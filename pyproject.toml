@@ -3,8 +3,8 @@ name = "sultan-ai-system"
 version = "0.1.0"
 description = "Sistema algorítmico de trading con AI, data-first, risk-first y audit-first."
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.11,<3.15"
+dependencies = ["prefect (>=3.6.29,<4.0.0)", "ccxt (>=4.5.51,<5.0.0)", "pandas (>=3.0.2,<4.0.0)", "pyarrow (>=24.0.0,<25.0.0)", "duckdb (>=1.5.2,<2.0.0)", "httpx (>=0.28.1,<0.29.0)", "psycopg2-binary (>=2.9.12,<3.0.0)", "python-dotenv (>=1.2.2,<2.0.0)", "loguru (>=0.7.3,<0.8.0)", "pandera (>=0.31.1,<0.32.0)", "pydantic (>=2.13.3,<3.0.0)", "ta-lib (>=0.6.8,<0.7.0)", "python-telegram-bot (>=22.7,<23.0)"]
 
 [tool.ruff]
 line-length = 100
