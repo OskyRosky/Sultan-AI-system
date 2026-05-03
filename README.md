@@ -20,11 +20,23 @@ Este repositorio está en fase fundacional. La prioridad es consolidar documenta
 
 El documento rector del proyecto es:
 
-[docs/01_blueprint_unificado.md](docs/01_blueprint_unificado.md)
+[01 Blueprint + Memo/00_blueprint_unificado.md](<01 Blueprint + Memo/00_blueprint_unificado.md>)
 
-## Estructura base
+## Estructura numerada por etapas
 
-- `docs/`: documentación de mandato, arquitectura, roadmap, riesgo y backlog.
+- `00 Inicio/`: visión general, propósito, objetivos, decisiones iniciales y backlog fundacional.
+- `01 Blueprint + Memo/`: blueprint unificado, investment memo, arquitectura, roadmap y política de riesgo.
+- `02 Data Platform/`: etapa futura para ingesta, almacenamiento, calidad, metadata y lineage.
+- `03 Feature Engineering/`: etapa futura para definición y generación de features.
+- `04 Research + Estrategias/`: etapa futura para notebooks de research y estrategias baseline.
+- `05 Backtesting/`: etapa futura para simulación histórica robusta.
+- `06 Risk Engine/`: etapa futura para controles de riesgo, veto y kill-switch.
+- `07 Paper Trading/`: etapa futura para operación simulada en tiempo real.
+- `08 Dashboard + Monitoreo/`: etapa futura para métricas, alertas y observabilidad.
+- `09 Live Small + Escalamiento/`: etapa futura para exposición mínima bajo controles estrictos.
+
+## Estructura técnica conservada
+
 - `src/sultan/`: paquete principal del sistema.
 - `data/`: zonas de datos raw, curated y features.
 - `configs/`: configuración versionable no secreta.
