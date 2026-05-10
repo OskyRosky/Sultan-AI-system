@@ -36,7 +36,10 @@ class DataPlatformSettings:
     default_exchange: str
     default_symbols: tuple[str, ...]
     default_timeframes: tuple[str, ...]
+    ohlcv_mode: str
     ohlcv_fetch_limit: int
+    ohlcv_page_limit: int
+    symbol_start_dates: dict[str, str]
     postgres: PostgresSettings
 
 
@@ -79,7 +82,13 @@ def load_settings(env_file: Path | None = None) -> DataPlatformSettings:
         default_exchange=os.getenv("SULTAN_DEFAULT_EXCHANGE", "binance"),
         default_symbols=_split_csv(os.getenv("SULTAN_DEFAULT_SYMBOLS", "BTCUSDT,ETHUSDT")),
         default_timeframes=_split_csv(os.getenv("SULTAN_DEFAULT_TIMEFRAMES", "1d,4h")),
+        ohlcv_mode=os.getenv("SULTAN_OHLCV_MODE", "full_history"),
         ohlcv_fetch_limit=int(os.getenv("SULTAN_OHLCV_FETCH_LIMIT", "500")),
+        ohlcv_page_limit=int(os.getenv("SULTAN_OHLCV_PAGE_LIMIT", "1000")),
+        symbol_start_dates={
+            "BTCUSDT": os.getenv("SULTAN_BTCUSDT_START_DATE", "2017-01-01T00:00:00Z"),
+            "ETHUSDT": os.getenv("SULTAN_ETHUSDT_START_DATE", "2017-01-01T00:00:00Z"),
+        },
         postgres=PostgresSettings(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             port=int(os.getenv("POSTGRES_PORT", "5432")),
