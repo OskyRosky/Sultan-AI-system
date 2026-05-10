@@ -49,3 +49,21 @@ Resultado: el run `26c5aba4-e626-41e7-a064-acad2c90c09e` terminó con `status = 
 Detalle: los gaps se calculan por `exchange + symbol + timeframe`, usando 1 día para `1d` y 4 horas para `4h`. Freshness se calcula como `now_utc - max(timestamp)`. El detalle por símbolo/timeframe queda registrado en `data_quality_checks.metadata`.
 
 Razón: completar el contrato mínimo de calidad operativo antes de avanzar a scheduling, más pares o nuevas fuentes.
+
+## 2026-05-10 - Idempotencia de re-runs OHLCV validada
+
+Decisión: mantener `ON CONFLICT (exchange, symbol, timeframe, timestamp) DO UPDATE` para `ohlcv_curated`.
+
+Resultado: se ejecutó una doble corrida controlada del flow OHLCV. Los runs `4cd9c775-d7b8-40ed-8f7c-6e5c6ebdd096` y `e9e0dd92-9550-4519-9c0d-a43b50d191b5` terminaron con `status = success`, `rows_fetched = 2000`, `rows_validated = 2000` y `rows_inserted = 2000`. En ambos casos el upsert detectó `rows_new = 0` y `rows_existing = 2000`.
+
+Confirmación: el total final de `ohlcv_curated` permaneció en `2000` filas, con `500` filas por cada combinación de `BTCUSDT`/`ETHUSDT` y `1d`/`4h`. `ingestion_runs` y `data_quality_checks` registraron cada ejecución.
+
+Razón: el sistema debe permitir re-runs auditables sin duplicar barras OHLCV.
+
+## 2026-05-10 - Vistas operativas para inspección PostgreSQL
+
+Decisión: crear vistas SQL simples para inspeccionar datos OHLCV, pipeline runs y data quality sin modificar tablas existentes.
+
+Resultado: se agregó `002_operational_views.sql` con `v_ohlcv_summary`, `v_ohlcv_latest_bars`, `v_pipeline_runs_latest`, `v_data_quality_latest` y `v_ohlcv_operational_health`.
+
+Razón: habilitar inspección clara en PostgreSQL y DBeaver antes de agregar dashboards o nuevas fuentes.

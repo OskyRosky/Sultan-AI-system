@@ -43,6 +43,13 @@ Run con gaps/freshness:
 - `freshness_lag_seconds`: `83575`.
 - `data_quality_score`: `1.00000`.
 
+Runs de idempotencia:
+
+- `4cd9c775-d7b8-40ed-8f7c-6e5c6ebdd096`: `status = success`, `rows_fetched = 2000`, `rows_validated = 2000`, `rows_inserted = 2000`.
+- `e9e0dd92-9550-4519-9c0d-a43b50d191b5`: `status = success`, `rows_fetched = 2000`, `rows_validated = 2000`, `rows_inserted = 2000`.
+- En ambos runs, el upsert reportó `rows_new = 0` y `rows_existing = 2000`.
+- El total final de `ohlcv_curated` permaneció en `2000` filas.
+
 No se crearán deployments programados todavía.
 
 ## Tracking mínimo
@@ -60,6 +67,7 @@ Cada ejecución debe registrar:
 - filas obtenidas
 - filas validadas
 - filas insertadas
+- filas nuevas y filas existentes en metadata del run
 - gaps encontrados
 - freshness lag en segundos
 - metadata de calidad por símbolo/timeframe

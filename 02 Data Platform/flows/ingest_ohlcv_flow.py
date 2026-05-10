@@ -295,6 +295,7 @@ def write_ingestion_run(
     raw_paths: list[str],
     curated_paths: list[str],
     error_message: str | None,
+    upsert_result: dict[str, int] | None = None,
 ) -> None:
     symbols = list(settings.default_symbols)
     timeframes = list(settings.default_timeframes)
@@ -302,6 +303,7 @@ def write_ingestion_run(
         {
             "raw_paths": raw_paths,
             "curated_paths": curated_paths,
+            "upsert_result": upsert_result or {},
         }
     )
 
@@ -349,7 +351,7 @@ def write_ingestion_run(
 
 
 @task
-def upsert_postgres(settings: DataPlatformSettings, df: pd.DataFrame) -> int:
+def upsert_postgres(settings: DataPlatformSettings, df: pd.DataFrame) -> dict[str, int]:
     rows = [
         (
             row.exchange,
@@ -371,10 +373,31 @@ def upsert_postgres(settings: DataPlatformSettings, df: pd.DataFrame) -> int:
     ]
 
     if not rows:
-        return 0
+        return {
+            "rows_inserted_or_updated": 0,
+            "rows_new": 0,
+            "rows_existing": 0,
+        }
 
     with psycopg2.connect(build_postgres_dsn(settings.postgres)) as connection:
         with connection.cursor() as cursor:
+            key_rows = [(row[0], row[1], row[2], row[3]) for row in rows]
+            existing_count_rows = execute_values(
+                cursor,
+                """
+                SELECT COUNT(*)
+                FROM (VALUES %s) AS incoming(exchange, symbol, timeframe, timestamp)
+                JOIN ohlcv_curated existing
+                  ON existing.exchange = incoming.exchange
+                 AND existing.symbol = incoming.symbol
+                 AND existing.timeframe = incoming.timeframe
+                 AND existing.timestamp = incoming.timestamp::timestamptz;
+                """,
+                key_rows,
+                page_size=1000,
+                fetch=True,
+            )
+            existing_count = sum(row[0] for row in existing_count_rows)
             execute_values(
                 cursor,
                 """
@@ -400,8 +423,18 @@ def upsert_postgres(settings: DataPlatformSettings, df: pd.DataFrame) -> int:
                 page_size=1000,
             )
 
-    get_run_logger().info("PostgreSQL ohlcv_curated upserted rows=%s", len(rows))
-    return len(rows)
+    upsert_result = {
+        "rows_inserted_or_updated": len(rows),
+        "rows_new": len(rows) - int(existing_count),
+        "rows_existing": int(existing_count),
+    }
+    get_run_logger().info(
+        "PostgreSQL ohlcv_curated upserted rows=%s new=%s existing=%s",
+        upsert_result["rows_inserted_or_updated"],
+        upsert_result["rows_new"],
+        upsert_result["rows_existing"],
+    )
+    return upsert_result
 
 
 @task
@@ -496,10 +529,11 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         status="success",
         rows_fetched=len(df),
         rows_validated=len(curated_df),
-        rows_inserted=rows_inserted,
+        rows_inserted=rows_inserted["rows_inserted_or_updated"],
         raw_paths=raw_paths,
         curated_paths=curated_paths,
         error_message=None,
+        upsert_result=rows_inserted,
     )
     write_quality_report(settings, run_id, validation_result)
 
@@ -507,7 +541,9 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         "run_id": run_id,
         "rows_fetched": len(df),
         "rows_validated": len(curated_df),
-        "rows_inserted": rows_inserted,
+        "rows_inserted": rows_inserted["rows_inserted_or_updated"],
+        "rows_new": rows_inserted["rows_new"],
+        "rows_existing": rows_inserted["rows_existing"],
         "raw_files": raw_paths,
         "curated_files": curated_paths,
     }

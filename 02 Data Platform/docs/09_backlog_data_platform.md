@@ -17,11 +17,15 @@
 - Cálculo de freshness.
 - Registro de `freshness_lag_seconds` en `data_quality_checks`.
 - Registro de metadata de calidad por símbolo/timeframe.
+- Idempotencia/re-runs del flow OHLCV.
+- Validación de doble ejecución controlada.
+- Crear vistas/queries operativas para inspección de datos.
+- Crear guía para inspeccionar BTC/ETH en PostgreSQL.
 
 ## Alta prioridad pendiente
 
 - Definir umbrales formales de freshness por timeframe.
-- Revisar idempotencia/re-runs.
+- Prueba controlada de validación fallida.
 
 ## Media prioridad
 

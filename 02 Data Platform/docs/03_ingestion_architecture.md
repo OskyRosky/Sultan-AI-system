@@ -32,6 +32,24 @@ La capa raw debe preservar el dato lo más cercano posible a la fuente, agregand
 
 La capa curated solo recibe datos que pasen validación. Si hay errores de contrato, duplicados inválidos, gaps no explicados o campos nulos críticos, el lote no debe promoverse.
 
+## Idempotencia
+
+El flow puede ejecutarse repetidamente sobre las mismas velas sin duplicar barras en `ohlcv_curated`.
+
+Mecanismo:
+
+- Clave lógica: `exchange + symbol + timeframe + timestamp`.
+- PostgreSQL usa `ON CONFLICT (exchange, symbol, timeframe, timestamp) DO UPDATE`.
+- Si una barra ya existe, se actualizan valores OHLCV, `run_id`, `ingested_at`, `validated_at` y `data_quality_score`.
+- `ingestion_runs` registra cada ejecución con un nuevo `run_id`.
+- `data_quality_checks` registra cada ejecución.
+
+Resultado de doble ejecución controlada:
+
+- Run `4cd9c775-d7b8-40ed-8f7c-6e5c6ebdd096`: `rows_fetched = 2000`, `rows_validated = 2000`, `rows_inserted = 2000`, `rows_new = 0`, `rows_existing = 2000`.
+- Run `e9e0dd92-9550-4519-9c0d-a43b50d191b5`: `rows_fetched = 2000`, `rows_validated = 2000`, `rows_inserted = 2000`, `rows_new = 0`, `rows_existing = 2000`.
+- Total final en `ohlcv_curated`: `2000` filas.
+
 ## Ejecución
 
 La primera versión local fue ejecutada correctamente con Prefect.

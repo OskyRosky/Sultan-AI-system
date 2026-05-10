@@ -58,6 +58,15 @@ Cada corrida debe producir:
 
 Si una validación falla, el dato no debe pasar a `curated`.
 
+## Idempotencia y re-runs
+
+Las corridas repetidas no deben fallar por duplicados si las velas ya existen en `ohlcv_curated`.
+
+- Los duplicados dentro del mismo lote siguen siendo una falla de validación.
+- Las barras ya existentes en PostgreSQL se manejan por `ON CONFLICT DO UPDATE`.
+- `ohlcv_curated` mantiene una sola fila por `exchange + symbol + timeframe + timestamp`.
+- `ingestion_runs` y `data_quality_checks` registran cada ejecución.
+
 ## Resultado confirmado
 
 En el primer run real mínimo:
@@ -79,3 +88,8 @@ En el run con gaps/freshness implementados:
 - `freshness_lag_seconds`: `83575`.
 - `data_quality_score`: `1.00000`.
 - `check_status`: `passed`.
+
+En la doble ejecución controlada de idempotencia:
+
+- Run `4cd9c775-d7b8-40ed-8f7c-6e5c6ebdd096`: `rows_checked = 2000`, `rows_failed = 0`, `gaps_found = 0`, `check_status = passed`.
+- Run `e9e0dd92-9550-4519-9c0d-a43b50d191b5`: `rows_checked = 2000`, `rows_failed = 0`, `gaps_found = 0`, `check_status = passed`.

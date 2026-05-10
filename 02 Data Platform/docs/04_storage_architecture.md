@@ -46,10 +46,21 @@ Tablas iniciales propuestas:
 - `data_quality_checks`
 - `ohlcv_curated`
 
+## Idempotencia en PostgreSQL
+
+`ohlcv_curated` no debe duplicar barras. La unicidad lógica es:
+
+```text
+exchange + symbol + timeframe + timestamp
+```
+
+El flow OHLCV usa `ON CONFLICT DO UPDATE` sobre esa clave. Esto permite re-runs sin duplicar datos y mantiene actualizados los valores validados más recientes.
+
+`ingestion_runs` y `data_quality_checks` sí registran cada ejecución para mantener auditoría operacional.
+
 ## Formato de archivos
 
 - Formato inicial para datasets: Parquet.
 - Motor local complementario futuro: DuckDB.
 - Particionamiento raw: fuente, símbolo, timeframe, año y mes.
 - Particionamiento curated: dataset, símbolo y timeframe.
-
