@@ -38,12 +38,21 @@ El primer flow real mínimo dejó tracking operativo en PostgreSQL:
 - `data_quality_checks`: check `minimal_ohlcv_contract` registrado con `check_status = passed`.
 - `ohlcv_curated`: `2000` filas validadas insertadas.
 
+El run `26c5aba4-e626-41e7-a064-acad2c90c09e` confirmó gaps/freshness:
+
+- `gaps_found`: `0`.
+- `freshness_lag_seconds`: `83575`.
+- `data_quality_score`: `1.00000`.
+- `data_quality_checks.metadata`: detalle por símbolo/timeframe.
+
 Distribución confirmada:
 
 - `BTCUSDT 1d`: `500` filas.
 - `BTCUSDT 4h`: `500` filas.
 - `ETHUSDT 1d`: `500` filas.
 - `ETHUSDT 4h`: `500` filas.
+
+La detección de gaps y freshness queda disponible como base para monitoreo operativo posterior.
 
 ## Mockup
 

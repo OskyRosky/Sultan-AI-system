@@ -13,10 +13,15 @@
 - Insertar en PostgreSQL.
 - Registrar `ingestion_runs`.
 - Ejecutar flow local en Prefect.
+- Detección formal de gaps.
+- Cálculo de freshness.
+- Registro de `freshness_lag_seconds` en `data_quality_checks`.
+- Registro de metadata de calidad por símbolo/timeframe.
 
 ## Alta prioridad pendiente
 
-- Detección formal de gaps.
+- Definir umbrales formales de freshness por timeframe.
+- Revisar idempotencia/re-runs.
 
 ## Media prioridad
 

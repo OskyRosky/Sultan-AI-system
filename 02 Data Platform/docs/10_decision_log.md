@@ -39,3 +39,13 @@ Resultado: el run `faf0e84e-5b6e-4751-9664-7fcbda356d68` descargó `2000` filas 
 Razón: se alcanzó el primer objetivo de punta a punta de la plataforma de datos mínima.
 
 Decisión operativa: no optimizar todavía ni ampliar fuentes hasta completar una primera versión estable de la etapa `02 Data Platform`.
+
+## 2026-05-10 - Gaps y freshness implementados en flow mínimo
+
+Decisión: se implementó detección formal de gaps y cálculo de freshness dentro de `ingest_ohlcv_flow` sin modificar arquitectura ni SQL.
+
+Resultado: el run `26c5aba4-e626-41e7-a064-acad2c90c09e` terminó con `status = success`, `rows_fetched = 2000`, `rows_validated = 2000`, `rows_inserted = 2000`, `gaps_found = 0`, `freshness_lag_seconds = 83575` y `data_quality_score = 1.00000`.
+
+Detalle: los gaps se calculan por `exchange + symbol + timeframe`, usando 1 día para `1d` y 4 horas para `4h`. Freshness se calcula como `now_utc - max(timestamp)`. El detalle por símbolo/timeframe queda registrado en `data_quality_checks.metadata`.
+
+Razón: completar el contrato mínimo de calidad operativo antes de avanzar a scheduling, más pares o nuevas fuentes.

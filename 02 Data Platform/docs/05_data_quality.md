@@ -17,11 +17,31 @@ La versión mínima ejecutada aplica:
 - `low <= close`.
 - `volume >= 0`.
 - No duplicados por `exchange + symbol + timeframe + timestamp`.
+- Detección formal de gaps por `exchange + symbol + timeframe`.
+- Cálculo de freshness por `exchange + symbol + timeframe`.
 
-Pendiente para siguientes bloques:
+## Gap detection
 
-- Detección formal de gaps según timeframe.
-- Cálculo formal de freshness por símbolo y timeframe.
+Los gaps se detectan ordenando cada grupo por `timestamp` y comparando la diferencia entre velas consecutivas contra el intervalo esperado.
+
+- Para `1d`, el intervalo esperado es 1 día.
+- Para `4h`, el intervalo esperado es 4 horas.
+- Si `gaps_found > 0`, `check_status = failed`.
+- Si `gaps_found > 0`, el lote no debe pasar a curated ni a `ohlcv_curated`.
+- No se imputan datos.
+- No se rellenan gaps.
+
+## Freshness
+
+Freshness se calcula por símbolo/timeframe usando:
+
+```text
+freshness_lag_seconds = now_utc - max(timestamp)
+```
+
+El mayor lag observado se registra en `data_quality_checks.freshness_lag_seconds`.
+
+El detalle por `exchange + symbol + timeframe` se guarda en `data_quality_checks.metadata`.
 
 ## Resultado de validación
 
@@ -49,3 +69,13 @@ En el primer run real mínimo:
 - `check_status`: `passed`.
 
 Run confirmado: `faf0e84e-5b6e-4751-9664-7fcbda356d68`.
+
+En el run con gaps/freshness implementados:
+
+- `run_id`: `26c5aba4-e626-41e7-a064-acad2c90c09e`.
+- `rows_checked`: `2000`.
+- `rows_failed`: `0`.
+- `gaps_found`: `0`.
+- `freshness_lag_seconds`: `83575`.
+- `data_quality_score`: `1.00000`.
+- `check_status`: `passed`.

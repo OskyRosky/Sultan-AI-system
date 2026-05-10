@@ -44,6 +44,10 @@ Resultado confirmado:
 - Filas validadas: `2000`.
 - Filas insertadas en PostgreSQL: `2000`.
 - Run exitoso: `faf0e84e-5b6e-4751-9664-7fcbda356d68`.
+- Run con gaps/freshness: `26c5aba4-e626-41e7-a064-acad2c90c09e`.
+- `gaps_found`: `0`.
+- `freshness_lag_seconds`: `83575`.
+- `data_quality_score`: `1.00000`.
 
 Datos actuales:
 
@@ -60,5 +64,14 @@ Tablas PostgreSQL usadas:
 - `ohlcv_curated`
 - `ingestion_runs`
 - `data_quality_checks`
+
+Data quality actual:
+
+- Gap detection implementado por `exchange + symbol + timeframe`.
+- Para `1d`, el intervalo esperado es 1 día.
+- Para `4h`, el intervalo esperado es 4 horas.
+- Si `gaps_found > 0`, la validación falla y el lote no debe pasar a curated ni a `ohlcv_curated`.
+- Freshness implementado como `now_utc - max(timestamp)`.
+- `data_quality_checks.metadata` guarda detalle por símbolo/timeframe.
 
 La etapa ya cuenta con un flujo mínimo funcional de punta a punta para OHLCV. Las siguientes mejoras deben mantenerse acotadas y orientadas a estabilizar esta base antes de ampliar fuentes o funcionalidades.

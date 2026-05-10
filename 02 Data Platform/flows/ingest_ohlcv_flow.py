@@ -32,6 +32,11 @@ REQUIRED_COLUMNS = [
     "data_quality_score",
 ]
 
+TIMEFRAME_INTERVALS = {
+    "1d": pd.Timedelta(days=1),
+    "4h": pd.Timedelta(hours=4),
+}
+
 
 def _ccxt_symbol(symbol: str) -> str:
     if "/" in symbol:
@@ -43,6 +48,10 @@ def _ccxt_symbol(symbol: str) -> str:
 
 def _safe_symbol(symbol: str) -> str:
     return symbol.replace("/", "")
+
+
+def _isoformat_timestamp(value: pd.Timestamp) -> str:
+    return value.to_pydatetime().isoformat()
 
 
 @task
@@ -109,6 +118,10 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
     logger = get_run_logger()
     errors: list[str] = []
     rows_checked = len(df)
+    gaps_found = 0
+    freshness_lag_seconds = None
+    freshness_detail: dict[str, dict[str, object]] = {}
+    gap_detail: list[dict[str, object]] = []
 
     missing_columns = [column for column in REQUIRED_COLUMNS if column not in df.columns]
     if missing_columns:
@@ -140,22 +153,71 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
         if duplicate_count:
             errors.append(f"duplicate_bars={int(duplicate_count)}")
 
+        now_utc = pd.Timestamp.now(tz=UTC)
+        max_freshness_lag_seconds = 0
+
+        for (exchange, symbol, timeframe), group in df.groupby(
+            ["exchange", "symbol", "timeframe"]
+        ):
+            ordered = group.sort_values("timestamp")
+            expected_interval = TIMEFRAME_INTERVALS.get(str(timeframe))
+            detail_key = f"{exchange}:{symbol}:{timeframe}"
+            max_timestamp = ordered["timestamp"].max()
+            lag_seconds = int((now_utc - max_timestamp).total_seconds())
+            max_freshness_lag_seconds = max(max_freshness_lag_seconds, lag_seconds)
+            freshness_detail[detail_key] = {
+                "max_timestamp": _isoformat_timestamp(max_timestamp),
+                "freshness_lag_seconds": lag_seconds,
+            }
+
+            if expected_interval is None:
+                errors.append(f"unsupported_timeframe={timeframe}")
+                continue
+
+            deltas = ordered["timestamp"].diff()
+            gap_deltas = deltas[deltas > expected_interval]
+            if not gap_deltas.empty:
+                gaps_found += int(len(gap_deltas))
+                gap_detail.append(
+                    {
+                        "exchange": str(exchange),
+                        "symbol": str(symbol),
+                        "timeframe": str(timeframe),
+                        "gaps_found": int(len(gap_deltas)),
+                        "expected_interval_seconds": int(expected_interval.total_seconds()),
+                    }
+                )
+
+        freshness_lag_seconds = max_freshness_lag_seconds
+        if gaps_found:
+            errors.append(f"gaps_found={gaps_found}")
+
     is_valid = not errors
     rows_failed = rows_checked if errors else 0
     quality_score = 1.0 if is_valid else 0.0
     logger.info(
-        "Validation completed. valid=%s rows_checked=%s errors=%s",
+        "Validation completed. valid=%s rows_checked=%s gaps_found=%s freshness_lag_seconds=%s errors=%s",
         is_valid,
         rows_checked,
+        gaps_found,
+        freshness_lag_seconds,
         errors,
     )
+    logger.info("Freshness detail: %s", freshness_detail)
+    logger.info("Gap detail: %s", gap_detail)
+    logger.info("Quality check status=%s", "passed" if is_valid else "failed")
     return {
         "is_valid": is_valid,
         "rows_checked": rows_checked,
         "rows_failed": rows_failed,
-        "gaps_found": 0,
+        "gaps_found": gaps_found,
+        "freshness_lag_seconds": freshness_lag_seconds,
         "data_quality_score": quality_score,
         "errors": errors,
+        "metadata": {
+            "freshness": freshness_detail,
+            "gaps": gap_detail,
+        },
     }
 
 
@@ -359,10 +421,10 @@ def write_quality_report(
                 """
                 INSERT INTO data_quality_checks (
                     run_id, dataset_name, check_name, check_status, severity,
-                    rows_checked, rows_failed, gaps_found, data_quality_score,
-                    error_message, metadata
+                    rows_checked, rows_failed, gaps_found, freshness_lag_seconds,
+                    data_quality_score, error_message, metadata
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb);
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb);
                 """,
                 (
                     str(run_id),
@@ -373,9 +435,15 @@ def write_quality_report(
                     validation_result["rows_checked"],
                     validation_result["rows_failed"],
                     validation_result["gaps_found"],
+                    validation_result["freshness_lag_seconds"],
                     validation_result["data_quality_score"],
                     error_message,
-                    json.dumps({"errors": validation_result["errors"]}),
+                    json.dumps(
+                        {
+                            "errors": validation_result["errors"],
+                            **validation_result["metadata"],
+                        }
+                    ),
                 ),
             )
     get_run_logger().info("data_quality_checks registered. status=%s", status)
