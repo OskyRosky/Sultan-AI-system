@@ -36,6 +36,7 @@ class DataPlatformSettings:
     default_exchange: str
     default_symbols: tuple[str, ...]
     default_timeframes: tuple[str, ...]
+    ohlcv_fetch_limit: int
     postgres: PostgresSettings
 
 
@@ -78,6 +79,7 @@ def load_settings(env_file: Path | None = None) -> DataPlatformSettings:
         default_exchange=os.getenv("SULTAN_DEFAULT_EXCHANGE", "binance"),
         default_symbols=_split_csv(os.getenv("SULTAN_DEFAULT_SYMBOLS", "BTCUSDT,ETHUSDT")),
         default_timeframes=_split_csv(os.getenv("SULTAN_DEFAULT_TIMEFRAMES", "1d,4h")),
+        ohlcv_fetch_limit=int(os.getenv("SULTAN_OHLCV_FETCH_LIMIT", "500")),
         postgres=PostgresSettings(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             port=int(os.getenv("POSTGRES_PORT", "5432")),
@@ -100,4 +102,3 @@ def build_postgres_dsn(settings: PostgresSettings) -> str:
         f"password={settings.password} "
         f"sslmode={settings.sslmode}"
     )
-

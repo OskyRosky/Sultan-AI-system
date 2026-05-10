@@ -31,12 +31,34 @@ No cubre:
 - Los artefactos de diseño, SQL, schemas, flows y reportes viven en `02 Data Platform/`.
 - Primero se construye confiabilidad de datos; después features; después research.
 
-## Primer pipeline previsto
+## Primer pipeline real mínimo ejecutado
 
-El primer pipeline real será `ingest_ohlcv_flow`, ejecutado localmente con Prefect. Descargará histórico OHLCV de Binance vía CCXT para:
+El primer pipeline real mínimo, `ingest_ohlcv_flow`, fue ejecutado correctamente de forma local con Prefect.
+
+Resultado confirmado:
+
+- Fuente: Binance público vía CCXT.
+- Símbolos: `BTCUSDT`, `ETHUSDT`.
+- Timeframes: `1d`, `4h`.
+- Filas descargadas: `2000`.
+- Filas validadas: `2000`.
+- Filas insertadas en PostgreSQL: `2000`.
+- Run exitoso: `faf0e84e-5b6e-4751-9664-7fcbda356d68`.
+
+Datos actuales:
 
 - `BTCUSDT`: `1d`, `4h`.
 - `ETHUSDT`: `1d`, `4h`.
 
-Esta primera ejecución solo prepara estructura, documentación, SQL y mockup. No descarga datos.
+Rutas usadas:
 
+- Raw Parquet: `data/raw/binance/{symbol}/{timeframe}/{year}/{month}/`.
+- Curated Parquet: `data/curated/ohlcv/{symbol}/{timeframe}/`.
+
+Tablas PostgreSQL usadas:
+
+- `ohlcv_curated`
+- `ingestion_runs`
+- `data_quality_checks`
+
+La etapa ya cuenta con un flujo mínimo funcional de punta a punta para OHLCV. Las siguientes mejoras deben mantenerse acotadas y orientadas a estabilizar esta base antes de ampliar fuentes o funcionalidades.

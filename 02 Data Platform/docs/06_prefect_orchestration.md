@@ -20,9 +20,19 @@ Prefect será usado para ejecutar, observar y depurar pipelines locales de datos
 - `write_ingestion_run`
 - `write_quality_report`
 
-## Estado inicial
+## Estado actual
 
-La primera versión será ejecutada localmente. No se crearán deployments programados todavía.
+La primera versión local fue ejecutada correctamente con Prefect.
+
+Run exitoso:
+
+- `run_id`: `faf0e84e-5b6e-4751-9664-7fcbda356d68`.
+- `status`: `success`.
+- `rows_fetched`: `2000`.
+- `rows_validated`: `2000`.
+- `rows_inserted`: `2000`.
+
+No se crearán deployments programados todavía.
 
 ## Tracking mínimo
 
@@ -44,4 +54,3 @@ Cada ejecución debe registrar:
 ## Alertas
 
 Telegram queda fuera del primer bloque. Se agregará después de tener validaciones y registros confiables.
-
