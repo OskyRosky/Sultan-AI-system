@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SULTAN Data Platform</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #121923;
+      --panel-2: #17202c;
+      --line: #293545;
+      --text: #e8edf4;
+      --muted: #91a0b4;
+      --good: #26c281;
+      --bad: #ff5d5d;
+      --warn: #f2b84b;
+      --info: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: #0e141c;
+      padding: 22px 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    main {
+      padding: 24px 28px 36px;
+      display: grid;
+      gap: 22px;
+    }
+
+    section {
+      display: grid;
+      gap: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .kpi, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .kpi {
+      padding: 14px;
+      min-height: 92px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 760;
+      line-height: 1.1;
+    }
+
+    .kpi-note {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .panel {
+      padding: 16px;
+      min-height: 280px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-ok {
+      color: var(--good);
+    }
+
+    .status-fail {
+      color: var(--bad);
+    }
+
+    .status-warn {
+      color: var(--warn);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      min-width: 1080px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      background: #101722;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .source-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .source-item {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .source-name {
+      font-weight: 720;
+    }
+
+    .source-meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    @media (max-width: 980px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+      }
+
+      .grid-2, .source-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      header, main {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SULTAN Data Platform</h1>
+    <div class="subtitle">Mockup operativo de monitoreo de ingesta, calidad y frescura de datos.</div>
+  </header>
+
+  <main>
+    <section aria-labelledby="data-sources-title">
+      <div class="panel-header">
+        <h2 id="data-sources-title">Data Sources</h2>
+        <span class="pill">Simulated data</span>
+      </div>
+      <div class="source-list">
+        <div class="source-item">
+          <div class="source-name">Binance OHLCV</div>
+          <div class="source-meta">Status: <span class="status-ok">active</span></div>
+          <div class="source-meta">Symbols: BTCUSDT, ETHUSDT</div>
+        </div>
+        <div class="source-item">
+          <div class="source-name">FRED Macro</div>
+          <div class="source-meta">Status: <span class="status-warn">planned</span></div>
+          <div class="source-meta">Datasets: rates, CPI, M2</div>
+        </div>
+        <div class="source-item">
+          <div class="source-name">CoinGecko Universe</div>
+          <div class="source-meta">Status: <span class="status-warn">planned</span></div>
+          <div class="source-meta">Datasets: market cap, volume</div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="kpi-title">
+      <h2 id="kpi-title">Pipeline Runs</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Active Sources</div><div class="kpi-value">1</div><div class="kpi-note">Binance enabled</div></div>
+        <div class="kpi"><div class="kpi-label">Successful Runs Today</div><div class="kpi-value status-ok">6</div><div class="kpi-note">Local Prefect runs</div></div>
+        <div class="kpi"><div class="kpi-label">Failed Runs Today</div><div class="kpi-value status-fail">1</div><div class="kpi-note">Validation blocked curated</div></div>
+        <div class="kpi"><div class="kpi-label">Rows Ingested</div><div class="kpi-value">48,320</div><div class="kpi-note">Mock 24h total</div></div>
+        <div class="kpi"><div class="kpi-label">Last BTC Update</div><div class="kpi-value">10:15</div><div class="kpi-note">UTC simulated</div></div>
+        <div class="kpi"><div class="kpi-label">Last ETH Update</div><div class="kpi-value">10:14</div><div class="kpi-note">UTC simulated</div></div>
+        <div class="kpi"><div class="kpi-label">Freshness Score</div><div class="kpi-value status-ok">98.6%</div><div class="kpi-note">Across active OHLCV</div></div>
+        <div class="kpi"><div class="kpi-label">Missing Data Gaps</div><div class="kpi-value status-warn">2</div><div class="kpi-note">ETHUSDT 4h review</div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="charts-title">
+      <h2 id="charts-title">Freshness, Data Quality, Storage Status, Prefect Tracking</h2>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><h2>Rows ingested over time</h2><span class="pill">Parquet + PostgreSQL</span></div>
+          <canvas id="rowsChart"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Success rate</h2><span class="pill">Prefect</span></div>
+          <canvas id="successChart"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Freshness by symbol</h2><span class="pill">OHLCV</span></div>
+          <canvas id="freshnessChart"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Data quality checks</h2><span class="pill">Pandera planned</span></div>
+          <canvas id="qualityChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="table-title">
+      <h2 id="table-title">Pipeline Run Details</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>flow_name</th>
+              <th>source</th>
+              <th>symbol</th>
+              <th>timeframe</th>
+              <th>last_run</th>
+              <th>status</th>
+              <th>rows_ingested</th>
+              <th>gaps_found</th>
+              <th>freshness</th>
+              <th>error_message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ingest_ohlcv_flow</td>
+              <td>binance</td>
+              <td>BTCUSDT</td>
+              <td>1d</td>
+              <td>2026-05-10 10:15 UTC</td>
+              <td class="status-ok">success</td>
+              <td>2,180</td>
+              <td>0</td>
+              <td>99.1%</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>ingest_ohlcv_flow</td>
+              <td>binance</td>
+              <td>BTCUSDT</td>
+              <td>4h</td>
+              <td>2026-05-10 10:12 UTC</td>
+              <td class="status-ok">success</td>
+              <td>13,080</td>
+              <td>0</td>
+              <td>98.8%</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>ingest_ohlcv_flow</td>
+              <td>binance</td>
+              <td>ETHUSDT</td>
+              <td>1d</td>
+              <td>2026-05-10 10:14 UTC</td>
+              <td class="status-ok">success</td>
+              <td>2,030</td>
+              <td>0</td>
+              <td>98.9%</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>ingest_ohlcv_flow</td>
+              <td>binance</td>
+              <td>ETHUSDT</td>
+              <td>4h</td>
+              <td>2026-05-10 09:55 UTC</td>
+              <td class="status-warn">blocked</td>
+              <td>12,996</td>
+              <td>2</td>
+              <td>97.7%</td>
+              <td>gap validation failed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const css = getComputedStyle(document.documentElement);
+    const text = css.getPropertyValue('--text').trim();
+    const muted = css.getPropertyValue('--muted').trim();
+    const line = css.getPropertyValue('--line').trim();
+    const good = css.getPropertyValue('--good').trim();
+    const bad = css.getPropertyValue('--bad').trim();
+    const warn = css.getPropertyValue('--warn').trim();
+    const info = css.getPropertyValue('--info').trim();
+
+    Chart.defaults.color = muted;
+    Chart.defaults.borderColor = line;
+    Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
+
+    new Chart(document.getElementById('rowsChart'), {
+      type: 'line',
+      data: {
+        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+        datasets: [{
+          label: 'Rows',
+          data: [7200, 8150, 7900, 9100, 8700, 9270],
+          borderColor: info,
+          backgroundColor: 'rgba(88, 166, 255, 0.18)',
+          fill: true,
+          tension: 0.32
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('successChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Success', 'Failed'],
+        datasets: [{ data: [86, 14], backgroundColor: [good, bad], borderColor: '#121923' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('freshnessChart'), {
+      type: 'bar',
+      data: {
+        labels: ['BTCUSDT 1d', 'BTCUSDT 4h', 'ETHUSDT 1d', 'ETHUSDT 4h'],
+        datasets: [{ label: 'Freshness %', data: [99.1, 98.8, 98.9, 97.7], backgroundColor: [good, good, good, warn] }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 94, max: 100 } } }
+    });
+
+    new Chart(document.getElementById('qualityChart'), {
+      type: 'bar',
+      data: {
+        labels: ['schema', 'nulls', 'ohlc rules', 'duplicates', 'gaps', 'freshness'],
+        datasets: [
+          { label: 'Passed', data: [4, 4, 4, 4, 3, 4], backgroundColor: good },
+          { label: 'Failed', data: [0, 0, 0, 0, 1, 0], backgroundColor: bad }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, ticks: { precision: 0 } } } }
+    });
+  </script>
+</body>
+</html>
+
