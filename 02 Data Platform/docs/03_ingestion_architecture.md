@@ -30,7 +30,9 @@ La capa raw debe preservar el dato lo más cercano posible a la fuente, agregand
 
 ## Política curated
 
-La capa curated solo recibe datos que pasen validación. Si hay errores de contrato, duplicados inválidos, gaps no explicados o campos nulos críticos, el lote no debe promoverse.
+La capa curated solo recibe datos que no tengan errores estructurales bloqueantes. Si hay errores de contrato, duplicados dentro del lote o campos nulos críticos, el lote no debe promoverse.
+
+Los gaps históricos detectados en Binance son warnings auditables. No se imputan datos, no se rellenan velas y no se bloquea el histórico estructuralmente válido por gaps de disponibilidad o mantenimiento del exchange.
 
 ## Idempotencia
 
@@ -66,5 +68,19 @@ Resultado confirmado:
 - Curated Parquet escrito en `data/curated/ohlcv/{symbol}/{timeframe}/`.
 - Run registrado en `ingestion_runs` con `status = success`.
 - Quality check registrado en `data_quality_checks` con `check_status = passed`.
+
+Resultado histórico completo:
+
+- Modo: `full_history`.
+- Fuente: Binance público vía CCXT.
+- Run: `2a979115-402f-4243-aef1-8c5aead2cc89`.
+- Estado: `success_with_warnings`.
+- Filas descargadas: `44612`.
+- Filas validadas: `44612`.
+- Filas insertadas/actualizadas: `44612`.
+- `BTCUSDT 1d`: `3189` filas, `2017-08-17 00:00:00 UTC` a `2026-05-10 00:00:00 UTC`.
+- `BTCUSDT 4h`: `19117` filas, `2017-08-17 04:00:00 UTC` a `2026-05-10 20:00:00 UTC`.
+- `ETHUSDT 1d`: `3189` filas, `2017-08-17 00:00:00 UTC` a `2026-05-10 00:00:00 UTC`.
+- `ETHUSDT 4h`: `19117` filas, `2017-08-17 04:00:00 UTC` a `2026-05-10 20:00:00 UTC`.
 
 No se define deployment programado todavía.

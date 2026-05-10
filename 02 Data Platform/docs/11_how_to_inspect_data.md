@@ -88,9 +88,12 @@ LIMIT 10;
 Interpretacion:
 
 - `gaps_found = 0`: no se detectaron saltos entre velas segun el timeframe.
+- `gaps_found > 0`: hay gaps auditables; revisar `metadata` para detalle por simbolo/timeframe.
 - `freshness_lag_seconds`: diferencia entre `now_utc` y el `max(timestamp)` observado.
 - `data_quality_score = 1.00000`: el lote paso la validacion minima.
+- `data_quality_score = 0.95000`: el lote paso con warnings auditables, normalmente gaps historicos.
 - `check_status = passed`: el lote puede pasar a curated/PostgreSQL.
+- `check_status = passed_with_warnings`: el lote paso a curated/PostgreSQL, pero requiere seguimiento operativo.
 - `check_status = failed`: el lote no debe pasar a curated/PostgreSQL.
 
 ## Ver salud operativa OHLCV
@@ -116,7 +119,15 @@ Esta vista combina conteos y timestamps de OHLCV con el ultimo estado global de 
 
 - Si `rows_count` es estable tras re-runs, la idempotencia esta funcionando.
 - Si `max_timestamp` avanza en nuevas ejecuciones, hay data mas reciente.
-- Si `gaps_found` es mayor que cero, el lote debe revisarse.
+- Si `gaps_found` es mayor que cero, el lote debe revisarse, pero no implica datos imputados.
 - Si `freshness_lag_seconds` crece demasiado, la data puede estar desactualizada.
 - Si `data_quality_score` baja a `0.00000`, la validacion fallo.
 
+## Rango historico cargado
+
+El run historico completo `2a979115-402f-4243-aef1-8c5aead2cc89` dejo estos rangos en PostgreSQL:
+
+- `BTCUSDT 1d`: `3189` filas, desde `2017-08-17 00:00:00 UTC` hasta `2026-05-10 00:00:00 UTC`.
+- `BTCUSDT 4h`: `19117` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-05-10 20:00:00 UTC`.
+- `ETHUSDT 1d`: `3189` filas, desde `2017-08-17 00:00:00 UTC` hasta `2026-05-10 00:00:00 UTC`.
+- `ETHUSDT 4h`: `19117` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-05-10 20:00:00 UTC`.

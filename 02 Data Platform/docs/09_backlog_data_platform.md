@@ -21,6 +21,10 @@
 - Validación de doble ejecución controlada.
 - Crear vistas/queries operativas para inspección de datos.
 - Crear guía para inspeccionar BTC/ETH en PostgreSQL.
+- Descarga histórica paginada OHLCV.
+- Carga completa disponible en Binance para BTCUSDT/ETHUSDT 1d/4h.
+- Validación de rangos completos en PostgreSQL.
+- Política de gaps históricos como warning auditable.
 
 ## Alta prioridad pendiente
 

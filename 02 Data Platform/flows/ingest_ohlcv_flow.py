@@ -222,7 +222,8 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
 @task
 def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
     logger = get_run_logger()
-    errors: list[str] = []
+    blocking_errors: list[str] = []
+    warning_errors: list[str] = []
     rows_checked = len(df)
     gaps_found = 0
     freshness_lag_seconds = None
@@ -231,33 +232,33 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
 
     missing_columns = [column for column in REQUIRED_COLUMNS if column not in df.columns]
     if missing_columns:
-        errors.append(f"missing_columns={missing_columns}")
+        blocking_errors.append(f"missing_columns={missing_columns}")
 
     if df.empty:
-        errors.append("empty_dataset")
+        blocking_errors.append("empty_dataset")
 
     if not missing_columns and not df.empty:
         if df["timestamp"].isna().any():
-            errors.append("timestamp_nulls")
+            blocking_errors.append("timestamp_nulls")
         if df[["open", "high", "low", "close"]].isna().any().any():
-            errors.append("ohlc_nulls")
+            blocking_errors.append("ohlc_nulls")
         if (df["high"] < df["low"]).any():
-            errors.append("high_lt_low")
+            blocking_errors.append("high_lt_low")
         if (df["high"] < df["open"]).any():
-            errors.append("high_lt_open")
+            blocking_errors.append("high_lt_open")
         if (df["high"] < df["close"]).any():
-            errors.append("high_lt_close")
+            blocking_errors.append("high_lt_close")
         if (df["low"] > df["open"]).any():
-            errors.append("low_gt_open")
+            blocking_errors.append("low_gt_open")
         if (df["low"] > df["close"]).any():
-            errors.append("low_gt_close")
+            blocking_errors.append("low_gt_close")
         if (df["volume"] < 0).any():
-            errors.append("volume_negative")
+            blocking_errors.append("volume_negative")
         duplicate_count = df.duplicated(
             subset=["exchange", "symbol", "timeframe", "timestamp"]
         ).sum()
         if duplicate_count:
-            errors.append(f"duplicate_bars={int(duplicate_count)}")
+            blocking_errors.append(f"duplicate_bars={int(duplicate_count)}")
 
         now_utc = pd.Timestamp.now(tz=UTC)
         max_freshness_lag_seconds = 0
@@ -265,7 +266,7 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
         for (exchange, symbol, timeframe), group in df.groupby(
             ["exchange", "symbol", "timeframe"]
         ):
-            ordered = group.sort_values("timestamp")
+            ordered = group.sort_values("timestamp").reset_index(drop=True)
             expected_interval = TIMEFRAME_INTERVALS.get(str(timeframe))
             detail_key = f"{exchange}:{symbol}:{timeframe}"
             max_timestamp = ordered["timestamp"].max()
@@ -277,13 +278,26 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
             }
 
             if expected_interval is None:
-                errors.append(f"unsupported_timeframe={timeframe}")
+                blocking_errors.append(f"unsupported_timeframe={timeframe}")
                 continue
 
             deltas = ordered["timestamp"].diff()
             gap_deltas = deltas[deltas > expected_interval]
             if not gap_deltas.empty:
                 gaps_found += int(len(gap_deltas))
+                gap_events = []
+                for index, observed_interval in gap_deltas.items():
+                    previous_timestamp = ordered.loc[index - 1, "timestamp"]
+                    current_timestamp = ordered.loc[index, "timestamp"]
+                    gap_events.append(
+                        {
+                            "previous_timestamp": _isoformat_timestamp(previous_timestamp),
+                            "current_timestamp": _isoformat_timestamp(current_timestamp),
+                            "observed_interval_seconds": int(
+                                observed_interval.total_seconds()
+                            ),
+                        }
+                    )
                 gap_detail.append(
                     {
                         "exchange": str(exchange),
@@ -291,35 +305,48 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
                         "timeframe": str(timeframe),
                         "gaps_found": int(len(gap_deltas)),
                         "expected_interval_seconds": int(expected_interval.total_seconds()),
+                        "events": gap_events,
                     }
                 )
 
         freshness_lag_seconds = max_freshness_lag_seconds
         if gaps_found:
-            errors.append(f"gaps_found={gaps_found}")
+            warning_errors.append(f"gaps_found={gaps_found}")
 
-    is_valid = not errors
-    rows_failed = rows_checked if errors else 0
-    quality_score = 1.0 if is_valid else 0.0
+    is_valid = not blocking_errors
+    rows_failed = rows_checked if blocking_errors else 0
+    quality_score = 0.0 if blocking_errors else 0.95 if warning_errors else 1.0
+    check_status = (
+        "failed"
+        if blocking_errors
+        else "passed_with_warnings"
+        if warning_errors
+        else "passed"
+    )
     logger.info(
-        "Validation completed. valid=%s rows_checked=%s gaps_found=%s freshness_lag_seconds=%s errors=%s",
+        "Validation completed. valid=%s rows_checked=%s gaps_found=%s freshness_lag_seconds=%s blocking_errors=%s warning_errors=%s",
         is_valid,
         rows_checked,
         gaps_found,
         freshness_lag_seconds,
-        errors,
+        blocking_errors,
+        warning_errors,
     )
     logger.info("Freshness detail: %s", freshness_detail)
     logger.info("Gap detail: %s", gap_detail)
-    logger.info("Quality check status=%s", "passed" if is_valid else "failed")
+    logger.info("Quality check status=%s data_quality_score=%s", check_status, quality_score)
+    logger.info("Pipeline will %s", "continue" if is_valid else "block")
     return {
         "is_valid": is_valid,
+        "check_status": check_status,
         "rows_checked": rows_checked,
         "rows_failed": rows_failed,
         "gaps_found": gaps_found,
         "freshness_lag_seconds": freshness_lag_seconds,
         "data_quality_score": quality_score,
-        "errors": errors,
+        "errors": blocking_errors,
+        "blocking_errors": blocking_errors,
+        "warning_errors": warning_errors,
         "metadata": {
             "freshness": freshness_detail,
             "gaps": gap_detail,
@@ -550,11 +577,12 @@ def write_quality_report(
     settings: DataPlatformSettings,
     run_id: str,
     validation_result: dict[str, object],
+    fetch_metadata: dict[str, object] | None = None,
 ) -> None:
-    status = "passed" if validation_result["is_valid"] else "failed"
+    status = str(validation_result["check_status"])
     error_message = None
-    if validation_result["errors"]:
-        error_message = "; ".join(validation_result["errors"])
+    if validation_result["blocking_errors"]:
+        error_message = "; ".join(validation_result["blocking_errors"])
 
     with psycopg2.connect(build_postgres_dsn(settings.postgres)) as connection:
         with connection.cursor() as cursor:
@@ -581,7 +609,9 @@ def write_quality_report(
                     error_message,
                     json.dumps(
                         {
-                            "errors": validation_result["errors"],
+                            "errors": validation_result["blocking_errors"],
+                            "warnings": validation_result["warning_errors"],
+                            "fetch": fetch_metadata or {},
                             **validation_result["metadata"],
                         }
                     ),
@@ -615,7 +645,7 @@ def ingest_ohlcv_flow() -> dict[str, object]:
             error_message="; ".join(validation_result["errors"]),
             fetch_metadata=fetch_metadata,
         )
-        write_quality_report(settings, run_id, validation_result)
+        write_quality_report(settings, run_id, validation_result, fetch_metadata)
         raise ValueError(f"OHLCV validation failed: {validation_result['errors']}")
 
     curated_df = transform_to_curated(df, validation_result)
@@ -634,11 +664,16 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         fetch_metadata=fetch_metadata,
     )
     rows_inserted = upsert_postgres(settings, curated_df)
+    final_status = (
+        "success_with_warnings"
+        if validation_result["warning_errors"]
+        else "success"
+    )
     write_ingestion_run(
         settings=settings,
         run_id=run_id,
         started_at=started_at,
-        status="success",
+        status=final_status,
         rows_fetched=len(df),
         rows_validated=len(curated_df),
         rows_inserted=rows_inserted["rows_inserted_or_updated"],
@@ -648,7 +683,7 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         fetch_metadata=fetch_metadata,
         upsert_result=rows_inserted,
     )
-    write_quality_report(settings, run_id, validation_result)
+    write_quality_report(settings, run_id, validation_result, fetch_metadata)
 
     return {
         "run_id": run_id,

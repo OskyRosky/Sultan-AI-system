@@ -67,3 +67,15 @@ Decisión: crear vistas SQL simples para inspeccionar datos OHLCV, pipeline runs
 Resultado: se agregó `002_operational_views.sql` con `v_ohlcv_summary`, `v_ohlcv_latest_bars`, `v_pipeline_runs_latest`, `v_data_quality_latest` y `v_ohlcv_operational_health`.
 
 Razón: habilitar inspección clara en PostgreSQL y DBeaver antes de agregar dashboards o nuevas fuentes.
+
+## 2026-05-10 - Histórico completo OHLCV con gaps auditables
+
+Decisión: tratar gaps históricos de Binance como warnings auditables cuando no existan errores estructurales bloqueantes.
+
+Resultado: el run `2a979115-402f-4243-aef1-8c5aead2cc89` descargó y validó `44612` filas en modo `full_history`, escribió curated Parquet y actualizó `ohlcv_curated`. El estado del run fue `success_with_warnings` y `data_quality_checks.check_status = passed_with_warnings`.
+
+Rangos cargados: `BTCUSDT 1d` con `3189` filas, `BTCUSDT 4h` con `19117` filas, `ETHUSDT 1d` con `3189` filas y `ETHUSDT 4h` con `19117` filas. Los rangos van desde `2017-08-17` hasta `2026-05-10`, según disponibilidad de Binance.
+
+Data quality: `gaps_found = 16`, con `8` gaps en `BTCUSDT 4h` y `8` gaps en `ETHUSDT 4h`; `rows_failed = 0`; `data_quality_score = 0.95000`. No se imputaron datos ni se rellenaron velas.
+
+Razón: en históricos reales de exchange pueden existir gaps por mantenimiento, listing o disponibilidad de datos. La plataforma debe auditarlos sin bloquear datos OHLCV estructuralmente válidos.

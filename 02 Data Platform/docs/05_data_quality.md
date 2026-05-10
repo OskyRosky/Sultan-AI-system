@@ -26,8 +26,8 @@ Los gaps se detectan ordenando cada grupo por `timestamp` y comparando la difere
 
 - Para `1d`, el intervalo esperado es 1 día.
 - Para `4h`, el intervalo esperado es 4 horas.
-- Si `gaps_found > 0`, `check_status = failed`.
-- Si `gaps_found > 0`, el lote no debe pasar a curated ni a `ohlcv_curated`.
+- Si `gaps_found > 0` y no hay errores estructurales, `check_status = passed_with_warnings`.
+- Si solo hay gaps, el lote puede pasar a curated y `ohlcv_curated`.
 - No se imputan datos.
 - No se rellenan gaps.
 
@@ -56,7 +56,25 @@ Cada corrida debe producir:
 
 ## Regla crítica
 
-Si una validación falla, el dato no debe pasar a `curated`.
+Si hay errores estructurales bloqueantes, el dato no debe pasar a `curated`.
+
+Errores bloqueantes:
+
+- `timestamp` nulo.
+- OHLC nulo.
+- Reglas OHLC inválidas.
+- `volume < 0`.
+- Duplicados por `exchange + symbol + timeframe + timestamp` dentro del lote.
+
+Warnings auditables:
+
+- `gaps_found > 0`.
+
+Score:
+
+- `1.0`: sin errores ni gaps.
+- `0.95`: solo gaps/warnings.
+- `0.0`: errores bloqueantes.
 
 ## Idempotencia y re-runs
 
@@ -93,3 +111,15 @@ En la doble ejecución controlada de idempotencia:
 
 - Run `4cd9c775-d7b8-40ed-8f7c-6e5c6ebdd096`: `rows_checked = 2000`, `rows_failed = 0`, `gaps_found = 0`, `check_status = passed`.
 - Run `e9e0dd92-9550-4519-9c0d-a43b50d191b5`: `rows_checked = 2000`, `rows_failed = 0`, `gaps_found = 0`, `check_status = passed`.
+
+En el run histórico completo:
+
+- `run_id`: `2a979115-402f-4243-aef1-8c5aead2cc89`.
+- `rows_checked`: `44612`.
+- `rows_failed`: `0`.
+- `gaps_found`: `16`.
+- `check_status`: `passed_with_warnings`.
+- `data_quality_score`: `0.95000`.
+- `freshness_lag_seconds`: `85642`.
+- `BTCUSDT 4h`: `8` gaps.
+- `ETHUSDT 4h`: `8` gaps.
