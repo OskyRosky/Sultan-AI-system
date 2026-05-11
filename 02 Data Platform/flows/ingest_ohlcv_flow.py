@@ -714,6 +714,13 @@ def write_quality_report(
     fetch_metadata: dict[str, object] | None = None,
 ) -> None:
     status = str(validation_result["check_status"])
+    severity = (
+        "error"
+        if status == "failed"
+        else "warning"
+        if status == "passed_with_warnings"
+        else "info"
+    )
     error_message = None
     if validation_result["blocking_errors"]:
         error_message = "; ".join(validation_result["blocking_errors"])
@@ -734,7 +741,7 @@ def write_quality_report(
                     "ohlcv",
                     "minimal_ohlcv_contract",
                     status,
-                    "error",
+                    severity,
                     validation_result["rows_checked"],
                     validation_result["rows_failed"],
                     validation_result["gaps_found"],

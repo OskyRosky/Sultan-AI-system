@@ -25,7 +25,7 @@ El contrato OHLCV ya cuenta con validación formal de gaps y cálculo de freshne
 - Los gaps se calculan por `exchange + symbol + timeframe`.
 - Para `1d`, el intervalo esperado es 1 día.
 - Para `4h`, el intervalo esperado es 4 horas.
-- Si `gaps_found > 0`, la validación falla y los datos no pasan a curated ni a PostgreSQL.
+- Si `gaps_found > 0` y no hay errores estructurales bloqueantes, el lote queda como warning auditable y puede pasar a curated y PostgreSQL.
 - `freshness_lag_seconds` se calcula como `now_utc - max(timestamp)`.
 - `data_quality_checks.metadata` guarda detalle de freshness por símbolo/timeframe y detalle de gaps detectados.
 

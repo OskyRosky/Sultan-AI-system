@@ -70,7 +70,7 @@ Data quality actual:
 - Gap detection implementado por `exchange + symbol + timeframe`.
 - Para `1d`, el intervalo esperado es 1 día.
 - Para `4h`, el intervalo esperado es 4 horas.
-- Si `gaps_found > 0`, la validación falla y el lote no debe pasar a curated ni a `ohlcv_curated`.
+- Si `gaps_found > 0` y no hay errores estructurales bloqueantes, el lote queda como warning auditable y puede pasar a curated y `ohlcv_curated`.
 - Freshness implementado como `now_utc - max(timestamp)`.
 - `data_quality_checks.metadata` guarda detalle por símbolo/timeframe.
 
