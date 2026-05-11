@@ -103,7 +103,7 @@ def load_config() -> DataPlatformSettings:
 @task
 def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object]:
     logger = get_run_logger()
-    exchange = ccxt.binance({"enableRateLimit": True})
+    exchange = ccxt.binance({"enableRateLimit": True, "timeout": 30000})
     ingested_at = datetime.now(UTC)
     frames: list[pd.DataFrame] = []
     fetch_metadata: dict[str, object] = {
@@ -797,27 +797,49 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         error_message=None,
         fetch_metadata=fetch_metadata,
     )
-    rows_inserted = upsert_postgres(settings, curated_df)
-    final_status = (
-        "success_with_warnings"
-        if validation_result["warning_errors"]
-        else "success"
-    )
-    write_ingestion_run(
-        settings=settings,
-        run_id=run_id,
-        started_at=started_at,
-        status=final_status,
-        rows_fetched=len(df),
-        rows_validated=len(curated_df),
-        rows_inserted=rows_inserted["rows_inserted_or_updated"],
-        raw_paths=raw_paths,
-        curated_paths=curated_paths,
-        error_message=None,
-        fetch_metadata=fetch_metadata,
-        upsert_result=rows_inserted,
-    )
-    write_quality_report(settings, run_id, validation_result, fetch_metadata)
+    rows_inserted = {
+        "rows_inserted_or_updated": 0,
+        "rows_new": 0,
+        "rows_existing": 0,
+    }
+    try:
+        rows_inserted = upsert_postgres(settings, curated_df)
+        final_status = (
+            "success_with_warnings"
+            if validation_result["warning_errors"]
+            else "success"
+        )
+        write_ingestion_run(
+            settings=settings,
+            run_id=run_id,
+            started_at=started_at,
+            status=final_status,
+            rows_fetched=len(df),
+            rows_validated=len(curated_df),
+            rows_inserted=rows_inserted["rows_inserted_or_updated"],
+            raw_paths=raw_paths,
+            curated_paths=curated_paths,
+            error_message=None,
+            fetch_metadata=fetch_metadata,
+            upsert_result=rows_inserted,
+        )
+        write_quality_report(settings, run_id, validation_result, fetch_metadata)
+    except Exception as exc:
+        write_ingestion_run(
+            settings=settings,
+            run_id=run_id,
+            started_at=started_at,
+            status="failed",
+            rows_fetched=len(df),
+            rows_validated=len(curated_df),
+            rows_inserted=rows_inserted["rows_inserted_or_updated"],
+            raw_paths=raw_paths,
+            curated_paths=curated_paths,
+            error_message=str(exc),
+            fetch_metadata=fetch_metadata,
+            upsert_result=rows_inserted,
+        )
+        raise
 
     return {
         "run_id": run_id,

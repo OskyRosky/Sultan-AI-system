@@ -38,7 +38,7 @@ Logs de pipeline:
 
 PostgreSQL funcionará como capa relacional para tracking, auditoría y consulta estructurada.
 
-Tablas iniciales propuestas:
+Tablas implementadas:
 
 - `asset_universe`
 - `data_sources`

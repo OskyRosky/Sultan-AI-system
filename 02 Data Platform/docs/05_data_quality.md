@@ -43,6 +43,16 @@ El mayor lag observado se registra en `data_quality_checks.freshness_lag_seconds
 
 El detalle por `exchange + symbol + timeframe` se guarda en `data_quality_checks.metadata`.
 
+## Vista operativa de health
+
+`v_ohlcv_operational_health` separa el ultimo quality check global del detalle disponible por `symbol/timeframe`.
+
+- Las columnas `latest_global_*` describen el ultimo registro global en `data_quality_checks`.
+- Las columnas `latest_data_quality_score`, `latest_gaps_found`, `latest_freshness_lag_seconds` y `latest_check_status` solo se llenan cuando el ultimo `metadata` contiene detalle para ese `symbol/timeframe`.
+- `latest_symbol_timeframe_summary` indica si el dato viene de `symbol_timeframe` o si no estuvo presente en el ultimo metadata.
+
+Esto evita presentar metricas globales como si fueran metricas especificas por par/timeframe.
+
 ## Resultado de validación
 
 Cada corrida debe producir:

@@ -112,6 +112,13 @@ SULTAN_OHLCV_MODE=incremental
 
 Si la computadora estuvo apagada o Prefect no estuvo activo durante varios dias, el siguiente run incremental hace catch-up desde el ultimo timestamp persistido. No borra datos y no duplica barras porque `ohlcv_curated` usa upsert idempotente con `ON CONFLICT`.
 
+## Hardening del flow
+
+- La conexion CCXT a Binance usa `enableRateLimit = True` y `timeout = 30000` ms.
+- Si el flow ya registro `ingestion_runs.status = running` y ocurre una excepcion inesperada antes del cierre normal, el mismo `run_id` se actualiza a `status = failed`, `finished_at` y `error_message`.
+- La excepcion se relanza para que Prefect marque el flow run como failed.
+- El deployment diario no cambio: sigue usando `ingest_ohlcv_flow/sultan-ohlcv-daily`, work pool `sultan-local-pool`, cron `0 10 * * *` y timezone `America/Costa_Rica`.
+
 ## Ver flow y deployment
 
 Listar flows:

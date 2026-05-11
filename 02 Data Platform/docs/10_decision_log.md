@@ -97,3 +97,15 @@ Resultado: el deployment `ingest_ohlcv_flow/sultan-ohlcv-daily` fue actualizado 
 Validación: una corrida incremental descargó `4` velas nuevas desde `MAX(timestamp) + intervalo`, validó `4` filas e insertó/actualizó `4` filas. Una segunda corrida inmediata terminó con `status = success` y `0` filas, confirmando que el flow no falla cuando la data ya está actualizada.
 
 Razón: el job diario no debe repetir el histórico completo. Debe completar desde el último timestamp disponible en PostgreSQL y permitir catch-up si la computadora o Prefect estuvieron apagados durante varios días.
+
+## 2026-05-11 - Hardening minimo antes de cerrar Data Platform v1
+
+Decision: aplicar fixes puntuales sin redisenar arquitectura ni cambiar el deployment diario.
+
+Resultado: `v_ohlcv_operational_health` fue corregida para no propagar el ultimo `data_quality_checks` global a todos los `symbol/timeframe`. La vista conserva las columnas operativas principales y agrega contexto `latest_global_*` y `latest_symbol_timeframe_summary`.
+
+Resultado: `ingest_ohlcv_flow` protege `ingestion_runs` contra runs huerfanos en `status = running`; si ocurre una excepcion despues del registro inicial, el mismo `run_id` se actualiza a `status = failed` con `finished_at` y `error_message`, y la excepcion se relanza para que Prefect marque el flow como failed.
+
+Resultado: la instancia `ccxt.binance` mantiene `enableRateLimit = True` y ahora usa `timeout = 30000` ms.
+
+Confirmacion: no se cambio la arquitectura, no se agregaron fuentes, no se agrego logica de trading y el deployment diario sigue en `0 10 * * *` con timezone `America/Costa_Rica`.

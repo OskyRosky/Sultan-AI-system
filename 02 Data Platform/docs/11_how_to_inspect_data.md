@@ -106,6 +106,8 @@ ORDER BY symbol, timeframe;
 
 Esta vista combina conteos y timestamps de OHLCV con el ultimo estado global de calidad registrado para el dataset `ohlcv`.
 
+La vista no copia metricas globales sobre todos los pares/timeframes. Las columnas `latest_global_*` muestran el ultimo quality check global. Las columnas `latest_data_quality_score`, `latest_gaps_found`, `latest_freshness_lag_seconds` y `latest_check_status` se llenan solo cuando `data_quality_checks.metadata` contiene detalle para ese `symbol/timeframe`; si no existe detalle en el ultimo run, quedan en `NULL` y `latest_symbol_timeframe_summary` lo indica.
+
 ## Uso en DBeaver
 
 1. Abrir la conexion PostgreSQL `sultan_ai`.

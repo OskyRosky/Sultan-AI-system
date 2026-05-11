@@ -83,4 +83,4 @@ Resultado histórico completo:
 - `ETHUSDT 1d`: `3189` filas, `2017-08-17 00:00:00 UTC` a `2026-05-10 00:00:00 UTC`.
 - `ETHUSDT 4h`: `19117` filas, `2017-08-17 04:00:00 UTC` a `2026-05-10 20:00:00 UTC`.
 
-No se define deployment programado todavía.
+El deployment diario `ingest_ohlcv_flow/sultan-ohlcv-daily` queda definido en Prefect con schedule `0 10 * * *` y timezone `America/Costa_Rica`.

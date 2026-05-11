@@ -32,6 +32,10 @@
 - Implementar modo incremental/catch-up para operacion diaria.
 - Validar run incremental con nuevas velas.
 - Validar run incremental sin nuevas velas disponibles.
+- Corregir `v_ohlcv_operational_health`.
+- Proteger `ingestion_runs` contra runs huerfanos en `running`.
+- Configurar timeout de 30 segundos en CCXT.
+- Cerrar documentalmente `02 Data Platform v1`.
 
 ## Alta prioridad pendiente
 
