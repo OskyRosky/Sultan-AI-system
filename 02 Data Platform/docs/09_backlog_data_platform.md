@@ -25,6 +25,13 @@
 - Carga completa disponible en Binance para BTCUSDT/ETHUSDT 1d/4h.
 - Validación de rangos completos en PostgreSQL.
 - Política de gaps históricos como warning auditable.
+- Crear deployment local en Prefect.
+- Ver flow/job en Prefect UI.
+- Crear schedule diario.
+- Ajustar schedule diario a 10:00 a.m. Costa Rica.
+- Implementar modo incremental/catch-up para operacion diaria.
+- Validar run incremental con nuevas velas.
+- Validar run incremental sin nuevas velas disponibles.
 
 ## Alta prioridad pendiente
 
@@ -33,7 +40,6 @@
 
 ## Media prioridad
 
-- Crear deployment programado en Prefect.
 - Agregar Telegram alerts.
 - Agregar más pares USDT.
 - Crear dashboard HTML de monitoreo.

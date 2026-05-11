@@ -79,3 +79,21 @@ Rangos cargados: `BTCUSDT 1d` con `3189` filas, `BTCUSDT 4h` con `19117` filas, 
 Data quality: `gaps_found = 16`, con `8` gaps en `BTCUSDT 4h` y `8` gaps en `ETHUSDT 4h`; `rows_failed = 0`; `data_quality_score = 0.95000`. No se imputaron datos ni se rellenaron velas.
 
 Razón: en históricos reales de exchange pueden existir gaps por mantenimiento, listing o disponibilidad de datos. La plataforma debe auditarlos sin bloquear datos OHLCV estructuralmente válidos.
+
+## 2026-05-10 - Deployment local Prefect diario
+
+Decisión: crear un deployment local diario para `ingest_ohlcv_flow` usando Prefect Server local y un work pool tipo `process`.
+
+Resultado: se creó el deployment `ingest_ohlcv_flow/sultan-ohlcv-daily` con id `64345509-70a4-420b-973e-10754115e1e2`, work pool `sultan-local-pool`, cron `0 1 * * *` y timezone `America/Costa_Rica`. El deployment quedó visible en Prefect UI y el work pool fue validado con un worker local.
+
+Razón: dejar la ingesta OHLCV preparada como job operativo diario sin introducir Airflow, infraestructura adicional ni cambios en la lógica de ingesta.
+
+## 2026-05-10 - Operacion diaria incremental y schedule 10:00 a.m.
+
+Decisión: mantener `full_history` para bootstrap inicial y usar `incremental` como modo operativo diario del flow OHLCV.
+
+Resultado: el deployment `ingest_ohlcv_flow/sultan-ohlcv-daily` fue actualizado de `0 1 * * *` a `0 10 * * *` con timezone `America/Costa_Rica`, manteniendo el mismo deployment id `64345509-70a4-420b-973e-10754115e1e2` y el work pool `sultan-local-pool`.
+
+Validación: una corrida incremental descargó `4` velas nuevas desde `MAX(timestamp) + intervalo`, validó `4` filas e insertó/actualizó `4` filas. Una segunda corrida inmediata terminó con `status = success` y `0` filas, confirmando que el flow no falla cuando la data ya está actualizada.
+
+Razón: el job diario no debe repetir el histórico completo. Debe completar desde el último timestamp disponible en PostgreSQL y permitir catch-up si la computadora o Prefect estuvieron apagados durante varios días.

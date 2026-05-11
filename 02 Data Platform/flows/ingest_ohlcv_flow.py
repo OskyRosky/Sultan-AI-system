@@ -58,6 +58,33 @@ def _timestamp_ms(value: str) -> int:
     return int(pd.Timestamp(value).timestamp() * 1000)
 
 
+def _get_latest_ohlcv_timestamp(
+    settings: DataPlatformSettings,
+    symbol: str,
+    timeframe: str,
+) -> pd.Timestamp | None:
+    with psycopg2.connect(build_postgres_dsn(settings.postgres)) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT MAX(timestamp)
+                FROM ohlcv_curated
+                WHERE exchange = %s
+                  AND symbol = %s
+                  AND timeframe = %s;
+                """,
+                (settings.default_exchange, symbol, timeframe),
+            )
+            latest_timestamp = cursor.fetchone()[0]
+
+    if latest_timestamp is None:
+        return None
+    timestamp = pd.Timestamp(latest_timestamp)
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize(UTC)
+    return timestamp.tz_convert(UTC)
+
+
 @task
 def load_config() -> DataPlatformSettings:
     settings = load_settings()
@@ -111,6 +138,15 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                     limit=settings.ohlcv_fetch_limit,
                 )
                 pages_downloaded = 1 if rows else 0
+                fetch_metadata["datasets"][dataset_key] = {
+                    "mode": settings.ohlcv_mode,
+                    "last_existing_timestamp": None,
+                    "fetch_since_timestamp": None,
+                    "pages_downloaded": pages_downloaded,
+                    "rows_fetched": 0,
+                    "min_timestamp": None,
+                    "max_timestamp": None,
+                }
             elif settings.ohlcv_mode == "full_history":
                 since_ms = _timestamp_ms(
                     settings.symbol_start_dates.get(safe_symbol, "2017-01-01T00:00:00Z")
@@ -169,6 +205,108 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
 
                     if len(page) < settings.ohlcv_page_limit and since_ms >= now_ms:
                         break
+                fetch_metadata["datasets"][dataset_key] = {
+                    "mode": settings.ohlcv_mode,
+                    "last_existing_timestamp": None,
+                    "fetch_since_timestamp": pd.to_datetime(
+                        _timestamp_ms(
+                            settings.symbol_start_dates.get(
+                                safe_symbol, "2017-01-01T00:00:00Z"
+                            )
+                        ),
+                        unit="ms",
+                        utc=True,
+                    ).isoformat(),
+                    "pages_downloaded": pages_downloaded,
+                    "rows_fetched": 0,
+                    "min_timestamp": None,
+                    "max_timestamp": None,
+                }
+            elif settings.ohlcv_mode == "incremental":
+                latest_timestamp = _get_latest_ohlcv_timestamp(
+                    settings,
+                    safe_symbol,
+                    timeframe,
+                )
+                if latest_timestamp is None:
+                    fetch_since_timestamp = pd.Timestamp(
+                        settings.symbol_start_dates.get(
+                            safe_symbol, "2017-01-01T00:00:00Z"
+                        )
+                    )
+                else:
+                    fetch_since_timestamp = latest_timestamp + expected_interval
+
+                since_ms = int(fetch_since_timestamp.timestamp() * 1000)
+                now_ms = exchange.milliseconds()
+                last_seen_ts = None
+                logger.info(
+                    "Fetching incremental OHLCV from Binance. symbol=%s timeframe=%s latest_existing=%s fetch_since=%s page_limit=%s",
+                    ccxt_pair,
+                    timeframe,
+                    latest_timestamp.isoformat() if latest_timestamp is not None else None,
+                    fetch_since_timestamp.isoformat(),
+                    settings.ohlcv_page_limit,
+                )
+
+                while since_ms <= now_ms:
+                    page = exchange.fetch_ohlcv(
+                        ccxt_pair,
+                        timeframe=timeframe,
+                        since=since_ms,
+                        limit=settings.ohlcv_page_limit,
+                    )
+                    if not page:
+                        logger.info(
+                            "No new OHLCV rows. symbol=%s timeframe=%s latest_existing=%s fetch_since=%s",
+                            ccxt_pair,
+                            timeframe,
+                            latest_timestamp.isoformat()
+                            if latest_timestamp is not None
+                            else None,
+                            fetch_since_timestamp.isoformat(),
+                        )
+                        break
+
+                    first_ts = int(page[0][0])
+                    last_ts = int(page[-1][0])
+                    if last_seen_ts is not None and last_ts <= last_seen_ts:
+                        logger.warning(
+                            "Stopping incremental pagination because timestamp did not advance. symbol=%s timeframe=%s last_ts=%s",
+                            ccxt_pair,
+                            timeframe,
+                            last_ts,
+                        )
+                        break
+
+                    rows.extend(page)
+                    pages_downloaded += 1
+                    logger.info(
+                        "Fetched incremental page=%s symbol=%s timeframe=%s rows=%s first=%s last=%s",
+                        pages_downloaded,
+                        ccxt_pair,
+                        timeframe,
+                        len(page),
+                        pd.to_datetime(first_ts, unit="ms", utc=True).isoformat(),
+                        pd.to_datetime(last_ts, unit="ms", utc=True).isoformat(),
+                    )
+                    last_seen_ts = last_ts
+                    since_ms = last_ts + interval_ms
+
+                    if len(page) < settings.ohlcv_page_limit and since_ms >= now_ms:
+                        break
+
+                fetch_metadata["datasets"][dataset_key] = {
+                    "mode": settings.ohlcv_mode,
+                    "last_existing_timestamp": latest_timestamp.isoformat()
+                    if latest_timestamp is not None
+                    else None,
+                    "fetch_since_timestamp": fetch_since_timestamp.isoformat(),
+                    "pages_downloaded": pages_downloaded,
+                    "rows_fetched": 0,
+                    "min_timestamp": None,
+                    "max_timestamp": None,
+                }
             else:
                 raise ValueError(f"Unsupported SULTAN_OHLCV_MODE={settings.ohlcv_mode}")
 
@@ -177,12 +315,6 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
             if frame.empty:
-                fetch_metadata["datasets"][dataset_key] = {
-                    "pages_downloaded": pages_downloaded,
-                    "rows_fetched": 0,
-                    "min_timestamp": None,
-                    "max_timestamp": None,
-                }
                 continue
             frame["timestamp"] = pd.to_datetime(frame["timestamp"], unit="ms", utc=True)
             frame["exchange"] = settings.default_exchange
@@ -197,12 +329,14 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                 subset=["exchange", "symbol", "timeframe", "timestamp"],
                 keep="last",
             )
-            fetch_metadata["datasets"][dataset_key] = {
-                "pages_downloaded": pages_downloaded,
-                "rows_fetched": int(len(frame)),
-                "min_timestamp": _isoformat_timestamp(frame["timestamp"].min()),
-                "max_timestamp": _isoformat_timestamp(frame["timestamp"].max()),
-            }
+            fetch_metadata["datasets"][dataset_key].update(
+                {
+                    "pages_downloaded": pages_downloaded,
+                    "rows_fetched": int(len(frame)),
+                    "min_timestamp": _isoformat_timestamp(frame["timestamp"].min()),
+                    "max_timestamp": _isoformat_timestamp(frame["timestamp"].max()),
+                }
+            )
             frames.append(frame[REQUIRED_COLUMNS])
 
     if not frames:
@@ -220,7 +354,7 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
 
 
 @task
-def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
+def validate_ohlcv(df: pd.DataFrame, settings: DataPlatformSettings) -> dict[str, object]:
     logger = get_run_logger()
     blocking_errors: list[str] = []
     warning_errors: list[str] = []
@@ -234,7 +368,7 @@ def validate_ohlcv(df: pd.DataFrame) -> dict[str, object]:
     if missing_columns:
         blocking_errors.append(f"missing_columns={missing_columns}")
 
-    if df.empty:
+    if df.empty and settings.ohlcv_mode != "incremental":
         blocking_errors.append("empty_dataset")
 
     if not missing_columns and not df.empty:
@@ -628,7 +762,7 @@ def ingest_ohlcv_flow() -> dict[str, object]:
     fetch_result = fetch_ohlcv(settings, run_id)
     df = fetch_result["dataframe"]
     fetch_metadata = fetch_result["metadata"]
-    validation_result = validate_ohlcv(df)
+    validation_result = validate_ohlcv(df, settings)
     raw_paths = save_raw_parquet(settings, df, run_id)
 
     if not validation_result["is_valid"]:
@@ -701,6 +835,6 @@ def ingest_ohlcv_flow() -> dict[str, object]:
 if __name__ == "__main__":
     print("This flow will fetch public Binance OHLCV for BTCUSDT and ETHUSDT.")
     print("Configured timeframes: 1d and 4h unless overridden in .env.")
-    print("Default mode: full_history with paginated OHLCV unless overridden in .env.")
+    print("Default mode: incremental catch-up unless overridden in .env.")
     print("It will write Parquet files under data/raw and data/curated, then upsert PostgreSQL.")
     ingest_ohlcv_flow()

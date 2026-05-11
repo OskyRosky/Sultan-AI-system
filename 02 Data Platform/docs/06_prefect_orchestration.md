@@ -50,7 +50,29 @@ Runs de idempotencia:
 - En ambos runs, el upsert reportó `rows_new = 0` y `rows_existing = 2000`.
 - El total final de `ohlcv_curated` permaneció en `2000` filas.
 
-No se crearán deployments programados todavía.
+Deployment local creado:
+
+- Deployment: `ingest_ohlcv_flow/sultan-ohlcv-daily`.
+- Work pool: `sultan-local-pool`.
+- Tipo de work pool: `process`.
+- Schedule anterior: `0 1 * * *`.
+- Schedule operativo actual: `0 10 * * *`.
+- Timezone: `America/Costa_Rica`.
+- Prefect UI: `http://127.0.0.1:4200`.
+- Estado validado: deployment y work pool visibles en Prefect; worker local probado correctamente.
+
+## Modo operativo diario
+
+El bootstrap inicial del historico completo se hizo con `SULTAN_OHLCV_MODE=full_history`.
+Para operacion diaria el modo recomendado/default es `SULTAN_OHLCV_MODE=incremental`.
+
+En modo incremental, el flow consulta `MAX(timestamp)` en `ohlcv_curated` por `exchange + symbol + timeframe` y descarga desde `MAX(timestamp) + intervalo` hasta el presente. Esto permite catch-up: si la computadora estuvo apagada uno o varios dias, el siguiente run descarga las velas faltantes sin duplicar barras.
+
+Validacion operativa:
+
+- Run incremental con nuevas velas: `rows_fetched = 4`, `rows_validated = 4`, `rows_inserted = 4`, `status = success`.
+- Run incremental inmediato sin nuevas velas: `rows_fetched = 0`, `rows_validated = 0`, `rows_inserted = 0`, `status = success`.
+- El deployment `ingest_ohlcv_flow/sultan-ohlcv-daily` quedo actualizado a `0 10 * * *` con timezone `America/Costa_Rica`.
 
 ## Tracking mínimo
 
