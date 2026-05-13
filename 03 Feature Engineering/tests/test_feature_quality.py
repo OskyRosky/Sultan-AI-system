@@ -14,10 +14,12 @@ from feature_quality import (
     validate_return_features,
     validate_trend_features,
     validate_volatility_features,
+    validate_momentum_features,
 )
 from returns import calculate_return_features
 from trend import calculate_trend_features
 from volatility import calculate_volatility_features
+from momentum import calculate_momentum_features
 
 
 def _feature_dataframe() -> pd.DataFrame:
@@ -286,3 +288,105 @@ def test_volatility_20_not_equal_rolling_std_20_fails_quality() -> None:
 
     assert result["passed"] is False
     assert "volatility_20_not_equal_rolling_std_20" in result["errors"]
+
+
+def _momentum_feature_dataframe() -> pd.DataFrame:
+    rows = []
+    for index in range(80):
+        close = 100.0 + index + (0.5 if index % 3 == 0 else -0.25)
+        rows.append(
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": pd.Timestamp("2026-01-01T00:00:00Z")
+                + pd.Timedelta(days=index),
+                "open": close - 0.5,
+                "high": close + 1.0,
+                "low": close - 1.0,
+                "close": close,
+                "volume": 10.0 + index,
+            }
+        )
+    return calculate_momentum_features(
+        calculate_volatility_features(
+            calculate_trend_features(calculate_return_features(pd.DataFrame(rows)))
+        )
+    )
+
+
+def test_valid_momentum_features_pass_quality() -> None:
+    result = validate_momentum_features(_momentum_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_momentum_column_fails_quality_when_required() -> None:
+    df = _momentum_feature_dataframe().drop(columns=["rsi_14"])
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "missing_momentum_columns=['rsi_14']" in result["errors"]
+
+
+def test_infinite_momentum_value_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df.loc[30, "macd"] = np.inf
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "macd_contains_infinite" in result["errors"]
+
+
+def test_rsi_below_0_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df.loc[30, "rsi_14"] = -1.0
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "rsi_14_out_of_range" in result["errors"]
+
+
+def test_rsi_above_100_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df.loc[30, "rsi_14"] = 101.0
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "rsi_14_out_of_range" in result["errors"]
+
+
+def test_forbidden_rsi_signal_column_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df["rsi_signal"] = 0
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['rsi_signal']" in result["errors"]
+
+
+def test_forbidden_macd_cross_column_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df["macd_cross"] = False
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['macd_cross']" in result["errors"]
+
+
+def test_forbidden_macd_signal_cross_column_fails_quality() -> None:
+    df = _momentum_feature_dataframe()
+    df["macd_signal_cross"] = False
+
+    result = validate_momentum_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['macd_signal_cross']" in result["errors"]

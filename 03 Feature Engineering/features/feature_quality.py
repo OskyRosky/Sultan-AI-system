@@ -21,6 +21,7 @@ TREND_FEATURE_COLUMNS = [
 TREND_NUMERIC_COLUMNS = ["sma_20", "sma_50", "ema_20", "ema_50", "sma20_slope"]
 TREND_STATE_COLUMNS = ["price_above_sma20", "ema20_above_ema50"]
 VOLATILITY_FEATURE_COLUMNS = ["rolling_std_20", "volatility_20", "atr_14"]
+MOMENTUM_FEATURE_COLUMNS = ["rsi_14", "macd", "macd_signal"]
 FEATURE_KEY_COLUMNS = [
     "exchange",
     "symbol",
@@ -43,6 +44,10 @@ FORBIDDEN_COLUMNS = [
     "crossover",
     "golden_cross",
     "death_cross",
+    "rsi_signal",
+    "macd_cross",
+    "macd_signal_cross",
+    "macd_crossover",
 ]
 
 
@@ -218,6 +223,63 @@ def validate_volatility_features(df: pd.DataFrame) -> dict[str, Any]:
     return _result(not errors, len(df), errors, warnings)
 
 
+def validate_momentum_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate momentum features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_momentum_columns = [
+        column for column in MOMENTUM_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_momentum_columns:
+        errors.append(f"missing_momentum_columns={missing_momentum_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in MOMENTUM_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+
+    rsi = pd.to_numeric(working["rsi_14"], errors="coerce")
+    if ((rsi.dropna() < 0) | (rsi.dropna() > 100)).any():
+        errors.append("rsi_14_out_of_range")
+
+    _validate_momentum_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
 def _validate_return_nans(
     df: pd.DataFrame, errors: list[str], warnings: list[str]
 ) -> None:
@@ -331,6 +393,30 @@ def _validate_volatility_nans(
     warmup_rows = int(group_index.lt(20).sum())
     if warmup_rows:
         warnings.append(f"volatility_warmup_rows={warmup_rows}")
+
+
+def _validate_momentum_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
+    group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+
+    unexpected_rsi_nan = sorted_df["rsi_14"].isna() & group_index.ge(14)
+    unexpected_macd_nan = sorted_df["macd"].isna()
+    unexpected_macd_signal_nan = sorted_df["macd_signal"].isna()
+
+    if unexpected_rsi_nan.any():
+        errors.append(f"rsi_14_unexpected_nan={int(unexpected_rsi_nan.sum())}")
+    if unexpected_macd_nan.any():
+        errors.append(f"macd_unexpected_nan={int(unexpected_macd_nan.sum())}")
+    if unexpected_macd_signal_nan.any():
+        errors.append(
+            f"macd_signal_unexpected_nan={int(unexpected_macd_signal_nan.sum())}"
+        )
+
+    warmup_rows = int(group_index.lt(14).sum())
+    if warmup_rows:
+        warnings.append(f"momentum_warmup_rows={warmup_rows}")
 
 
 def _result(

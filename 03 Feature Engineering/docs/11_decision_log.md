@@ -47,6 +47,16 @@
 - Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
 - Se mantiene la prohibición de señales, estrategias y backtesting.
 
+## Bloque 6 - Momentum Feature Calculation
+
+- Se implementan features de momentum dentro de `05 Feature Calculation Engine`, sin crear subcomponentes nuevos.
+- Se implementan `rsi_14`, `macd` y `macd_signal`.
+- RSI usa Wilder-style smoothing con `ewm(alpha=1/14, adjust=False)` y warm-up inicial controlado.
+- MACD usa EMA 12 y EMA 26 con `adjust=False`; `macd_signal` usa EMA 9 de MACD.
+- RSI y MACD se documentan como indicadores técnicos, no señales.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

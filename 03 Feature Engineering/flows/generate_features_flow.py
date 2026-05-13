@@ -31,12 +31,14 @@ from feature_quality import (  # noqa: E402
     validate_return_features,
     validate_trend_features,
     validate_volatility_features,
+    validate_momentum_features,
 )
 from ohlcv_loader import load_ohlcv_batch_read_only  # noqa: E402
 from ohlcv_validation import validate_ohlcv_dataframe  # noqa: E402
 from returns import calculate_return_features  # noqa: E402
 from trend import calculate_trend_features  # noqa: E402
 from volatility import calculate_volatility_features  # noqa: E402
+from momentum import calculate_momentum_features  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -142,6 +144,16 @@ def validate_volatility_features_preview(features_df: pd.DataFrame) -> dict[str,
 
 
 @task
+def calculate_momentum_features_preview(features_df: pd.DataFrame) -> pd.DataFrame:
+    return calculate_momentum_features(features_df)
+
+
+@task
+def validate_momentum_features_preview(features_df: pd.DataFrame) -> dict[str, Any]:
+    return validate_momentum_features(features_df)
+
+
+@task
 def summarize_feature_preview(
     df: pd.DataFrame,
     features_df: pd.DataFrame,
@@ -149,6 +161,7 @@ def summarize_feature_preview(
     returns_quality_result: dict[str, Any],
     trend_quality_result: dict[str, Any],
     volatility_quality_result: dict[str, Any],
+    momentum_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
@@ -162,6 +175,7 @@ def summarize_feature_preview(
         "returns_quality_passed": returns_quality_result["passed"],
         "trend_quality_passed": trend_quality_result["passed"],
         "volatility_quality_passed": volatility_quality_result["passed"],
+        "momentum_quality_passed": momentum_quality_result["passed"],
         "freshness_passed": all(item["passed"] for item in freshness_results),
         "return_features_calculated": [
             "simple_return",
@@ -182,12 +196,18 @@ def summarize_feature_preview(
             "volatility_20",
             "atr_14",
         ],
+        "momentum_features_calculated": [
+            "rsi_14",
+            "macd",
+            "macd_signal",
+        ],
         "ready_for_future_persistence": validation_result["passed"]
         and returns_quality_result["passed"]
         and trend_quality_result["passed"]
         and volatility_quality_result["passed"]
+        and momentum_quality_result["passed"]
         and all(item["passed"] for item in freshness_results),
-        "note": "Returns, trend, and volatility preview only. No Parquet or PostgreSQL persistence executed.",
+        "note": "Returns, trend, volatility, and momentum preview only. No Parquet or PostgreSQL persistence executed.",
     }
 
 
@@ -196,7 +216,7 @@ def stop_before_persistence(summary: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": "stopped_before_persistence",
         "features_calculated": True,
-        "feature_families": ["returns", "trend", "volatility"],
+        "feature_families": ["returns", "trend", "volatility", "momentum"],
         "parquet_written": False,
         "postgres_inserted": False,
         "summary": summary,
@@ -220,13 +240,16 @@ def generate_features_flow(
     volatility_quality_result = validate_volatility_features_preview(
         volatility_features_df
     )
+    momentum_features_df = calculate_momentum_features_preview(volatility_features_df)
+    momentum_quality_result = validate_momentum_features_preview(momentum_features_df)
     summary = summarize_feature_preview(
         ohlcv_df,
-        volatility_features_df,
+        momentum_features_df,
         validation_result,
         returns_quality_result,
         trend_quality_result,
         volatility_quality_result,
+        momentum_quality_result,
         freshness_results,
     )
     stop_result = stop_before_persistence(summary)
@@ -238,6 +261,7 @@ def generate_features_flow(
         "returns_quality": returns_quality_result,
         "trend_quality": trend_quality_result,
         "volatility_quality": volatility_quality_result,
+        "momentum_quality": momentum_quality_result,
         "summary": summary,
         "stop": stop_result,
     }
@@ -248,7 +272,7 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
     base_timestamp = pd.Timestamp.now(tz="UTC").floor("h")
     for symbol in config["symbols"]:
         for timeframe in config["timeframes"]:
-            for offset in range(60):
+            for offset in range(80):
                 open_price = 100.0 + offset
                 close = open_price + (0.5 if offset % 2 == 0 else -0.25)
                 rows.append(

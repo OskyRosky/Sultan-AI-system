@@ -91,6 +91,14 @@ Features:
 
 Miden aceleración, fuerza relativa y diferencia entre medias exponenciales. Sirven para describir presión direccional y cambios de ritmo.
 
+Definiciones v1:
+
+- `rsi_14`: Relative Strength Index con suavizado estilo Wilder usando `ewm(alpha=1/14, adjust=False)`.
+- `macd`: `ema_12(close) - ema_26(close)`.
+- `macd_signal`: EMA 9 de `macd`.
+
+RSI y MACD son indicadores técnicos descriptivos en esta etapa. No se interpretan como señales, no se crean columnas `rsi_signal`, `macd_cross`, `macd_signal_cross` ni `macd_crossover`.
+
 Limitaciones: pueden generar lecturas extremas durante tendencias prolongadas y requieren interpretación posterior en research. No representan orden, entrada ni salida.
 
 ## Relative Strength / Breakout Context
