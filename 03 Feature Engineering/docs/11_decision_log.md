@@ -38,6 +38,15 @@
 - `ema20_above_ema50` se trata como estado técnico neutral, no como señal.
 - No se implementan eventos ni columnas `cross`, `crossover`, `golden_cross` o `death_cross`.
 
+## Bloque 5 - Volatility Feature Calculation
+
+- Se implementan features de volatilidad dentro de `05 Feature Calculation Engine`, sin crear subcomponentes nuevos.
+- Se implementan `rolling_std_20`, `volatility_20` y `atr_14`.
+- `atr_14` usa previous close por grupo para calcular true range sin lookahead.
+- `volatility_20 = rolling_std_20` en v1 para evitar supuestos de anualización por timeframe.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

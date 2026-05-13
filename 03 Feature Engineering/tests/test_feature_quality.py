@@ -10,9 +10,14 @@ FEATURES_DIR = Path(__file__).resolve().parents[1] / "features"
 if str(FEATURES_DIR) not in sys.path:
     sys.path.insert(0, str(FEATURES_DIR))
 
-from feature_quality import validate_return_features, validate_trend_features
+from feature_quality import (
+    validate_return_features,
+    validate_trend_features,
+    validate_volatility_features,
+)
 from returns import calculate_return_features
 from trend import calculate_trend_features
+from volatility import calculate_volatility_features
 
 
 def _feature_dataframe() -> pd.DataFrame:
@@ -191,3 +196,93 @@ def test_forbidden_crossover_column_fails_quality() -> None:
 
     assert result["passed"] is False
     assert "forbidden_columns=['crossover']" in result["errors"]
+
+
+def _volatility_feature_dataframe() -> pd.DataFrame:
+    rows = []
+    for index in range(60):
+        close = 100.0 + index + (0.5 if index % 2 == 0 else -0.25)
+        rows.append(
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": pd.Timestamp("2026-01-01T00:00:00Z")
+                + pd.Timedelta(days=index),
+                "open": close - 0.5,
+                "high": close + 2.0,
+                "low": close - 1.0,
+                "close": close,
+                "volume": 10.0 + index,
+            }
+        )
+    return calculate_volatility_features(
+        calculate_trend_features(calculate_return_features(pd.DataFrame(rows)))
+    )
+
+
+def test_valid_volatility_features_pass_quality() -> None:
+    result = validate_volatility_features(_volatility_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_volatility_column_fails_quality_when_required() -> None:
+    df = _volatility_feature_dataframe().drop(columns=["atr_14"])
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "missing_volatility_columns=['atr_14']" in result["errors"]
+
+
+def test_infinite_volatility_value_fails_quality() -> None:
+    df = _volatility_feature_dataframe()
+    df.loc[30, "rolling_std_20"] = np.inf
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "rolling_std_20_contains_infinite" in result["errors"]
+
+
+def test_negative_rolling_std_fails_quality() -> None:
+    df = _volatility_feature_dataframe()
+    df.loc[30, "rolling_std_20"] = -0.01
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "rolling_std_20_contains_negative" in result["errors"]
+
+
+def test_negative_volatility_20_fails_quality() -> None:
+    df = _volatility_feature_dataframe()
+    df.loc[30, "volatility_20"] = -0.01
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "volatility_20_contains_negative" in result["errors"]
+
+
+def test_negative_atr_14_fails_quality() -> None:
+    df = _volatility_feature_dataframe()
+    df.loc[30, "atr_14"] = -0.01
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "atr_14_contains_negative" in result["errors"]
+
+
+def test_volatility_20_not_equal_rolling_std_20_fails_quality() -> None:
+    df = _volatility_feature_dataframe()
+    df.loc[30, "volatility_20"] = df.loc[30, "rolling_std_20"] + 0.01
+
+    result = validate_volatility_features(df)
+
+    assert result["passed"] is False
+    assert "volatility_20_not_equal_rolling_std_20" in result["errors"]

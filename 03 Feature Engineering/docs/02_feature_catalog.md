@@ -37,6 +37,20 @@ Features:
 
 Miden dispersión, variabilidad y rango efectivo del precio. Sirven para contextualizar riesgo, amplitud de movimiento y cambios de régimen.
 
+Definiciones v1:
+
+- `rolling_std_20`: desviación estándar móvil de `simple_return` sobre 20 periodos.
+- `volatility_20`: igual a `rolling_std_20` en v1.
+- `atr_14`: media móvil simple de 14 periodos del true range.
+
+True range en T:
+
+```text
+max(high_t - low_t, abs(high_t - close_{t-1}), abs(low_t - close_{t-1}))
+```
+
+En v1 no se anualiza `volatility_20` para evitar supuestos no homogéneos entre timeframes.
+
 Limitaciones: dependen de ventanas históricas, tienen warm-up period y pueden reaccionar tarde ante cambios abruptos. No representan señal de trading.
 
 ## Trend

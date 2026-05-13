@@ -20,6 +20,7 @@ TREND_FEATURE_COLUMNS = [
 ]
 TREND_NUMERIC_COLUMNS = ["sma_20", "sma_50", "ema_20", "ema_50", "sma20_slope"]
 TREND_STATE_COLUMNS = ["price_above_sma20", "ema20_above_ema50"]
+VOLATILITY_FEATURE_COLUMNS = ["rolling_std_20", "volatility_20", "atr_14"]
 FEATURE_KEY_COLUMNS = [
     "exchange",
     "symbol",
@@ -156,6 +157,67 @@ def validate_trend_features(df: pd.DataFrame) -> dict[str, Any]:
     return _result(not errors, len(df), errors, warnings)
 
 
+def validate_volatility_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate volatility features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_volatility_columns = [
+        column for column in VOLATILITY_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_volatility_columns:
+        errors.append(f"missing_volatility_columns={missing_volatility_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in VOLATILITY_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+        if (values.dropna() < 0).any():
+            errors.append(f"{column}_contains_negative")
+
+    comparable = working[["rolling_std_20", "volatility_20"]].dropna()
+    if not comparable.empty and not np.isclose(
+        comparable["rolling_std_20"], comparable["volatility_20"]
+    ).all():
+        errors.append("volatility_20_not_equal_rolling_std_20")
+
+    _validate_volatility_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
 def _validate_return_nans(
     df: pd.DataFrame, errors: list[str], warnings: list[str]
 ) -> None:
@@ -241,6 +303,34 @@ def _invalid_state_count(series: pd.Series) -> int:
         return 0
     valid_values = {True, False, 0, 1, 0.0, 1.0}
     return int((~non_null.map(lambda value: value in valid_values)).sum())
+
+
+def _validate_volatility_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
+    group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+
+    unexpected_rolling_std_nan = sorted_df["rolling_std_20"].isna() & group_index.ge(20)
+    unexpected_volatility_nan = (
+        sorted_df["volatility_20"].isna() & sorted_df["rolling_std_20"].notna()
+    )
+    unexpected_atr_nan = sorted_df["atr_14"].isna() & group_index.ge(13)
+
+    if unexpected_rolling_std_nan.any():
+        errors.append(
+            f"rolling_std_20_unexpected_nan={int(unexpected_rolling_std_nan.sum())}"
+        )
+    if unexpected_volatility_nan.any():
+        errors.append(
+            f"volatility_20_unexpected_nan={int(unexpected_volatility_nan.sum())}"
+        )
+    if unexpected_atr_nan.any():
+        errors.append(f"atr_14_unexpected_nan={int(unexpected_atr_nan.sum())}")
+
+    warmup_rows = int(group_index.lt(20).sum())
+    if warmup_rows:
+        warnings.append(f"volatility_warmup_rows={warmup_rows}")
 
 
 def _result(
