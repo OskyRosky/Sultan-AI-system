@@ -1,14 +1,34 @@
-"""Mock Prefect flow for 03 Feature Engineering.
+"""Preview flow for 03 Feature Engineering read-only OHLCV readiness.
 
-This file defines the intended orchestration shape only. It does not connect to
-PostgreSQL, calculate real features, write Parquet, or upsert rows.
+Default execution is safe: read_from_db=False uses mock OHLCV rows. Setting
+read_from_db=True performs SELECT-only reads and freshness checks.
 """
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
+
+import pandas as pd
+
+FEATURE_ENGINEERING_DIR = Path(__file__).resolve().parents[1]
+FEATURES_DIR = FEATURE_ENGINEERING_DIR / "features"
+if str(FEATURES_DIR) not in sys.path:
+    sys.path.insert(0, str(FEATURES_DIR))
+
+from config import (  # noqa: E402
+    DEFAULT_SYMBOLS,
+    DEFAULT_TIMEFRAMES,
+    FEATURE_SET,
+    FEATURE_VERSION,
+    load_feature_settings,
+)
+from freshness_gate import evaluate_freshness_timestamp, check_ohlcv_freshness as db_freshness_gate  # noqa: E402
+from ohlcv_loader import load_ohlcv_batch_read_only  # noqa: E402
+from ohlcv_validation import validate_ohlcv_dataframe  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -27,191 +47,139 @@ except ImportError:
         return decorator(func) if func is not None else decorator
 
 
-FEATURE_SET = "technical_v1"
-FEATURE_VERSION = "1.0.0"
-
-
 @task
-def load_feature_config() -> dict[str, Any]:
+def load_feature_config(read_from_db: bool = False, limit: int = 1000) -> dict[str, Any]:
+    settings = load_feature_settings()
     return {
         "run_id": str(uuid4()),
         "flow_name": "generate_features_flow",
         "feature_set": FEATURE_SET,
         "feature_version": FEATURE_VERSION,
-        "symbols": ["BTCUSDT", "ETHUSDT"],
-        "timeframes": ["1d", "4h"],
+        "symbols": list(settings.default_symbols or DEFAULT_SYMBOLS),
+        "timeframes": list(settings.default_timeframes or DEFAULT_TIMEFRAMES),
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "mode": "mock_noop",
+        "mode": "read_only_preview",
+        "read_from_db": read_from_db,
+        "limit": limit,
+        "ohlcv_table": settings.ohlcv_table,
     }
 
 
 @task
-def check_ohlcv_freshness_mock(config: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "run_id": config["run_id"],
-        "check_name": "check_ohlcv_freshness_mock",
-        "check_status": "passed",
-        "severity": "info",
-        "message": "Mock freshness check only. No PostgreSQL query executed.",
-    }
+def check_ohlcv_freshness(config: dict[str, Any]) -> list[dict[str, Any]]:
+    if config["read_from_db"]:
+        return [
+            db_freshness_gate(symbol=symbol, timeframe=timeframe).to_dict()
+            for symbol in config["symbols"]
+            for timeframe in config["timeframes"]
+        ]
+
+    mock_now = pd.Timestamp.now(tz="UTC")
+    return [
+        evaluate_freshness_timestamp(
+            symbol=symbol,
+            timeframe=timeframe,
+            latest_timestamp=mock_now,
+            current_time=mock_now,
+        ).to_dict()
+        for symbol in config["symbols"]
+        for timeframe in config["timeframes"]
+    ]
 
 
 @task
-def load_ohlcv_data_mock(config: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "run_id": config["run_id"],
-        "rows_loaded": 0,
-        "symbols": config["symbols"],
-        "timeframes": config["timeframes"],
-        "message": "Mock OHLCV load only. No data read.",
-    }
+def load_ohlcv_data_read_only(config: dict[str, Any]) -> pd.DataFrame:
+    if config["read_from_db"]:
+        return load_ohlcv_batch_read_only(
+            symbols=config["symbols"],
+            timeframes=config["timeframes"],
+            limit=config["limit"],
+        )
+    return _build_mock_ohlcv_dataframe(config)
 
 
 @task
-def calculate_features_mock(ohlcv_payload: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "run_id": ohlcv_payload["run_id"],
-        "rows_generated": 0,
-        "feature_columns": [
-            "simple_return",
-            "log_return",
-            "close_open_return",
-            "rolling_std_20",
-            "volatility_20",
-            "atr_14",
-            "sma_20",
-            "sma_50",
-            "ema_20",
-            "ema_50",
-            "price_above_sma20",
-            "sma20_slope",
-            "ema20_above_ema50",
-            "rsi_14",
-            "macd",
-            "macd_signal",
-            "close_vs_high_52w",
-            "rolling_max_20",
-            "rolling_min_20",
-            "volume_change",
-            "volume_sma_20",
-            "volume_ratio_20",
-            "high_low_range",
-            "body_size",
-            "upper_wick",
-            "lower_wick",
-            "body_to_range_ratio",
-        ],
-        "message": "Mock feature calculation only. No indicators calculated.",
-    }
+def validate_ohlcv_data(df: pd.DataFrame) -> dict[str, Any]:
+    return validate_ohlcv_dataframe(df).to_dict()
 
 
 @task
-def validate_features_mock(features_payload: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "run_id": features_payload["run_id"],
-        "rows_validated": 0,
-        "data_quality_score": 1.0,
-        "checks": [
-            "no_duplicates",
-            "no_infinities",
-            "required_fields_present",
-            "warmup_nulls_only",
-            "no_lookahead",
-        ],
-        "message": "Mock validation only. No feature rows inspected.",
-    }
-
-
-@task
-def save_features_parquet_mock(
-    config: dict[str, Any], validation_payload: dict[str, Any]
+def summarize_ohlcv_for_feature_readiness(
+    df: pd.DataFrame,
+    validation_result: dict[str, Any],
+    freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
-        "run_id": config["run_id"],
-        "rows_saved": 0,
-        "target_root": "data/features/technical/",
-        "data_quality_score": validation_payload["data_quality_score"],
-        "message": "Mock Parquet save only. No files written.",
+        "rows_loaded": int(len(df)),
+        "symbols": sorted(df["symbol"].dropna().unique().tolist()) if not df.empty else [],
+        "timeframes": sorted(df["timeframe"].dropna().unique().tolist())
+        if not df.empty
+        else [],
+        "validation_passed": validation_result["passed"],
+        "freshness_passed": all(item["passed"] for item in freshness_results),
+        "ready_for_future_feature_calculation": validation_result["passed"]
+        and all(item["passed"] for item in freshness_results),
+        "note": "Readiness summary only. No real features calculated.",
     }
 
 
 @task
-def upsert_features_postgres_mock(
-    config: dict[str, Any], validation_payload: dict[str, Any]
-) -> dict[str, Any]:
+def stop_before_feature_calculation(summary: dict[str, Any]) -> dict[str, Any]:
     return {
-        "run_id": config["run_id"],
-        "rows_inserted": 0,
-        "target_table": "public.ohlcv_features",
-        "data_quality_score": validation_payload["data_quality_score"],
-        "message": "Mock PostgreSQL upsert only. No database connection opened.",
-    }
-
-
-@task
-def write_feature_run_mock(
-    config: dict[str, Any],
-    ohlcv_payload: dict[str, Any],
-    features_payload: dict[str, Any],
-    validation_payload: dict[str, Any],
-    upsert_payload: dict[str, Any],
-) -> dict[str, Any]:
-    return {
-        "run_id": config["run_id"],
-        "flow_name": config["flow_name"],
-        "status": "mock_success",
-        "feature_set": config["feature_set"],
-        "feature_version": config["feature_version"],
-        "rows_loaded": ohlcv_payload["rows_loaded"],
-        "rows_generated": features_payload["rows_generated"],
-        "rows_validated": validation_payload["rows_validated"],
-        "rows_inserted": upsert_payload["rows_inserted"],
-        "message": "Mock feature run record only. No audit row written.",
-    }
-
-
-@task
-def write_feature_quality_report_mock(
-    config: dict[str, Any], validation_payload: dict[str, Any]
-) -> dict[str, Any]:
-    return {
-        "run_id": config["run_id"],
-        "feature_set": config["feature_set"],
-        "feature_version": config["feature_version"],
-        "data_quality_score": validation_payload["data_quality_score"],
-        "checks": validation_payload["checks"],
-        "message": "Mock quality report only. No report file written.",
+        "status": "stopped_before_feature_calculation",
+        "features_calculated": False,
+        "parquet_written": False,
+        "postgres_inserted": False,
+        "summary": summary,
     }
 
 
 @flow(name="generate_features_flow")
-def generate_features_flow() -> dict[str, Any]:
-    config = load_feature_config()
-    freshness = check_ohlcv_freshness_mock(config)
-    ohlcv_payload = load_ohlcv_data_mock(config)
-    features_payload = calculate_features_mock(ohlcv_payload)
-    validation_payload = validate_features_mock(features_payload)
-    parquet_payload = save_features_parquet_mock(config, validation_payload)
-    upsert_payload = upsert_features_postgres_mock(config, validation_payload)
-    run_payload = write_feature_run_mock(
-        config,
-        ohlcv_payload,
-        features_payload,
-        validation_payload,
-        upsert_payload,
+def generate_features_flow(
+    read_from_db: bool = False,
+    limit: int = 1000,
+) -> dict[str, Any]:
+    config = load_feature_config(read_from_db=read_from_db, limit=limit)
+    freshness_results = check_ohlcv_freshness(config)
+    ohlcv_df = load_ohlcv_data_read_only(config)
+    validation_result = validate_ohlcv_data(ohlcv_df)
+    summary = summarize_ohlcv_for_feature_readiness(
+        ohlcv_df,
+        validation_result,
+        freshness_results,
     )
-    quality_payload = write_feature_quality_report_mock(config, validation_payload)
+    stop_result = stop_before_feature_calculation(summary)
 
     return {
         "config": config,
-        "freshness": freshness,
-        "parquet": parquet_payload,
-        "upsert": upsert_payload,
-        "run": run_payload,
-        "quality": quality_payload,
+        "freshness": freshness_results,
+        "validation": validation_result,
+        "summary": summary,
+        "stop": stop_result,
     }
 
 
+def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    base_timestamp = pd.Timestamp.now(tz="UTC").floor("h")
+    for symbol in config["symbols"]:
+        for timeframe in config["timeframes"]:
+            rows.append(
+                {
+                    "exchange": "binance",
+                    "symbol": symbol,
+                    "timeframe": timeframe,
+                    "timestamp": base_timestamp,
+                    "open": 100.0,
+                    "high": 101.0,
+                    "low": 99.0,
+                    "close": 100.5,
+                    "volume": 10.0,
+                }
+            )
+    return pd.DataFrame(rows).sort_values(["symbol", "timeframe", "timestamp"])
+
+
 if __name__ == "__main__":
-    result = generate_features_flow()
+    result = generate_features_flow(read_from_db=False, limit=1000)
     print(result)

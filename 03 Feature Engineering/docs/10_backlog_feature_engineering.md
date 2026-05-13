@@ -2,9 +2,9 @@
 
 ## Alta prioridad
 
-- Crear SQL inicial.
-- Crear flow mock.
-- Crear script de conexión/lectura OHLCV desde PostgreSQL.
+- Crear SQL inicial. Completado en Bloque 1.
+- Crear flow mock. Completado en Bloque 1.
+- Crear script de conexión/lectura OHLCV desde PostgreSQL. Completado en Bloque 2 como loader read-only.
 - Implementar cálculo real de returns.
 - Implementar cálculo real de trend features.
 - Implementar cálculo real de volatility features.
