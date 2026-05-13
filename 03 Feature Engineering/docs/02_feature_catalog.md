@@ -1,0 +1,116 @@
+# Feature Catalog v1
+
+## Identidad
+
+- `feature_set`: `technical_v1`
+- `feature_version`: `1.0.0`
+
+Este catálogo define features técnicas derivadas de OHLCV. Ninguna feature representa una señal de trading, recomendación de compra, recomendación de venta, posición ni resultado de estrategia.
+
+## Returns
+
+Features:
+
+- `simple_return`
+- `log_return`
+- `close_open_return`
+
+Miden variaciones relativas de precio entre observaciones o dentro de una vela. Sirven para describir comportamiento direccional histórico y normalizar cambios entre activos o timeframes.
+
+Limitaciones: pueden ser ruidosas, sensibles a outliers y no capturan por sí solas régimen, liquidez ni riesgo futuro. No representan señal de entrada o salida.
+
+## Volatility
+
+Features:
+
+- `rolling_std_20`
+- `volatility_20`
+- `atr_14`
+
+Miden dispersión, variabilidad y rango efectivo del precio. Sirven para contextualizar riesgo, amplitud de movimiento y cambios de régimen.
+
+Limitaciones: dependen de ventanas históricas, tienen warm-up period y pueden reaccionar tarde ante cambios abruptos. No representan señal de trading.
+
+## Trend
+
+Features:
+
+- `sma_20`
+- `sma_50`
+- `ema_20`
+- `ema_50`
+- `price_above_sma20`
+- `sma20_slope`
+- `ema20_above_ema50`
+
+Miden suavización, dirección y relación del precio frente a medias móviles. Sirven para describir contexto tendencial y persistencia histórica.
+
+Limitaciones: son indicadores rezagados, pueden fallar en mercados laterales y no definen por sí mismos una estrategia. No representan señal BUY/SELL.
+
+## Momentum
+
+Features:
+
+- `rsi_14`
+- `macd`
+- `macd_signal`
+
+Miden aceleración, fuerza relativa y diferencia entre medias exponenciales. Sirven para describir presión direccional y cambios de ritmo.
+
+Limitaciones: pueden generar lecturas extremas durante tendencias prolongadas y requieren interpretación posterior en research. No representan orden, entrada ni salida.
+
+## Relative Strength / Breakout Context
+
+Features:
+
+- `close_vs_high_52w`
+- `rolling_max_20`
+- `rolling_min_20`
+
+Miden la posición del cierre respecto a máximos o rangos recientes. Sirven para describir contexto de ruptura, proximidad a extremos y compresión o expansión del rango.
+
+Limitaciones: no distinguen entre ruptura válida, falso breakout o agotamiento. No representan señal de compra o venta.
+
+## Volume
+
+Features:
+
+- `volume_change`
+- `volume_sma_20`
+- `volume_ratio_20`
+
+Miden cambios relativos y contexto del volumen frente a su promedio reciente. Sirven para evaluar participación, actividad y confirmación descriptiva del movimiento.
+
+Limitaciones: volumen exchange-specific, sensible a cambios de mercado y no comparable directamente entre venues sin normalización. No representa señal de trading.
+
+## Candle Structure
+
+Features:
+
+- `high_low_range`
+- `body_size`
+- `upper_wick`
+- `lower_wick`
+- `body_to_range_ratio`
+
+Miden forma interna de la vela, rango, cuerpo y mechas. Sirven para describir estructura de precio dentro del periodo y presión intraperiodo.
+
+Limitaciones: son descripciones locales, no modelos predictivos. No representan patrón operativo ni señal de estrategia.
+
+## Exclusiones explícitas v1
+
+No forman parte de este catálogo:
+
+- `buy_signal`
+- `sell_signal`
+- `entry_price`
+- `exit_price`
+- `strategy_return`
+- `position`
+- `pnl`
+- `backtest_return`
+- Order book features.
+- Spread.
+- On-chain.
+- Macro.
+- Sentiment.
