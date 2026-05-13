@@ -9,6 +9,8 @@
 - Implementar cálculo real de trend features. Completado en Bloque 4 sin persistencia.
 - Implementar cálculo real de volatility features. Completado en Bloque 5 sin persistencia.
 - Implementar cálculo real de momentum features. Completado en Bloque 6 sin persistencia.
+- Implementar cálculo real de Relative Strength / Breakout Context features. Completado en Bloque 7 sin persistencia.
+- Implementar cálculo real de Volume features. Completado en Bloque 8 sin persistencia.
 - Implementar validación sin infinitos.
 - Implementar no-lookahead checks.
 - Guardar features Parquet.

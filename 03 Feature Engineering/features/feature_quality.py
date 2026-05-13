@@ -22,6 +22,16 @@ TREND_NUMERIC_COLUMNS = ["sma_20", "sma_50", "ema_20", "ema_50", "sma20_slope"]
 TREND_STATE_COLUMNS = ["price_above_sma20", "ema20_above_ema50"]
 VOLATILITY_FEATURE_COLUMNS = ["rolling_std_20", "volatility_20", "atr_14"]
 MOMENTUM_FEATURE_COLUMNS = ["rsi_14", "macd", "macd_signal"]
+BREAKOUT_CONTEXT_FEATURE_COLUMNS = [
+    "close_vs_high_52w",
+    "rolling_max_20",
+    "rolling_min_20",
+]
+VOLUME_FEATURE_COLUMNS = ["volume_change", "volume_sma_20", "volume_ratio_20"]
+HIGH_52W_LOOKBACK_BY_TIMEFRAME = {
+    "1d": 365,
+    "4h": 2190,
+}
 FEATURE_KEY_COLUMNS = [
     "exchange",
     "symbol",
@@ -48,6 +58,14 @@ FORBIDDEN_COLUMNS = [
     "macd_cross",
     "macd_signal_cross",
     "macd_crossover",
+    "breakout_signal",
+    "breakout",
+    "support",
+    "resistance",
+    "high_breakout",
+    "low_breakdown",
+    "volume_signal",
+    "volume_spike_signal",
 ]
 
 
@@ -280,6 +298,119 @@ def validate_momentum_features(df: pd.DataFrame) -> dict[str, Any]:
     return _result(not errors, len(df), errors, warnings)
 
 
+def validate_breakout_context_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate breakout context features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_breakout_columns = [
+        column for column in BREAKOUT_CONTEXT_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_breakout_columns:
+        errors.append(f"missing_breakout_context_columns={missing_breakout_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in BREAKOUT_CONTEXT_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+        if (values.dropna() < 0).any():
+            errors.append(f"{column}_contains_negative")
+
+    _validate_breakout_context_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
+def validate_volume_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate volume features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_volume_columns = [
+        column for column in VOLUME_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_volume_columns:
+        errors.append(f"missing_volume_columns={missing_volume_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in VOLUME_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+
+    for column in ["volume_sma_20", "volume_ratio_20"]:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if (values.dropna() < 0).any():
+            errors.append(f"{column}_contains_negative")
+
+    _validate_volume_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
 def _validate_return_nans(
     df: pd.DataFrame, errors: list[str], warnings: list[str]
 ) -> None:
@@ -417,6 +548,82 @@ def _validate_momentum_nans(
     warmup_rows = int(group_index.lt(14).sum())
     if warmup_rows:
         warnings.append(f"momentum_warmup_rows={warmup_rows}")
+
+
+def _validate_breakout_context_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
+    group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+
+    unexpected_rolling_max_nan = sorted_df["rolling_max_20"].isna() & group_index.ge(19)
+    unexpected_rolling_min_nan = sorted_df["rolling_min_20"].isna() & group_index.ge(19)
+
+    if unexpected_rolling_max_nan.any():
+        errors.append(
+            f"rolling_max_20_unexpected_nan={int(unexpected_rolling_max_nan.sum())}"
+        )
+    if unexpected_rolling_min_nan.any():
+        errors.append(
+            f"rolling_min_20_unexpected_nan={int(unexpected_rolling_min_nan.sum())}"
+        )
+
+    close_vs_high_nan = sorted_df["close_vs_high_52w"].isna()
+    warmup_rows = 0
+    for (_, _, timeframe), group in sorted_df.groupby(
+        ["exchange", "symbol", "timeframe"], sort=False
+    ):
+        lookback = HIGH_52W_LOOKBACK_BY_TIMEFRAME.get(str(timeframe))
+        if lookback is None:
+            errors.append(f"unsupported_timeframe_for_close_vs_high_52w={timeframe}")
+            continue
+        local_index = group.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+        warmup_mask = local_index.lt(lookback - 1)
+        warmup_rows += int(warmup_mask.sum())
+        unexpected_nan = close_vs_high_nan.loc[group.index] & ~warmup_mask
+        if unexpected_nan.any():
+            errors.append(
+                "close_vs_high_52w_unexpected_nan="
+                f"{int(unexpected_nan.sum())}"
+            )
+
+    if warmup_rows:
+        warnings.append(f"breakout_context_warmup_rows={warmup_rows}")
+
+
+def _validate_volume_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
+    group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+
+    previous_volume = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False)[
+        "volume"
+    ].shift(1)
+    previous_volume_positive = pd.to_numeric(previous_volume, errors="coerce") > 0
+
+    unexpected_volume_change_nan = (
+        sorted_df["volume_change"].isna() & group_index.gt(0) & previous_volume_positive
+    )
+    unexpected_volume_sma_nan = sorted_df["volume_sma_20"].isna() & group_index.ge(19)
+    unexpected_volume_ratio_nan = (
+        sorted_df["volume_ratio_20"].isna() & sorted_df["volume_sma_20"].gt(0)
+    )
+
+    if unexpected_volume_change_nan.any():
+        errors.append(
+            f"volume_change_unexpected_nan={int(unexpected_volume_change_nan.sum())}"
+        )
+    if unexpected_volume_sma_nan.any():
+        errors.append(f"volume_sma_20_unexpected_nan={int(unexpected_volume_sma_nan.sum())}")
+    if unexpected_volume_ratio_nan.any():
+        errors.append(
+            f"volume_ratio_20_unexpected_nan={int(unexpected_volume_ratio_nan.sum())}"
+        )
+
+    warmup_rows = int(group_index.lt(19).sum())
+    if warmup_rows:
+        warnings.append(f"volume_warmup_rows={warmup_rows}")
 
 
 def _result(

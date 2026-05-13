@@ -15,11 +15,15 @@ from feature_quality import (
     validate_trend_features,
     validate_volatility_features,
     validate_momentum_features,
+    validate_breakout_context_features,
+    validate_volume_features,
 )
 from returns import calculate_return_features
 from trend import calculate_trend_features
 from volatility import calculate_volatility_features
 from momentum import calculate_momentum_features
+from breakout_context import calculate_breakout_context_features
+from volume import calculate_volume_features
 
 
 def _feature_dataframe() -> pd.DataFrame:
@@ -390,3 +394,190 @@ def test_forbidden_macd_signal_cross_column_fails_quality() -> None:
 
     assert result["passed"] is False
     assert "forbidden_columns=['macd_signal_cross']" in result["errors"]
+
+
+def _breakout_context_feature_dataframe() -> pd.DataFrame:
+    rows = []
+    for index in range(365):
+        close = 100.0 + index
+        rows.append(
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": pd.Timestamp("2025-01-01T00:00:00Z")
+                + pd.Timedelta(days=index),
+                "open": close - 0.5,
+                "high": close + 2.0,
+                "low": close - 2.0,
+                "close": close,
+                "volume": 10.0 + index,
+            }
+        )
+    return calculate_breakout_context_features(pd.DataFrame(rows))
+
+
+def test_valid_breakout_context_features_pass_quality() -> None:
+    result = validate_breakout_context_features(_breakout_context_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_breakout_context_column_fails_quality_when_required() -> None:
+    df = _breakout_context_feature_dataframe().drop(columns=["rolling_min_20"])
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "missing_breakout_context_columns=['rolling_min_20']" in result["errors"]
+
+
+def test_infinite_breakout_context_value_fails_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df.loc[30, "rolling_max_20"] = np.inf
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "rolling_max_20_contains_infinite" in result["errors"]
+
+
+def test_negative_close_vs_high_52w_fails_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df.loc[364, "close_vs_high_52w"] = -0.1
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "close_vs_high_52w_contains_negative" in result["errors"]
+
+
+def test_negative_rolling_max_20_fails_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df.loc[30, "rolling_max_20"] = -1.0
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "rolling_max_20_contains_negative" in result["errors"]
+
+
+def test_negative_rolling_min_20_fails_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df.loc[30, "rolling_min_20"] = -1.0
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "rolling_min_20_contains_negative" in result["errors"]
+
+
+def test_forbidden_breakout_signal_column_fails_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df["breakout_signal"] = False
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['breakout_signal']" in result["errors"]
+
+
+def test_forbidden_support_resistance_columns_fail_quality() -> None:
+    df = _breakout_context_feature_dataframe()
+    df["support"] = 100.0
+    df["resistance"] = 200.0
+
+    result = validate_breakout_context_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['support', 'resistance']" in result["errors"]
+
+
+def _volume_feature_dataframe() -> pd.DataFrame:
+    rows = []
+    for index in range(60):
+        close = 100.0 + index
+        rows.append(
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": pd.Timestamp("2026-01-01T00:00:00Z")
+                + pd.Timedelta(days=index),
+                "open": close - 0.5,
+                "high": close + 1.0,
+                "low": close - 1.0,
+                "close": close,
+                "volume": 1000.0 + index * 10.0,
+            }
+        )
+    return calculate_volume_features(pd.DataFrame(rows))
+
+
+def test_valid_volume_features_pass_quality() -> None:
+    result = validate_volume_features(_volume_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_volume_column_fails_quality_when_required() -> None:
+    df = _volume_feature_dataframe().drop(columns=["volume_ratio_20"])
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "missing_volume_columns=['volume_ratio_20']" in result["errors"]
+
+
+def test_infinite_volume_value_fails_quality() -> None:
+    df = _volume_feature_dataframe()
+    df.loc[20, "volume_change"] = np.inf
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "volume_change_contains_infinite" in result["errors"]
+
+
+def test_negative_volume_sma_20_fails_quality() -> None:
+    df = _volume_feature_dataframe()
+    df.loc[20, "volume_sma_20"] = -1.0
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "volume_sma_20_contains_negative" in result["errors"]
+
+
+def test_negative_volume_ratio_20_fails_quality() -> None:
+    df = _volume_feature_dataframe()
+    df.loc[20, "volume_ratio_20"] = -1.0
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "volume_ratio_20_contains_negative" in result["errors"]
+
+
+def test_forbidden_volume_signal_column_fails_quality() -> None:
+    df = _volume_feature_dataframe()
+    df["volume_signal"] = False
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['volume_signal']" in result["errors"]
+
+
+def test_forbidden_volume_spike_signal_column_fails_quality() -> None:
+    df = _volume_feature_dataframe()
+    df["volume_spike_signal"] = False
+
+    result = validate_volume_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['volume_spike_signal']" in result["errors"]

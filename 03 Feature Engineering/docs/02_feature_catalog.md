@@ -111,6 +111,19 @@ Features:
 
 Miden la posición del cierre respecto a máximos o rangos recientes. Sirven para describir contexto de ruptura, proximidad a extremos y compresión o expansión del rango.
 
+Definiciones v1:
+
+- `rolling_max_20`: máximo móvil de `high` sobre 20 períodos.
+- `rolling_min_20`: mínimo móvil de `low` sobre 20 períodos.
+- `close_vs_high_52w`: `close_t / rolling_high_52w_t`.
+
+Lookback de `rolling_high_52w`:
+
+- `1d`: 365 períodos.
+- `4h`: 2190 períodos.
+
+Estas features describen contexto relativo. No representan señales de ruptura, soporte, resistencia, compra o venta.
+
 Limitaciones: no distinguen entre ruptura válida, falso breakout o agotamiento. No representan señal de compra o venta.
 
 ## Volume
@@ -122,6 +135,14 @@ Features:
 - `volume_ratio_20`
 
 Miden cambios relativos y contexto del volumen frente a su promedio reciente. Sirven para evaluar participación, actividad y confirmación descriptiva del movimiento.
+
+Definiciones v1:
+
+- `volume_change`: `volume_t / volume_{t-1} - 1`.
+- `volume_sma_20`: media móvil simple de `volume` sobre 20 períodos.
+- `volume_ratio_20`: `volume_t / volume_sma_20_t`.
+
+Estas features describen contexto de actividad. No representan señales de volumen, compra, venta o ejecución.
 
 Limitaciones: volumen exchange-specific, sensible a cambios de mercado y no comparable directamente entre venues sin normalización. No representa señal de trading.
 

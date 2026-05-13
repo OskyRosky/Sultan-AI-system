@@ -57,6 +57,25 @@
 - Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
 - Se mantiene la prohibición de señales, estrategias y backtesting.
 
+## Bloque 7 - Relative Strength / Breakout Context Feature Calculation
+
+- Se implementan features de Relative Strength / Breakout Context dentro de `05 Feature Calculation Engine`, sin crear subcomponentes nuevos.
+- Se implementan `close_vs_high_52w`, `rolling_max_20` y `rolling_min_20`.
+- `rolling_max_20` usa `high`; `rolling_min_20` usa `low`.
+- `close_vs_high_52w` usa rolling high 52w por timeframe: `1d = 365`, `4h = 2190`.
+- `close_vs_high_52w` se documenta como contexto técnico, no señal de ruptura.
+- No se crean columnas `breakout_signal`, `breakout`, `support` o `resistance`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+
+## Bloque 8 - Volume Feature Calculation
+
+- Se implementan features de volumen dentro de `05 Feature Calculation Engine`, sin crear subcomponentes nuevos.
+- Se implementan `volume_change`, `volume_sma_20` y `volume_ratio_20`.
+- `volume_ratio_20` se documenta como contexto relativo de volumen, no señal.
+- No se crean columnas `volume_signal` o `volume_spike_signal`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
