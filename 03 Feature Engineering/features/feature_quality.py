@@ -1,0 +1,136 @@
+"""Feature quality checks for return feature preview data."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+
+RETURN_FEATURE_COLUMNS = ["simple_return", "log_return", "close_open_return"]
+FEATURE_KEY_COLUMNS = [
+    "exchange",
+    "symbol",
+    "timeframe",
+    "timestamp",
+    "feature_set",
+    "feature_version",
+]
+FORBIDDEN_COLUMNS = [
+    "signal",
+    "buy_signal",
+    "sell_signal",
+    "position",
+    "entry",
+    "exit",
+    "pnl",
+    "strategy_return",
+    "backtest_return",
+]
+
+
+def validate_return_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate return features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_return_columns = [
+        column for column in RETURN_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_return_columns:
+        errors.append(f"missing_return_columns={missing_return_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in RETURN_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+
+    _validate_return_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
+def _validate_return_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
+    first_row_mask = (
+        sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False)
+        .cumcount()
+        .eq(0)
+    )
+
+    open_positive = pd.to_numeric(sorted_df["open"], errors="coerce") > 0
+    close_positive = pd.to_numeric(sorted_df["close"], errors="coerce") > 0
+
+    previous_close = sorted_df.groupby(
+        ["exchange", "symbol", "timeframe"], sort=False
+    )["close"].shift(1)
+    previous_close_positive = pd.to_numeric(previous_close, errors="coerce") > 0
+
+    simple_nan = sorted_df["simple_return"].isna()
+    log_nan = sorted_df["log_return"].isna()
+    close_open_nan = sorted_df["close_open_return"].isna()
+
+    invalid_previous_context = first_row_mask | ~previous_close_positive | ~close_positive
+    unexpected_simple_nan = simple_nan & ~invalid_previous_context
+    unexpected_log_nan = log_nan & ~invalid_previous_context
+    unexpected_close_open_nan = close_open_nan & open_positive & close_positive
+
+    if unexpected_simple_nan.any():
+        errors.append(f"simple_return_unexpected_nan={int(unexpected_simple_nan.sum())}")
+    if unexpected_log_nan.any():
+        errors.append(f"log_return_unexpected_nan={int(unexpected_log_nan.sum())}")
+    if unexpected_close_open_nan.any():
+        errors.append(
+            f"close_open_return_unexpected_nan={int(unexpected_close_open_nan.sum())}"
+        )
+
+    invalid_price_rows = int((~open_positive | ~close_positive | ~previous_close_positive).sum())
+    if invalid_price_rows:
+        warnings.append(f"nan_allowed_for_invalid_price_context_rows={invalid_price_rows}")
+
+
+def _result(
+    passed: bool, rows_checked: int, errors: list[str], warnings: list[str]
+) -> dict[str, Any]:
+    return {
+        "status": "passed" if passed else "failed",
+        "passed": passed,
+        "errors": errors,
+        "warnings": warnings,
+        "rows_checked": rows_checked,
+    }

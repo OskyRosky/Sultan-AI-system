@@ -27,8 +27,10 @@ from config import (  # noqa: E402
     load_feature_settings,
 )
 from freshness_gate import evaluate_freshness_timestamp, check_ohlcv_freshness as db_freshness_gate  # noqa: E402
+from feature_quality import validate_return_features  # noqa: E402
 from ohlcv_loader import load_ohlcv_batch_read_only  # noqa: E402
 from ohlcv_validation import validate_ohlcv_dataframe  # noqa: E402
+from returns import calculate_return_features  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -104,30 +106,51 @@ def validate_ohlcv_data(df: pd.DataFrame) -> dict[str, Any]:
 
 
 @task
-def summarize_ohlcv_for_feature_readiness(
+def calculate_returns_features_preview(df: pd.DataFrame) -> pd.DataFrame:
+    return calculate_return_features(df)
+
+
+@task
+def validate_returns_features_preview(features_df: pd.DataFrame) -> dict[str, Any]:
+    return validate_return_features(features_df)
+
+
+@task
+def summarize_feature_preview(
     df: pd.DataFrame,
+    features_df: pd.DataFrame,
     validation_result: dict[str, Any],
+    feature_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
         "rows_loaded": int(len(df)),
+        "rows_with_return_features": int(len(features_df)),
         "symbols": sorted(df["symbol"].dropna().unique().tolist()) if not df.empty else [],
         "timeframes": sorted(df["timeframe"].dropna().unique().tolist())
         if not df.empty
         else [],
         "validation_passed": validation_result["passed"],
+        "feature_quality_passed": feature_quality_result["passed"],
         "freshness_passed": all(item["passed"] for item in freshness_results),
-        "ready_for_future_feature_calculation": validation_result["passed"]
+        "return_features_calculated": [
+            "simple_return",
+            "log_return",
+            "close_open_return",
+        ],
+        "ready_for_future_persistence": validation_result["passed"]
+        and feature_quality_result["passed"]
         and all(item["passed"] for item in freshness_results),
-        "note": "Readiness summary only. No real features calculated.",
+        "note": "Returns preview only. No Parquet or PostgreSQL persistence executed.",
     }
 
 
 @task
-def stop_before_feature_calculation(summary: dict[str, Any]) -> dict[str, Any]:
+def stop_before_persistence(summary: dict[str, Any]) -> dict[str, Any]:
     return {
-        "status": "stopped_before_feature_calculation",
-        "features_calculated": False,
+        "status": "stopped_before_persistence",
+        "features_calculated": True,
+        "feature_families": ["returns"],
         "parquet_written": False,
         "postgres_inserted": False,
         "summary": summary,
@@ -143,17 +166,22 @@ def generate_features_flow(
     freshness_results = check_ohlcv_freshness(config)
     ohlcv_df = load_ohlcv_data_read_only(config)
     validation_result = validate_ohlcv_data(ohlcv_df)
-    summary = summarize_ohlcv_for_feature_readiness(
+    return_features_df = calculate_returns_features_preview(ohlcv_df)
+    feature_quality_result = validate_returns_features_preview(return_features_df)
+    summary = summarize_feature_preview(
         ohlcv_df,
+        return_features_df,
         validation_result,
+        feature_quality_result,
         freshness_results,
     )
-    stop_result = stop_before_feature_calculation(summary)
+    stop_result = stop_before_persistence(summary)
 
     return {
         "config": config,
         "freshness": freshness_results,
         "validation": validation_result,
+        "feature_quality": feature_quality_result,
         "summary": summary,
         "stop": stop_result,
     }
@@ -164,19 +192,20 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
     base_timestamp = pd.Timestamp.now(tz="UTC").floor("h")
     for symbol in config["symbols"]:
         for timeframe in config["timeframes"]:
-            rows.append(
-                {
-                    "exchange": "binance",
-                    "symbol": symbol,
-                    "timeframe": timeframe,
-                    "timestamp": base_timestamp,
-                    "open": 100.0,
-                    "high": 101.0,
-                    "low": 99.0,
-                    "close": 100.5,
-                    "volume": 10.0,
-                }
-            )
+            for offset, close in enumerate([100.5, 102.0, 101.0]):
+                rows.append(
+                    {
+                        "exchange": "binance",
+                        "symbol": symbol,
+                        "timeframe": timeframe,
+                        "timestamp": base_timestamp + pd.Timedelta(hours=offset),
+                        "open": 100.0 + offset,
+                        "high": max(101.0 + offset, close),
+                        "low": 99.0 + offset,
+                        "close": close,
+                        "volume": 10.0 + offset,
+                    }
+                )
     return pd.DataFrame(rows).sort_values(["symbol", "timeframe", "timestamp"])
 
 

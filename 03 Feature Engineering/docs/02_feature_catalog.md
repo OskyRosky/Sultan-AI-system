@@ -17,6 +17,14 @@ Features:
 
 Miden variaciones relativas de precio entre observaciones o dentro de una vela. Sirven para describir comportamiento direccional histórico y normalizar cambios entre activos o timeframes.
 
+Definiciones v1:
+
+- `simple_return`: `close_t / close_{t-1} - 1`.
+- `log_return`: `log(close_t / close_{t-1})`.
+- `close_open_return`: `close_t / open_t - 1`.
+
+Estas definiciones respetan no-lookahead: en timestamp T solo usan precios disponibles hasta T.
+
 Limitaciones: pueden ser ruidosas, sensibles a outliers y no capturan por sí solas régimen, liquidez ni riesgo futuro. No representan señal de entrada o salida.
 
 ## Volatility

@@ -21,6 +21,15 @@
 - El bloque se detiene explícitamente antes de calcular features reales.
 - No se guarda Parquet ni se inserta en PostgreSQL en este bloque.
 
+## Bloque 3 - Returns Feature Calculation
+
+- Se implementa cálculo real solo para `simple_return`, `log_return` y `close_open_return`.
+- El cálculo se agrupa por `exchange + symbol + timeframe` y se ordena por `timestamp`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+- El `NaN` inicial por grupo es esperado para returns que dependen de `close_{t-1}`.
+- Los precios no positivos producen `NaN` controlado para evitar infinitos.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
