@@ -28,6 +28,13 @@ BREAKOUT_CONTEXT_FEATURE_COLUMNS = [
     "rolling_min_20",
 ]
 VOLUME_FEATURE_COLUMNS = ["volume_change", "volume_sma_20", "volume_ratio_20"]
+CANDLE_STRUCTURE_FEATURE_COLUMNS = [
+    "high_low_range",
+    "body_size",
+    "upper_wick",
+    "lower_wick",
+    "body_to_range_ratio",
+]
 HIGH_52W_LOOKBACK_BY_TIMEFRAME = {
     "1d": 365,
     "4h": 2190,
@@ -66,6 +73,10 @@ FORBIDDEN_COLUMNS = [
     "low_breakdown",
     "volume_signal",
     "volume_spike_signal",
+    "candle_signal",
+    "doji_signal",
+    "hammer_signal",
+    "engulfing_signal",
 ]
 
 
@@ -411,6 +422,68 @@ def validate_volume_features(df: pd.DataFrame) -> dict[str, Any]:
     return _result(not errors, len(df), errors, warnings)
 
 
+def validate_candle_structure_features(df: pd.DataFrame) -> dict[str, Any]:
+    """Validate candle structure features without writing audit records."""
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    missing_candle_columns = [
+        column for column in CANDLE_STRUCTURE_FEATURE_COLUMNS if column not in df.columns
+    ]
+    if missing_candle_columns:
+        errors.append(f"missing_candle_structure_columns={missing_candle_columns}")
+
+    forbidden_present = [column for column in FORBIDDEN_COLUMNS if column in df.columns]
+    if forbidden_present:
+        errors.append(f"forbidden_columns={forbidden_present}")
+
+    missing_key_columns = [column for column in FEATURE_KEY_COLUMNS if column not in df.columns]
+    if missing_key_columns:
+        errors.append(f"missing_feature_key_columns={missing_key_columns}")
+
+    if errors:
+        return _result(False, len(df), errors, warnings)
+
+    if df.empty:
+        errors.append("empty_feature_dataframe")
+        return _result(False, 0, errors, warnings)
+
+    working = df.copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        errors.append("timestamp_null_or_invalid")
+
+    if working["feature_set"].isna().any() or (working["feature_set"] == "").any():
+        errors.append("feature_set_null_or_empty")
+    if working["feature_version"].isna().any() or (
+        working["feature_version"] == ""
+    ).any():
+        errors.append("feature_version_null_or_empty")
+
+    duplicate_count = working.duplicated(subset=FEATURE_KEY_COLUMNS).sum()
+    if duplicate_count:
+        errors.append(f"duplicate_feature_rows={int(duplicate_count)}")
+
+    for column in CANDLE_STRUCTURE_FEATURE_COLUMNS:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if np.isinf(values).any():
+            errors.append(f"{column}_contains_infinite")
+
+    for column in ["high_low_range", "body_size", "upper_wick", "lower_wick"]:
+        values = pd.to_numeric(working[column], errors="coerce")
+        if (values.dropna() < 0).any():
+            errors.append(f"{column}_contains_negative")
+
+    ratio = pd.to_numeric(working["body_to_range_ratio"], errors="coerce")
+    if ((ratio.dropna() < 0) | (ratio.dropna() > 1)).any():
+        errors.append("body_to_range_ratio_out_of_range")
+
+    _validate_candle_structure_nans(working, errors, warnings)
+
+    return _result(not errors, len(df), errors, warnings)
+
+
 def _validate_return_nans(
     df: pd.DataFrame, errors: list[str], warnings: list[str]
 ) -> None:
@@ -624,6 +697,24 @@ def _validate_volume_nans(
     warmup_rows = int(group_index.lt(19).sum())
     if warmup_rows:
         warnings.append(f"volume_warmup_rows={warmup_rows}")
+
+
+def _validate_candle_structure_nans(
+    df: pd.DataFrame, errors: list[str], warnings: list[str]
+) -> None:
+    high_low_range = pd.to_numeric(df["high_low_range"], errors="coerce")
+    ratio_nan = df["body_to_range_ratio"].isna()
+
+    unexpected_ratio_nan = ratio_nan & high_low_range.gt(0)
+    if unexpected_ratio_nan.any():
+        errors.append(
+            "body_to_range_ratio_unexpected_nan="
+            f"{int(unexpected_ratio_nan.sum())}"
+        )
+
+    invalid_range_rows = int(high_low_range.le(0).sum())
+    if invalid_range_rows:
+        warnings.append(f"body_to_range_ratio_nan_allowed_rows={invalid_range_rows}")
 
 
 def _result(

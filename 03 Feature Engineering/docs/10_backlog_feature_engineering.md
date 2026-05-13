@@ -11,6 +11,7 @@
 - Implementar cálculo real de momentum features. Completado en Bloque 6 sin persistencia.
 - Implementar cálculo real de Relative Strength / Breakout Context features. Completado en Bloque 7 sin persistencia.
 - Implementar cálculo real de Volume features. Completado en Bloque 8 sin persistencia.
+- Implementar cálculo real de Candle Structure features. Completado en Bloque 9 sin persistencia.
 - Implementar validación sin infinitos.
 - Implementar no-lookahead checks.
 - Guardar features Parquet.

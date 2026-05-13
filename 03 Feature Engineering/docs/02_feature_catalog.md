@@ -158,6 +158,16 @@ Features:
 
 Miden forma interna de la vela, rango, cuerpo y mechas. Sirven para describir estructura de precio dentro del periodo y presión intraperiodo.
 
+Definiciones v1:
+
+- `high_low_range`: `high_t - low_t`.
+- `body_size`: `abs(close_t - open_t)`.
+- `upper_wick`: `high_t - max(open_t, close_t)`.
+- `lower_wick`: `min(open_t, close_t) - low_t`.
+- `body_to_range_ratio`: `body_size_t / high_low_range_t`.
+
+Estas features describen geometría de vela. No representan patrones accionables ni señales de trading.
+
 Limitaciones: son descripciones locales, no modelos predictivos. No representan patrón operativo ni señal de estrategia.
 
 ## Exclusiones explícitas v1

@@ -34,6 +34,7 @@ from feature_quality import (  # noqa: E402
     validate_momentum_features,
     validate_breakout_context_features,
     validate_volume_features,
+    validate_candle_structure_features,
 )
 from ohlcv_loader import load_ohlcv_batch_read_only  # noqa: E402
 from ohlcv_validation import validate_ohlcv_dataframe  # noqa: E402
@@ -43,6 +44,7 @@ from volatility import calculate_volatility_features  # noqa: E402
 from momentum import calculate_momentum_features  # noqa: E402
 from breakout_context import calculate_breakout_context_features  # noqa: E402
 from volume import calculate_volume_features  # noqa: E402
+from candle_structure import calculate_candle_structure_features  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -178,6 +180,16 @@ def validate_volume_features_preview(features_df: pd.DataFrame) -> dict[str, Any
 
 
 @task
+def calculate_candle_structure_features_preview(features_df: pd.DataFrame) -> pd.DataFrame:
+    return calculate_candle_structure_features(features_df)
+
+
+@task
+def validate_candle_structure_features_preview(features_df: pd.DataFrame) -> dict[str, Any]:
+    return validate_candle_structure_features(features_df)
+
+
+@task
 def summarize_feature_preview(
     df: pd.DataFrame,
     features_df: pd.DataFrame,
@@ -188,6 +200,7 @@ def summarize_feature_preview(
     momentum_quality_result: dict[str, Any],
     breakout_context_quality_result: dict[str, Any],
     volume_quality_result: dict[str, Any],
+    candle_structure_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
@@ -204,6 +217,7 @@ def summarize_feature_preview(
         "momentum_quality_passed": momentum_quality_result["passed"],
         "breakout_context_quality_passed": breakout_context_quality_result["passed"],
         "volume_quality_passed": volume_quality_result["passed"],
+        "candle_structure_quality_passed": candle_structure_quality_result["passed"],
         "freshness_passed": all(item["passed"] for item in freshness_results),
         "return_features_calculated": [
             "simple_return",
@@ -239,6 +253,13 @@ def summarize_feature_preview(
             "volume_sma_20",
             "volume_ratio_20",
         ],
+        "candle_structure_features_calculated": [
+            "high_low_range",
+            "body_size",
+            "upper_wick",
+            "lower_wick",
+            "body_to_range_ratio",
+        ],
         "ready_for_future_persistence": validation_result["passed"]
         and returns_quality_result["passed"]
         and trend_quality_result["passed"]
@@ -246,6 +267,7 @@ def summarize_feature_preview(
         and momentum_quality_result["passed"]
         and breakout_context_quality_result["passed"]
         and volume_quality_result["passed"]
+        and candle_structure_quality_result["passed"]
         and all(item["passed"] for item in freshness_results),
         "note": "Feature preview only. No Parquet or PostgreSQL persistence executed.",
     }
@@ -263,6 +285,7 @@ def stop_before_persistence(summary: dict[str, Any]) -> dict[str, Any]:
             "momentum",
             "breakout_context",
             "volume",
+            "candle_structure",
         ],
         "parquet_written": False,
         "postgres_inserted": False,
@@ -297,9 +320,15 @@ def generate_features_flow(
     )
     volume_features_df = calculate_volume_features_preview(breakout_context_features_df)
     volume_quality_result = validate_volume_features_preview(volume_features_df)
+    candle_structure_features_df = calculate_candle_structure_features_preview(
+        volume_features_df
+    )
+    candle_structure_quality_result = validate_candle_structure_features_preview(
+        candle_structure_features_df
+    )
     summary = summarize_feature_preview(
         ohlcv_df,
-        volume_features_df,
+        candle_structure_features_df,
         validation_result,
         returns_quality_result,
         trend_quality_result,
@@ -307,6 +336,7 @@ def generate_features_flow(
         momentum_quality_result,
         breakout_context_quality_result,
         volume_quality_result,
+        candle_structure_quality_result,
         freshness_results,
     )
     stop_result = stop_before_persistence(summary)
@@ -321,6 +351,7 @@ def generate_features_flow(
         "momentum_quality": momentum_quality_result,
         "breakout_context_quality": breakout_context_quality_result,
         "volume_quality": volume_quality_result,
+        "candle_structure_quality": candle_structure_quality_result,
         "summary": summary,
         "stop": stop_result,
     }

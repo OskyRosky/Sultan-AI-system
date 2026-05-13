@@ -17,6 +17,7 @@ from feature_quality import (
     validate_momentum_features,
     validate_breakout_context_features,
     validate_volume_features,
+    validate_candle_structure_features,
 )
 from returns import calculate_return_features
 from trend import calculate_trend_features
@@ -24,6 +25,7 @@ from volatility import calculate_volatility_features
 from momentum import calculate_momentum_features
 from breakout_context import calculate_breakout_context_features
 from volume import calculate_volume_features
+from candle_structure import calculate_candle_structure_features
 
 
 def _feature_dataframe() -> pd.DataFrame:
@@ -581,3 +583,130 @@ def test_forbidden_volume_spike_signal_column_fails_quality() -> None:
 
     assert result["passed"] is False
     assert "forbidden_columns=['volume_spike_signal']" in result["errors"]
+
+
+def _candle_structure_feature_dataframe() -> pd.DataFrame:
+    ohlcv = pd.DataFrame(
+        [
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": "2026-01-01T00:00:00Z",
+                "open": 100.0,
+                "high": 112.0,
+                "low": 95.0,
+                "close": 108.0,
+                "volume": 1000.0,
+            },
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": "2026-01-02T00:00:00Z",
+                "open": 108.0,
+                "high": 110.0,
+                "low": 101.0,
+                "close": 103.0,
+                "volume": 1010.0,
+            },
+        ]
+    )
+    return calculate_candle_structure_features(ohlcv)
+
+
+def test_valid_candle_structure_features_pass_quality() -> None:
+    result = validate_candle_structure_features(_candle_structure_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_candle_structure_column_fails_quality_when_required() -> None:
+    df = _candle_structure_feature_dataframe().drop(columns=["upper_wick"])
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "missing_candle_structure_columns=['upper_wick']" in result["errors"]
+
+
+def test_infinite_candle_structure_value_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "body_size"] = np.inf
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "body_size_contains_infinite" in result["errors"]
+
+
+def test_negative_high_low_range_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "high_low_range"] = -1.0
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "high_low_range_contains_negative" in result["errors"]
+
+
+def test_negative_body_size_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "body_size"] = -1.0
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "body_size_contains_negative" in result["errors"]
+
+
+def test_negative_upper_wick_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "upper_wick"] = -1.0
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "upper_wick_contains_negative" in result["errors"]
+
+
+def test_negative_lower_wick_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "lower_wick"] = -1.0
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "lower_wick_contains_negative" in result["errors"]
+
+
+def test_body_to_range_ratio_above_1_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df.loc[0, "body_to_range_ratio"] = 1.1
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "body_to_range_ratio_out_of_range" in result["errors"]
+
+
+def test_forbidden_candle_signal_column_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df["candle_signal"] = False
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['candle_signal']" in result["errors"]
+
+
+def test_forbidden_hammer_signal_column_fails_quality() -> None:
+    df = _candle_structure_feature_dataframe()
+    df["hammer_signal"] = False
+
+    result = validate_candle_structure_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['hammer_signal']" in result["errors"]

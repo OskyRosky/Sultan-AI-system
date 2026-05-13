@@ -76,6 +76,16 @@
 - Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
 - Se mantiene la prohibición de señales, estrategias y backtesting.
 
+## Bloque 9 - Candle Structure Feature Calculation
+
+- Se implementan features de estructura de vela dentro de `05 Feature Calculation Engine`, sin crear subcomponentes nuevos.
+- Se implementan `high_low_range`, `body_size`, `upper_wick`, `lower_wick` y `body_to_range_ratio`.
+- Las features usan solo valores de la misma vela T y no tienen warm-up temporal.
+- Se documentan como geometría de vela, no como patrones accionables.
+- No se crean columnas `candle_signal`, `doji_signal`, `hammer_signal` o `engulfing_signal`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
