@@ -45,6 +45,7 @@ from momentum import calculate_momentum_features  # noqa: E402
 from breakout_context import calculate_breakout_context_features  # noqa: E402
 from volume import calculate_volume_features  # noqa: E402
 from candle_structure import calculate_candle_structure_features  # noqa: E402
+from integrated_feature_quality import validate_integrated_feature_dataset  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -190,6 +191,13 @@ def validate_candle_structure_features_preview(features_df: pd.DataFrame) -> dic
 
 
 @task
+def validate_integrated_feature_dataset_preview(
+    features_df: pd.DataFrame,
+) -> dict[str, Any]:
+    return validate_integrated_feature_dataset(features_df)
+
+
+@task
 def summarize_feature_preview(
     df: pd.DataFrame,
     features_df: pd.DataFrame,
@@ -201,6 +209,7 @@ def summarize_feature_preview(
     breakout_context_quality_result: dict[str, Any],
     volume_quality_result: dict[str, Any],
     candle_structure_quality_result: dict[str, Any],
+    integrated_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
@@ -218,6 +227,13 @@ def summarize_feature_preview(
         "breakout_context_quality_passed": breakout_context_quality_result["passed"],
         "volume_quality_passed": volume_quality_result["passed"],
         "candle_structure_quality_passed": candle_structure_quality_result["passed"],
+        "integrated_quality_status": integrated_quality_result["status"],
+        "integrated_ready_for_storage": integrated_quality_result[
+            "ready_for_storage"
+        ],
+        "integrated_data_quality_score": integrated_quality_result[
+            "data_quality_score"
+        ],
         "freshness_passed": all(item["passed"] for item in freshness_results),
         "return_features_calculated": [
             "simple_return",
@@ -268,6 +284,7 @@ def summarize_feature_preview(
         and breakout_context_quality_result["passed"]
         and volume_quality_result["passed"]
         and candle_structure_quality_result["passed"]
+        and integrated_quality_result["ready_for_storage"]
         and all(item["passed"] for item in freshness_results),
         "note": "Feature preview only. No Parquet or PostgreSQL persistence executed.",
     }
@@ -326,6 +343,9 @@ def generate_features_flow(
     candle_structure_quality_result = validate_candle_structure_features_preview(
         candle_structure_features_df
     )
+    integrated_quality_result = validate_integrated_feature_dataset_preview(
+        candle_structure_features_df
+    )
     summary = summarize_feature_preview(
         ohlcv_df,
         candle_structure_features_df,
@@ -337,6 +357,7 @@ def generate_features_flow(
         breakout_context_quality_result,
         volume_quality_result,
         candle_structure_quality_result,
+        integrated_quality_result,
         freshness_results,
     )
     stop_result = stop_before_persistence(summary)
@@ -352,6 +373,7 @@ def generate_features_flow(
         "breakout_context_quality": breakout_context_quality_result,
         "volume_quality": volume_quality_result,
         "candle_structure_quality": candle_structure_quality_result,
+        "integrated_quality": integrated_quality_result,
         "summary": summary,
         "stop": stop_result,
     }

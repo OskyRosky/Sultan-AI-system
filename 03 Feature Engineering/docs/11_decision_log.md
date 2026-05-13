@@ -86,6 +86,18 @@
 - Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
 - Se mantiene la prohibición de señales, estrategias y backtesting.
 
+## Bloque 10 - Integrated Cross-Family Feature Quality
+
+- Se implementa validación integrada cross-family dentro de `06 Feature Quality`, sin crear subcomponentes nuevos.
+- No se agregan nuevas features ni se modifican fórmulas existentes.
+- Se valida el catálogo `technical_v1` completo de 27 features.
+- `ready_for_storage` queda definido como gate lógico previo a storage futuro.
+- `data_quality_score` v1 es simple, auditable y limitado entre 0 y 1.
+- Se consolida `family_summary` reutilizando validadores por familia.
+- Se agrega `symbol_timeframe_summary` para inspección operacional.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
