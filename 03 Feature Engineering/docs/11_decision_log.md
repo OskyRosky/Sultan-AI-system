@@ -30,6 +30,14 @@
 - El `NaN` inicial por grupo es esperado para returns que dependen de `close_{t-1}`.
 - Los precios no positivos producen `NaN` controlado para evitar infinitos.
 
+## Bloque 4 - Trend Feature Calculation
+
+- Se implementan solo features de tendencia: `sma_20`, `sma_50`, `ema_20`, `ema_50`, `price_above_sma20`, `sma20_slope` y `ema20_above_ema50`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
+- Se mantiene la prohibición de señales, estrategias y backtesting.
+- `ema20_above_ema50` se trata como estado técnico neutral, no como señal.
+- No se implementan eventos ni columnas `cross`, `crossover`, `golden_cross` o `death_cross`.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

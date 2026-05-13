@@ -6,7 +6,7 @@
 - Crear flow mock. Completado en Bloque 1.
 - Crear script de conexión/lectura OHLCV desde PostgreSQL. Completado en Bloque 2 como loader read-only.
 - Implementar cálculo real de returns. Completado en Bloque 3 sin persistencia.
-- Implementar cálculo real de trend features.
+- Implementar cálculo real de trend features. Completado en Bloque 4 sin persistencia.
 - Implementar cálculo real de volatility features.
 - Implementar validación sin infinitos.
 - Implementar no-lookahead checks.

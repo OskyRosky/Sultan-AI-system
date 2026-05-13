@@ -27,10 +27,11 @@ from config import (  # noqa: E402
     load_feature_settings,
 )
 from freshness_gate import evaluate_freshness_timestamp, check_ohlcv_freshness as db_freshness_gate  # noqa: E402
-from feature_quality import validate_return_features  # noqa: E402
+from feature_quality import validate_return_features, validate_trend_features  # noqa: E402
 from ohlcv_loader import load_ohlcv_batch_read_only  # noqa: E402
 from ohlcv_validation import validate_ohlcv_dataframe  # noqa: E402
 from returns import calculate_return_features  # noqa: E402
+from trend import calculate_trend_features  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -116,11 +117,22 @@ def validate_returns_features_preview(features_df: pd.DataFrame) -> dict[str, An
 
 
 @task
+def calculate_trend_features_preview(features_df: pd.DataFrame) -> pd.DataFrame:
+    return calculate_trend_features(features_df)
+
+
+@task
+def validate_trend_features_preview(features_df: pd.DataFrame) -> dict[str, Any]:
+    return validate_trend_features(features_df)
+
+
+@task
 def summarize_feature_preview(
     df: pd.DataFrame,
     features_df: pd.DataFrame,
     validation_result: dict[str, Any],
-    feature_quality_result: dict[str, Any],
+    returns_quality_result: dict[str, Any],
+    trend_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
 ) -> dict[str, Any]:
     return {
@@ -131,17 +143,28 @@ def summarize_feature_preview(
         if not df.empty
         else [],
         "validation_passed": validation_result["passed"],
-        "feature_quality_passed": feature_quality_result["passed"],
+        "returns_quality_passed": returns_quality_result["passed"],
+        "trend_quality_passed": trend_quality_result["passed"],
         "freshness_passed": all(item["passed"] for item in freshness_results),
         "return_features_calculated": [
             "simple_return",
             "log_return",
             "close_open_return",
         ],
+        "trend_features_calculated": [
+            "sma_20",
+            "sma_50",
+            "ema_20",
+            "ema_50",
+            "price_above_sma20",
+            "sma20_slope",
+            "ema20_above_ema50",
+        ],
         "ready_for_future_persistence": validation_result["passed"]
-        and feature_quality_result["passed"]
+        and returns_quality_result["passed"]
+        and trend_quality_result["passed"]
         and all(item["passed"] for item in freshness_results),
-        "note": "Returns preview only. No Parquet or PostgreSQL persistence executed.",
+        "note": "Returns and trend preview only. No Parquet or PostgreSQL persistence executed.",
     }
 
 
@@ -150,7 +173,7 @@ def stop_before_persistence(summary: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": "stopped_before_persistence",
         "features_calculated": True,
-        "feature_families": ["returns"],
+        "feature_families": ["returns", "trend"],
         "parquet_written": False,
         "postgres_inserted": False,
         "summary": summary,
@@ -167,12 +190,15 @@ def generate_features_flow(
     ohlcv_df = load_ohlcv_data_read_only(config)
     validation_result = validate_ohlcv_data(ohlcv_df)
     return_features_df = calculate_returns_features_preview(ohlcv_df)
-    feature_quality_result = validate_returns_features_preview(return_features_df)
+    returns_quality_result = validate_returns_features_preview(return_features_df)
+    trend_features_df = calculate_trend_features_preview(return_features_df)
+    trend_quality_result = validate_trend_features_preview(trend_features_df)
     summary = summarize_feature_preview(
         ohlcv_df,
-        return_features_df,
+        trend_features_df,
         validation_result,
-        feature_quality_result,
+        returns_quality_result,
+        trend_quality_result,
         freshness_results,
     )
     stop_result = stop_before_persistence(summary)
@@ -181,7 +207,8 @@ def generate_features_flow(
         "config": config,
         "freshness": freshness_results,
         "validation": validation_result,
-        "feature_quality": feature_quality_result,
+        "returns_quality": returns_quality_result,
+        "trend_quality": trend_quality_result,
         "summary": summary,
         "stop": stop_result,
     }
@@ -192,16 +219,18 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
     base_timestamp = pd.Timestamp.now(tz="UTC").floor("h")
     for symbol in config["symbols"]:
         for timeframe in config["timeframes"]:
-            for offset, close in enumerate([100.5, 102.0, 101.0]):
+            for offset in range(60):
+                open_price = 100.0 + offset
+                close = open_price + (0.5 if offset % 2 == 0 else -0.25)
                 rows.append(
                     {
                         "exchange": "binance",
                         "symbol": symbol,
                         "timeframe": timeframe,
                         "timestamp": base_timestamp + pd.Timedelta(hours=offset),
-                        "open": 100.0 + offset,
-                        "high": max(101.0 + offset, close),
-                        "low": 99.0 + offset,
+                        "open": open_price,
+                        "high": max(open_price, close) + 1.0,
+                        "low": min(open_price, close) - 1.0,
                         "close": close,
                         "volume": 10.0 + offset,
                     }

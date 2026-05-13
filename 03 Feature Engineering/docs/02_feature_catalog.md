@@ -53,6 +53,18 @@ Features:
 
 Miden suavización, dirección y relación del precio frente a medias móviles. Sirven para describir contexto tendencial y persistencia histórica.
 
+Definiciones v1:
+
+- `sma_20`: media móvil simple de `close` sobre 20 periodos.
+- `sma_50`: media móvil simple de `close` sobre 50 periodos.
+- `ema_20`: media móvil exponencial de `close` con span 20 y `adjust=False`.
+- `ema_50`: media móvil exponencial de `close` con span 50 y `adjust=False`.
+- `price_above_sma20`: estado técnico neutral que indica si `close_t > sma_20_t`.
+- `sma20_slope`: `sma_20_t - sma_20_{t-1}`.
+- `ema20_above_ema50`: estado técnico neutral que indica si `ema_20_t > ema_50_t`.
+
+`ema20_above_ema50` no representa señal de trading. No se modelan eventos `cross` o `crossover` en esta etapa.
+
 Limitaciones: son indicadores rezagados, pueden fallar en mercados laterales y no definen por sí mismos una estrategia. No representan señal BUY/SELL.
 
 ## Momentum

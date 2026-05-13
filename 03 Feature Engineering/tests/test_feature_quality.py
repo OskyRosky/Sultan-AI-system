@@ -10,8 +10,9 @@ FEATURES_DIR = Path(__file__).resolve().parents[1] / "features"
 if str(FEATURES_DIR) not in sys.path:
     sys.path.insert(0, str(FEATURES_DIR))
 
-from feature_quality import validate_return_features
+from feature_quality import validate_return_features, validate_trend_features
 from returns import calculate_return_features
+from trend import calculate_trend_features
 
 
 def _feature_dataframe() -> pd.DataFrame:
@@ -100,3 +101,93 @@ def test_missing_feature_set_or_version_fails_quality() -> None:
     assert result["passed"] is False
     assert "feature_set_null_or_empty" in result["errors"]
     assert "feature_version_null_or_empty" in result["errors"]
+
+
+def _trend_feature_dataframe() -> pd.DataFrame:
+    rows = []
+    for index in range(60):
+        close = 100.0 + index
+        rows.append(
+            {
+                "exchange": "binance",
+                "symbol": "BTCUSDT",
+                "timeframe": "1d",
+                "timestamp": pd.Timestamp("2026-01-01T00:00:00Z")
+                + pd.Timedelta(days=index),
+                "open": close - 0.5,
+                "high": close + 1.0,
+                "low": close - 1.0,
+                "close": close,
+                "volume": 10.0 + index,
+            }
+        )
+    return calculate_trend_features(calculate_return_features(pd.DataFrame(rows)))
+
+
+def test_valid_trend_features_pass_quality() -> None:
+    result = validate_trend_features(_trend_feature_dataframe())
+
+    assert result["passed"] is True
+    assert result["status"] == "passed"
+    assert result["errors"] == []
+
+
+def test_missing_trend_column_fails_quality_when_required() -> None:
+    df = _trend_feature_dataframe().drop(columns=["sma_20"])
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "missing_trend_columns=['sma_20']" in result["errors"]
+
+
+def test_infinite_trend_value_fails_quality() -> None:
+    df = _trend_feature_dataframe()
+    df.loc[50, "ema_20"] = np.inf
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "ema_20_contains_infinite" in result["errors"]
+
+
+def test_invalid_price_above_sma20_state_fails_quality() -> None:
+    df = _trend_feature_dataframe()
+    df["price_above_sma20"] = df["price_above_sma20"].astype("object")
+    df.loc[50, "price_above_sma20"] = "BUY"
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "price_above_sma20_invalid_state_values=1" in result["errors"]
+
+
+def test_invalid_ema20_above_ema50_state_fails_quality() -> None:
+    df = _trend_feature_dataframe()
+    df["ema20_above_ema50"] = df["ema20_above_ema50"].astype("object")
+    df.loc[50, "ema20_above_ema50"] = "BULLISH"
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "ema20_above_ema50_invalid_state_values=1" in result["errors"]
+
+
+def test_forbidden_cross_column_fails_quality() -> None:
+    df = _trend_feature_dataframe()
+    df["cross"] = False
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['cross']" in result["errors"]
+
+
+def test_forbidden_crossover_column_fails_quality() -> None:
+    df = _trend_feature_dataframe()
+    df["crossover"] = False
+
+    result = validate_trend_features(df)
+
+    assert result["passed"] is False
+    assert "forbidden_columns=['crossover']" in result["errors"]
