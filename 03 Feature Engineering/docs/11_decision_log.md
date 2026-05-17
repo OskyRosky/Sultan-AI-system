@@ -170,6 +170,20 @@
 - No se crea deployment Prefect todavia.
 - El siguiente paso oficial es `09 Feature Monitoring & Inspection`.
 
+## Bloque 13 - Feature Monitoring & Inspection
+
+- Se crea capa v1 de vistas SQL read-only para inspeccion operativa.
+- Las vistas se crean en PostgreSQL local `sultan_ai`.
+- `vw_feature_latest_runs` muestra ultimos runs y score.
+- `vw_feature_quality_latest` muestra checks recientes.
+- `vw_feature_storage_summary` resume cobertura por `exchange/symbol/timeframe`.
+- `vw_feature_duplicate_check` detecta duplicados por unique key.
+- `vw_feature_null_summary` resume nulls en columnas tecnicas clave.
+- `vw_feature_latest_by_symbol_timeframe` muestra ultimo timestamp almacenado por slice.
+- DBeaver queda como herramienta manual de inspeccion v1.
+- No se agrega Grafana ni alerting automatico en este bloque.
+- El siguiente paso recomendado es Feature Closure.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

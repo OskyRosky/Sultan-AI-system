@@ -1,36 +1,53 @@
 # Feature Monitoring and Inspection
 
-## Propósito
+## Proposito
 
-La inspección operativa debe permitir revisar que cada ejecución de features sea completa, trazable y consistente con OHLCV fuente.
+La inspeccion operativa permite revisar que cada ejecucion de features sea completa, trazable y consistente con OHLCV fuente.
 
-## Elementos esperados
+## Objetos Operativos
 
-- Tabla `feature_runs`.
-- Tabla `feature_quality_checks`.
-- Tabla `ohlcv_features`.
-- Vistas operativas futuras para inspección en DBeaver.
-- Reportes locales por ejecución.
+Tablas:
 
-## Métricas mínimas
+- `feature_runs`
+- `feature_quality_checks`
+- `ohlcv_features`
 
-- Estado de ejecución.
-- Símbolos procesados.
-- Timeframes procesados.
-- Filas cargadas.
-- Filas generadas.
-- Filas validadas.
-- Filas insertadas.
-- Nulls encontrados.
-- Infinitos encontrados.
-- Duplicados encontrados.
-- Violaciones de lookahead.
-- `data_quality_score`.
+Vistas:
 
-## DBeaver
+- `vw_feature_latest_runs`
+- `vw_feature_quality_latest`
+- `vw_feature_storage_summary`
+- `vw_feature_duplicate_check`
+- `vw_feature_null_summary`
+- `vw_feature_latest_by_symbol_timeframe`
 
-DBeaver se usará para inspección manual de tablas y vistas. La capa v1 prioriza una tabla ancha para facilitar lectura y comparación directa de columnas.
+## Uso en DBeaver
 
-## Restricción
+Abrir la conexion local a `sultan_ai` y revisar `public -> Views`.
 
-Las vistas operativas se crearán en bloques posteriores. Bloque 1 solo deja propuesta SQL inicial.
+Queries recomendadas:
+
+```sql
+SELECT * FROM vw_feature_latest_runs LIMIT 10;
+SELECT * FROM vw_feature_quality_latest LIMIT 20;
+SELECT * FROM vw_feature_storage_summary;
+SELECT * FROM vw_feature_duplicate_check LIMIT 20;
+SELECT * FROM vw_feature_null_summary;
+SELECT * FROM vw_feature_latest_by_symbol_timeframe;
+```
+
+## Checks Minimos
+
+- Ultimo run `passed`.
+- `data_quality_score` presente.
+- Quality checks sin fallos.
+- `ohlcv_features` con filas por symbol/timeframe esperado.
+- `vw_feature_duplicate_check` sin filas.
+- Nulls consistentes con warm-up.
+- `latest_run_id` coherente con el ultimo upsert.
+
+## Estado Actual
+
+Bloque 13 crea y valida la capa v1 de vistas read-only para inspeccion manual.
+
+No hay Grafana ni alertas automaticas todavia.

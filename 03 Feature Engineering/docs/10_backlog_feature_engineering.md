@@ -24,11 +24,11 @@
 - Verificar idempotencia PostgreSQL. Completado en Bloque 11C sin duplicados por unique key.
 - Estabilizar y documentar Feature Storage. Completado en Bloque 11D.
 - Implementar Feature Orchestration real. Completado en Bloque 12 con storage opcional y guards.
+- Crear vistas operativas de Feature Monitoring. Completado en Bloque 13.
+- Validar inspeccion en PostgreSQL/DBeaver. Completado en Bloque 13 con vistas `vw_feature_*`.
 - Implementar no-lookahead checks.
 - Integrar guardado Parquet al pipeline controlado.
-- Implementar Monitoring & Inspection.
 - Ejecutar Feature Closure final.
-- Crear vistas operativas.
 - Ver features en DBeaver.
 
 ## Media prioridad
