@@ -186,6 +186,18 @@ def test_invalid_ema20_above_ema50_state_fails_quality() -> None:
     assert "ema20_above_ema50_invalid_state_values=1" in result["errors"]
 
 
+def test_ema_nan_is_reported_only_when_close_is_available() -> None:
+    df = _trend_feature_dataframe()
+    df.loc[10, "close"] = np.nan
+    df.loc[10, "ema_20"] = np.nan
+    df.loc[11, "ema_50"] = np.nan
+
+    result = validate_trend_features(df)
+
+    assert "ema_20_unexpected_nan=1" not in result["errors"]
+    assert "ema_50_unexpected_nan=1" in result["errors"]
+
+
 def test_forbidden_cross_column_fails_quality() -> None:
     df = _trend_feature_dataframe()
     df["cross"] = False
@@ -396,6 +408,18 @@ def test_forbidden_macd_signal_cross_column_fails_quality() -> None:
 
     assert result["passed"] is False
     assert "forbidden_columns=['macd_signal_cross']" in result["errors"]
+
+
+def test_macd_nan_is_reported_only_when_close_is_available() -> None:
+    df = _momentum_feature_dataframe()
+    df.loc[10, "close"] = np.nan
+    df.loc[10, "macd"] = np.nan
+    df.loc[11, "macd_signal"] = np.nan
+
+    result = validate_momentum_features(df)
+
+    assert "macd_unexpected_nan=1" not in result["errors"]
+    assert "macd_signal_unexpected_nan=1" in result["errors"]
 
 
 def _breakout_context_feature_dataframe() -> pd.DataFrame:

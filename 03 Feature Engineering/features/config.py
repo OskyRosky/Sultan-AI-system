@@ -18,6 +18,7 @@ except ImportError:
 
 FEATURE_ENGINEERING_DIR = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = FEATURE_ENGINEERING_DIR.parent
+DATA_FEATURES_DIR = PROJECT_ROOT / "data" / "features"
 LOCAL_ENV_FILE = FEATURE_ENGINEERING_DIR / ".env"
 DATA_PLATFORM_ENV_FILE = PROJECT_ROOT / "02 Data Platform" / ".env"
 

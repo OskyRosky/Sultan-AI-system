@@ -15,8 +15,10 @@
 - Implementar validación sin infinitos. Avanzado en Bloque 10 con validación integrada cross-family.
 - Implementar validación integral del catálogo técnico v1. Completado en Bloque 10 sin persistencia.
 - Implementar readiness para storage. Completado en Bloque 10 como gate lógico sin persistencia.
+- Definir contrato de columnas storage. Completado en Bloque 11A.
+- Implementar Parquet writer local controlado. Completado en Bloque 11A con tests `tmp_path`.
 - Implementar no-lookahead checks.
-- Guardar features Parquet.
+- Integrar guardado Parquet al pipeline controlado.
 - Insertar features PostgreSQL.
 - Crear vistas operativas.
 - Ver features en DBeaver.

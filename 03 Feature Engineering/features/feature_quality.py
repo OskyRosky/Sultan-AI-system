@@ -530,6 +530,7 @@ def _validate_trend_nans(
 ) -> None:
     sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
     group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+    close_available = sorted_df["close"].notna()
 
     unexpected_sma20_nan = sorted_df["sma_20"].isna() & group_index.ge(19)
     unexpected_sma50_nan = sorted_df["sma_50"].isna() & group_index.ge(49)
@@ -537,8 +538,8 @@ def _validate_trend_nans(
     unexpected_price_state_nan = (
         sorted_df["price_above_sma20"].isna() & sorted_df["sma_20"].notna()
     )
-    unexpected_ema20_nan = sorted_df["ema_20"].isna()
-    unexpected_ema50_nan = sorted_df["ema_50"].isna()
+    unexpected_ema20_nan = sorted_df["ema_20"].isna() & close_available
+    unexpected_ema50_nan = sorted_df["ema_50"].isna() & close_available
 
     if unexpected_sma20_nan.any():
         errors.append(f"sma_20_unexpected_nan={int(unexpected_sma20_nan.sum())}")
@@ -604,10 +605,11 @@ def _validate_momentum_nans(
 ) -> None:
     sorted_df = df.sort_values(["exchange", "symbol", "timeframe", "timestamp"]).copy()
     group_index = sorted_df.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+    close_available = sorted_df["close"].notna()
 
     unexpected_rsi_nan = sorted_df["rsi_14"].isna() & group_index.ge(14)
-    unexpected_macd_nan = sorted_df["macd"].isna()
-    unexpected_macd_signal_nan = sorted_df["macd_signal"].isna()
+    unexpected_macd_nan = sorted_df["macd"].isna() & close_available
+    unexpected_macd_signal_nan = sorted_df["macd_signal"].isna() & close_available
 
     if unexpected_rsi_nan.any():
         errors.append(f"rsi_14_unexpected_nan={int(unexpected_rsi_nan.sum())}")
@@ -650,7 +652,7 @@ def _validate_breakout_context_nans(
         if lookback is None:
             errors.append(f"unsupported_timeframe_for_close_vs_high_52w={timeframe}")
             continue
-        local_index = group.groupby(["exchange", "symbol", "timeframe"], sort=False).cumcount()
+        local_index = pd.Series(np.arange(len(group)), index=group.index)
         warmup_mask = local_index.lt(lookback - 1)
         warmup_rows += int(warmup_mask.sum())
         unexpected_nan = close_vs_high_nan.loc[group.index] & ~warmup_mask

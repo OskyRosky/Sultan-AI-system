@@ -62,7 +62,7 @@ def load_ohlcv_read_only(
         query_parts.append("AND timestamp <= %s")
         params.append(end_timestamp)
 
-    query_parts.append("ORDER BY symbol, timeframe, timestamp")
+    query_parts.append("ORDER BY exchange, symbol, timeframe, timestamp")
     if limit is not None:
         safe_limit = int(limit)
         if safe_limit <= 0:

@@ -162,6 +162,30 @@ def test_data_quality_score_between_0_and_1() -> None:
     assert 0.0 <= result["data_quality_score"] <= 1.0
 
 
+def test_data_quality_score_is_1_for_clean_dataset_with_expected_warmup() -> None:
+    result = validate_integrated_feature_dataset(_integrated_feature_dataframe())
+
+    assert result["warnings"] == ["all_null_feature_columns=['close_vs_high_52w']"]
+    assert result["data_quality_score"] == 1.0
+
+
+def test_data_quality_score_with_blocking_error_is_capped_at_0_5() -> None:
+    df = _integrated_feature_dataframe().drop(columns=["macd"])
+
+    result = validate_integrated_feature_dataset(df)
+
+    assert result["blocking_errors"]
+    assert result["data_quality_score"] <= 0.5
+
+
+def test_ready_for_storage_false_when_score_is_capped_by_blocking_error() -> None:
+    df = _integrated_feature_dataframe().drop(columns=["macd"])
+
+    result = validate_integrated_feature_dataset(df)
+
+    assert result["ready_for_storage"] is False
+
+
 def test_family_summary_contains_all_families() -> None:
     result = validate_integrated_feature_dataset(_integrated_feature_dataframe())
 

@@ -384,6 +384,7 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
     base_timestamp = pd.Timestamp.now(tz="UTC").floor("h")
     for symbol in config["symbols"]:
         for timeframe in config["timeframes"]:
+            timeframe_delta = _mock_timeframe_delta(timeframe)
             for offset in range(80):
                 open_price = 100.0 + offset
                 close = open_price + (0.5 if offset % 2 == 0 else -0.25)
@@ -392,7 +393,7 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
                         "exchange": "binance",
                         "symbol": symbol,
                         "timeframe": timeframe,
-                        "timestamp": base_timestamp + pd.Timedelta(hours=offset),
+                        "timestamp": base_timestamp + offset * timeframe_delta,
                         "open": open_price,
                         "high": max(open_price, close) + 1.0,
                         "low": min(open_price, close) - 1.0,
@@ -401,6 +402,14 @@ def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:
                     }
                 )
     return pd.DataFrame(rows).sort_values(["symbol", "timeframe", "timestamp"])
+
+
+def _mock_timeframe_delta(timeframe: str) -> pd.Timedelta:
+    if timeframe == "1d":
+        return pd.Timedelta(days=1)
+    if timeframe == "4h":
+        return pd.Timedelta(hours=4)
+    raise ValueError(f"Unsupported mock OHLCV timeframe: {timeframe}")
 
 
 if __name__ == "__main__":

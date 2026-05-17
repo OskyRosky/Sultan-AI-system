@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from typing import Any, Callable
 
 import numpy as np
@@ -59,6 +60,33 @@ EXPECTED_FEATURE_COLUMNS = [
 ]
 
 EXPECTED_COLUMNS = BASE_METADATA_COLUMNS + EXPECTED_FEATURE_COLUMNS
+
+STRUCTURAL_WARMUP_ALL_NULL_COLUMNS = {
+    "simple_return",
+    "log_return",
+    "sma_20",
+    "sma_50",
+    "price_above_sma20",
+    "sma20_slope",
+    "rolling_std_20",
+    "volatility_20",
+    "atr_14",
+    "rsi_14",
+    "close_vs_high_52w",
+    "rolling_max_20",
+    "rolling_min_20",
+    "volume_change",
+    "volume_sma_20",
+    "volume_ratio_20",
+}
+
+STRUCTURAL_WARMUP_WARNING_PREFIXES = (
+    "trend_warmup_rows=",
+    "volatility_warmup_rows=",
+    "momentum_warmup_rows=",
+    "breakout_context_warmup_rows=",
+    "volume_warmup_rows=",
+)
 
 FAMILY_VALIDATORS: dict[str, Callable[[pd.DataFrame], dict[str, Any]]] = {
     "returns": validate_return_features,
@@ -281,11 +309,35 @@ def _calculate_data_quality_score(
     duplicate_count: int,
     infinite_count: int,
 ) -> float:
+    penalized_warnings = [
+        warning for warning in warnings if not _is_structural_warmup_warning(warning)
+    ]
     score = 1.0
     score -= min(0.30, 0.03 * len(missing_columns))
     score -= 0.10 if duplicate_count else 0.0
     score -= 0.10 if infinite_count else 0.0
-    score -= min(0.30, 0.03 * len(warnings))
+    score -= min(0.30, 0.03 * len(penalized_warnings))
     if blocking_errors:
         score = min(score, 0.50)
     return round(float(max(0.0, min(1.0, score))), 4)
+
+
+def _is_structural_warmup_warning(warning: str) -> bool:
+    if warning.startswith(STRUCTURAL_WARMUP_WARNING_PREFIXES):
+        return True
+
+    prefix = "all_null_feature_columns="
+    if not warning.startswith(prefix):
+        return False
+
+    try:
+        columns = ast.literal_eval(warning.removeprefix(prefix))
+    except (SyntaxError, ValueError):
+        return False
+
+    if not isinstance(columns, list):
+        return False
+
+    return bool(columns) and all(
+        column in STRUCTURAL_WARMUP_ALL_NULL_COLUMNS for column in columns
+    )

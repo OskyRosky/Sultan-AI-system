@@ -9,7 +9,6 @@ Feature Quality valida que las features generadas sean estructuralmente correcta
 - No duplicados por clave lógica.
 - No infinitos.
 - `timestamp` no nulo.
-- `run_id` no nulo.
 - `feature_set` no nulo.
 - `feature_version` no nulo.
 - Nulls permitidos solo por warm-up period.
@@ -54,3 +53,28 @@ La validación integrada consolida:
 - `ready_for_storage` como gate previo a persistencia futura.
 
 `ready_for_storage` no escribe datos. Solo indica que el preview calculado está apto para que un bloque posterior persista features en Parquet y PostgreSQL.
+
+## Preview schema vs storage schema
+
+`integrated_feature_quality` valida el dataset preview calculado en memoria. Ese preview incluye:
+
+- Campos base OHLCV: `exchange`, `symbol`, `timeframe`, `timestamp`, `open`, `high`, `low`, `close`, `volume`.
+- Metadata de catálogo: `feature_set`, `feature_version`.
+- Las 27 features técnicas de `technical_v1`.
+
+El storage schema futuro agregará columnas de trazabilidad propias del write path, por ejemplo:
+
+- `run_id`
+- `validated_at`
+- `data_quality_score`
+- `created_at` / `updated_at`, si se define en `07 Feature Storage`
+
+Esas columnas no pertenecen al cálculo preview y no deben exigirse en el schema preview. `ready_for_storage` será el gate booleano que permita o bloquee la escritura futura, pero la escritura no se implementa en este bloque.
+
+## data_quality_score v1
+
+`data_quality_score` es una métrica auxiliar entre 0 y 1. Los warnings estructurales de warm-up esperado no penalizan el score de un dataset limpio. Los warnings reales no estructurales sí pueden penalizarlo.
+
+Los errores bloqueantes, columnas faltantes, duplicados, infinitos y columnas prohibidas siguen afectando el resultado. Si existen `blocking_errors`, el score queda limitado a un máximo de `0.5`.
+
+`ready_for_storage` no depende únicamente del score. Sigue siendo un gate booleano basado en ausencia de errores bloqueantes, columnas faltantes, columnas prohibidas, duplicados e infinitos.

@@ -98,6 +98,30 @@
 - Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no auditoría real.
 - Se mantiene la prohibición de señales, estrategias y backtesting.
 
+## Bloque 10.1 - Pre-Storage Review Fixes
+
+- Se aplican correcciones puntuales previas a `07 Feature Storage` sin agregar features nuevas.
+- `data_quality_score` no penaliza warnings estructurales de warm-up esperado en datasets limpios.
+- Los warnings reales no estructurales, missing columns, duplicados, infinitos, columnas prohibidas y errores bloqueantes siguen afectando quality.
+- Si existen `blocking_errors`, `data_quality_score` queda limitado a un máximo de `0.5`.
+- `ready_for_storage` se mantiene como gate booleano y no depende únicamente del score.
+- Se documenta la diferencia entre preview schema y storage schema: el preview contiene base OHLCV, metadata de catálogo y 27 features; el storage futuro agregará trazabilidad como `run_id`, `validated_at`, `data_quality_score` y potencialmente `created_at` / `updated_at`.
+- Las columnas de trazabilidad pertenecen al write path/storage futuro, no al cálculo preview.
+- Se refinan diagnósticos de NaN en EMA/MACD para no duplicar errores cuando el origen es `close` faltante.
+- Se corrige el mock OHLCV para usar delta de `1d` o `4h` según timeframe en modo `read_from_db=False`.
+- Se mantiene la etapa sin persistencia: no Parquet, no PostgreSQL, no SQL, no tablas.
+
+## Bloque 11A - Storage Contract + Parquet Writer
+
+- Se implementa `07 Feature Storage` solo para contrato storage y writer Parquet local.
+- PostgreSQL queda fuera de 11A; no se ejecuta SQL, no se crean tablas, no se insertan filas y no se implementa upsert.
+- El storage schema excluye columnas OHLCV crudas: `open`, `high`, `low`, `close` y `volume`.
+- El storage schema agrega trazabilidad por fila: `run_id`, `created_at`, `validated_at` y `data_quality_score`.
+- `ready_for_storage` es gate obligatorio antes de preparar el DataFrame de storage.
+- Parquet se escribe con un archivo por `symbol/timeframe/run_id`.
+- La ruta definida es `data/features/{feature_set}/{feature_version}/{symbol}/{timeframe}/features_{run_id}.parquet`.
+- Los tests del bloque usan `tmp_path` y no escriben datos reales.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
