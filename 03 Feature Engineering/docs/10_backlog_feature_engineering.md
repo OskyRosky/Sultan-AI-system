@@ -26,9 +26,9 @@
 - Implementar Feature Orchestration real. Completado en Bloque 12 con storage opcional y guards.
 - Crear vistas operativas de Feature Monitoring. Completado en Bloque 13.
 - Validar inspeccion en PostgreSQL/DBeaver. Completado en Bloque 13 con vistas `vw_feature_*`.
+- Ejecutar Feature Closure final. Completado en Bloque 14.
 - Implementar no-lookahead checks.
 - Integrar guardado Parquet al pipeline controlado.
-- Ejecutar Feature Closure final.
 - Ver features en DBeaver.
 
 ## Media prioridad

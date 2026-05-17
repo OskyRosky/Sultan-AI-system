@@ -8,16 +8,17 @@ Esta etapa parte de la salida validada de 02 Data Platform v1 y prepara una capa
 
 ## Alcance
 
-Incluye:
+Incluye, completado en v1:
 
 - Diseño de arquitectura de features.
 - Catálogo técnico v1.
 - Contratos de datos.
 - Versionado de features.
-- Motor de cálculo futuro.
+- Motor de cálculo real con 27 features técnicas.
 - Validación de calidad.
-- Propuesta de almacenamiento en Parquet y PostgreSQL.
-- Orquestación mock/no-op inicial.
+- Almacenamiento Parquet y PostgreSQL.
+- Orquestación real controlada.
+- Vistas operativas para inspección en DBeaver.
 - Documentación operativa.
 
 No incluye:
@@ -42,6 +43,18 @@ OHLCV validado
 -> inspección en DBeaver
 -> base lista para Research + Estrategias
 ```
+
+## Estado v1
+
+`03 Feature Engineering` queda cerrada para `technical_v1 / 1.0.0`.
+
+El cierre formal se documenta en:
+
+```text
+docs/99_feature_engineering_v1_closure.md
+```
+
+Siguiente etapa recomendada: `04 Research Layer`, una vez que esta etapa este commiteada y limpia.
 
 ## Principios
 

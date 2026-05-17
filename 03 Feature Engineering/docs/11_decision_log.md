@@ -184,6 +184,16 @@
 - No se agrega Grafana ni alerting automatico en este bloque.
 - El siguiente paso recomendado es Feature Closure.
 
+## Bloque 14 - Feature Engineering v1 Closure
+
+- Se cierra formalmente `03 Feature Engineering` para `technical_v1 / 1.0.0`.
+- Se documentan alcance, artefactos, quality gates, storage, orchestration, monitoring, smoke test y limitaciones.
+- Se confirma que la etapa no incluye senales, estrategias ni backtesting.
+- Se confirma que Storage v1 funciona con Parquet y PostgreSQL.
+- Se confirma que Monitoring v1 funciona mediante vistas SQL y DBeaver.
+- Se recomienda avanzar a `04 Research Layer`.
+- No se debe iniciar research/backtesting hasta que `03 Feature Engineering` este commiteado y limpio.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
