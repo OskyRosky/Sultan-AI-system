@@ -17,9 +17,11 @@
 - Implementar readiness para storage. Completado en Bloque 10 como gate lógico sin persistencia.
 - Definir contrato de columnas storage. Completado en Bloque 11A.
 - Implementar Parquet writer local controlado. Completado en Bloque 11A con tests `tmp_path`.
+- Preparar PostgreSQL write path. Completado en Bloque 11B con tests mock, sin DB real.
+- Preparar SQL readiness de índices storage. Completado en Bloque 11B como SQL declarativo.
 - Implementar no-lookahead checks.
 - Integrar guardado Parquet al pipeline controlado.
-- Insertar features PostgreSQL.
+- Ejecutar DDL controlado y smoke test real PostgreSQL.
 - Crear vistas operativas.
 - Ver features en DBeaver.
 

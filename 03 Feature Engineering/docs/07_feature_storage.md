@@ -29,6 +29,25 @@ Cada feature será una columna. No se usará formato long/key-value en v1.
 - Unique key por `exchange + symbol + timeframe + timestamp + feature_set + feature_version`.
 - Índices útiles por `symbol`, `timeframe` y `timestamp`.
 
+## PostgreSQL Write Path
+
+El write path debe respetar el orden impuesto por FK:
+
+1. Insertar `feature_runs` con `status = running`.
+2. Evaluar `ready_for_storage`.
+3. Si el gate falla, insertar `feature_quality_checks`, cerrar el run como `failed` y no escribir `ohlcv_features`.
+4. Si el gate pasa, hacer upsert en `ohlcv_features`, insertar `feature_quality_checks` y cerrar el run como `passed`.
+
+El upsert de `ohlcv_features` usa la llave:
+
+```text
+exchange + symbol + timeframe + timestamp + feature_set + feature_version
+```
+
+En conflicto se actualizan `run_id`, `validated_at`, `data_quality_score` y las 27 features. `created_at` no se sobrescribe.
+
+Bloque 11B prepara el código de escritura PostgreSQL y SQL readiness, pero no ejecuta DDL ni escribe contra una base real.
+
 ## Frontera preview vs storage
 
 El dataset preview validado por `06 Feature Quality` contiene campos base OHLCV, `feature_set`, `feature_version` y las 27 features técnicas de `technical_v1`.

@@ -122,6 +122,18 @@
 - La ruta definida es `data/features/{feature_set}/{feature_version}/{symbol}/{timeframe}/features_{run_id}.parquet`.
 - Los tests del bloque usan `tmp_path` y no escriben datos reales.
 
+## Bloque 11B - PostgreSQL Write Path + DDL Readiness
+
+- Se implementa el write path PostgreSQL como helpers testeables, sin abrir conexiones reales.
+- No se ejecuta DDL, no se crean tablas y no se insertan datos reales en PostgreSQL.
+- `ready_for_storage` es gate obligatorio antes del upsert de `ohlcv_features`.
+- `feature_runs` se inserta antes de `ohlcv_features` para respetar la FK `run_id`.
+- Si `ready_for_storage = False`, se registran quality checks, se cierra el run como `failed` y no se ejecuta upsert.
+- Si `ready_for_storage = True`, se ejecuta upsert, se registran quality checks y se cierra el run como `passed`.
+- El upsert usa la llave `exchange + symbol + timeframe + timestamp + feature_set + feature_version`.
+- `created_at` no se sobrescribe en conflicto; conserva la primera creacion de la fila.
+- Se agrega SQL declarativo para `idx_ohlcv_features_set_version`; su ejecucion queda para un paso controlado posterior.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
