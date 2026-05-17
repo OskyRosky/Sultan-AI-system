@@ -27,9 +27,9 @@
 - Crear vistas operativas de Feature Monitoring. Completado en Bloque 13.
 - Validar inspeccion en PostgreSQL/DBeaver. Completado en Bloque 13 con vistas `vw_feature_*`.
 - Ejecutar Feature Closure final. Completado en Bloque 14.
-- Implementar no-lookahead checks.
-- Integrar guardado Parquet al pipeline controlado.
-- Ver features en DBeaver.
+- Implementar no-lookahead checks. Completado en v1 mediante diseño de cálculo y validaciones de quality.
+- Integrar guardado Parquet al pipeline controlado. Completado en Bloque 12 con `enable_storage`.
+- Ver features en DBeaver. Completado en Bloque 13 con vistas `vw_feature_*`.
 
 ## Media prioridad
 
