@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
+import pytest
 
 FEATURES_DIR = Path(__file__).resolve().parents[1] / "features"
 if str(FEATURES_DIR) not in sys.path:
@@ -64,7 +65,7 @@ def _preview_features_df() -> pd.DataFrame:
             "feature_version": "1.0.0",
         }
         for feature_index, column in enumerate(STORAGE_FEATURE_COLUMNS):
-            row[column] = float(index + feature_index)
+            row[column] = 1.0 if column in {"price_above_sma20", "ema20_above_ema50"} else float(index + feature_index)
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -192,6 +193,56 @@ def test_dataframe_records_convert_timestamps() -> None:
 
     assert records[0]["timestamp"].tzinfo is not None
     assert records[0]["timestamp"].isoformat() == "2026-05-17T12:00:00+00:00"
+
+
+def test_dataframe_records_boolean_columns_convert_float_to_bool() -> None:
+    records = dataframe_records_for_postgres(
+        pd.DataFrame(
+            {
+                "price_above_sma20": [1.0, 0.0],
+                "ema20_above_ema50": [0.0, 1.0],
+            }
+        )
+    )
+
+    assert records == [
+        {"price_above_sma20": True, "ema20_above_ema50": False},
+        {"price_above_sma20": False, "ema20_above_ema50": True},
+    ]
+
+
+def test_dataframe_records_boolean_columns_preserve_bool() -> None:
+    records = dataframe_records_for_postgres(
+        pd.DataFrame(
+            {
+                "price_above_sma20": [True],
+                "ema20_above_ema50": [False],
+            }
+        )
+    )
+
+    assert records == [{"price_above_sma20": True, "ema20_above_ema50": False}]
+
+
+def test_dataframe_records_boolean_columns_convert_nulls_to_none() -> None:
+    records = dataframe_records_for_postgres(
+        pd.DataFrame(
+            {
+                "price_above_sma20": [np.nan, None],
+                "ema20_above_ema50": [None, pd.NA],
+            }
+        )
+    )
+
+    assert records == [
+        {"price_above_sma20": None, "ema20_above_ema50": None},
+        {"price_above_sma20": None, "ema20_above_ema50": None},
+    ]
+
+
+def test_dataframe_records_boolean_columns_raise_for_invalid_value() -> None:
+    with pytest.raises(ValueError, match="invalid_boolean_value_for_price_above_sma20"):
+        dataframe_records_for_postgres(pd.DataFrame({"price_above_sma20": [2.0]}))
 
 
 def test_store_features_postgres_skips_upsert_when_ready_for_storage_false(

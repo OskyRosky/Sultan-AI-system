@@ -134,6 +134,42 @@
 - `created_at` no se sobrescribe en conflicto; conserva la primera creacion de la fila.
 - Se agrega SQL declarativo para `idx_ohlcv_features_set_version`; su ejecucion queda para un paso controlado posterior.
 
+## Bloque 11C - DDL Controlado + Smoke Test Real
+
+- Se ejecuta DDL controlado en PostgreSQL local `sultan_ai`.
+- Se crean/verifican `feature_runs`, `feature_quality_checks` y `ohlcv_features`.
+- Se crea/verifica `idx_ohlcv_features_set_version`.
+- Se confirma FK `ohlcv_features.run_id -> feature_runs.run_id`.
+- Se confirma unique key de `ohlcv_features`: `exchange + symbol + timeframe + timestamp + feature_set + feature_version`.
+- Se ejecuta smoke test real con slice pequeno: `BTCUSDT`, `1d`, 200 filas.
+- Smoke test exitoso: `run_id = aa3a9f39-1206-457b-b13e-4d7f704cd432`, `rows_inserted = 200`, `data_quality_score = 1.0`.
+- Re-run exitoso: `run_id = 9438175f-2c9c-4e1c-b05c-5f02abc26d3e`.
+- Idempotencia verificada: `ohlcv_features` queda en 200 filas y duplicados por unique key = 0.
+- `run_id` en `ohlcv_features` refleja el ultimo run que escribio/actualizo la fila.
+- Se detecta bug booleano en `ema20_above_ema50` y se corrige en el write path.
+
+## Bloque 11D - Feature Storage Stabilization
+
+- Se formaliza la ruta Parquet: `data/features/{feature_set}/{feature_version}/{symbol}/{timeframe}/features_{run_id}.parquet`.
+- Se confirma que `open`, `high`, `low`, `close` y `volume` quedan excluidos de Feature Storage.
+- PostgreSQL usa `ohlcv_features` como tabla ancha de features v1.
+- El upsert conserva `created_at` en conflicto y actualiza `run_id`, `validated_at`, `data_quality_score` y features.
+- El smoke script `mockups/smoke_test_feature_storage_postgres.py` queda como herramienta manual/controlada, no como pytest.
+- El bug booleano queda documentado y cubierto por tests: `price_above_sma20` y `ema20_above_ema50` se normalizan antes de PostgreSQL.
+- El siguiente paso oficial es `08 Feature Orchestration`.
+
+## Bloque 12 - Feature Orchestration Real Controlled Flow
+
+- `generate_features_flow` pasa a ser un flow real controlado.
+- `read_from_db=True` es el modo real por defecto.
+- `enable_storage=False` queda como default seguro; por defecto no se escribe Parquet ni PostgreSQL.
+- Full history queda bloqueado si `limit is None` y `allow_full_history=False`.
+- Storage requiere `read_from_db=True`.
+- Storage solo se ejecuta si `ready_for_storage=True`.
+- Parquet y PostgreSQL se habilitan por flags separados: `enable_parquet` y `enable_postgres`.
+- No se crea deployment Prefect todavia.
+- El siguiente paso oficial es `09 Feature Monitoring & Inspection`.
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

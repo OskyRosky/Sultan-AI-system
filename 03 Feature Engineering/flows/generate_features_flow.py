@@ -1,7 +1,7 @@
-"""Preview flow for 03 Feature Engineering read-only OHLCV readiness.
+"""Controlled flow for 03 Feature Engineering feature generation.
 
-Default execution is safe: read_from_db=False uses mock OHLCV rows. Setting
-read_from_db=True performs SELECT-only reads and freshness checks.
+Default execution is safe: read_from_db=True calculates and validates features,
+but enable_storage=False prevents Parquet and PostgreSQL writes.
 """
 
 from __future__ import annotations
@@ -20,10 +20,12 @@ if str(FEATURES_DIR) not in sys.path:
     sys.path.insert(0, str(FEATURES_DIR))
 
 from config import (  # noqa: E402
+    DATA_FEATURES_DIR,
     DEFAULT_SYMBOLS,
     DEFAULT_TIMEFRAMES,
     FEATURE_SET,
     FEATURE_VERSION,
+    build_postgres_dsn,
     load_feature_settings,
 )
 from freshness_gate import evaluate_freshness_timestamp, check_ohlcv_freshness as db_freshness_gate  # noqa: E402
@@ -46,6 +48,9 @@ from breakout_context import calculate_breakout_context_features  # noqa: E402
 from volume import calculate_volume_features  # noqa: E402
 from candle_structure import calculate_candle_structure_features  # noqa: E402
 from integrated_feature_quality import validate_integrated_feature_dataset  # noqa: E402
+from feature_storage_contract import prepare_features_for_storage  # noqa: E402
+from feature_storage_db import build_insert_feature_run_payload, store_features_postgres  # noqa: E402
+from feature_storage_parquet import write_features_parquet  # noqa: E402
 
 try:
     from prefect import flow, task
@@ -65,25 +70,52 @@ except ImportError:
 
 
 @task
-def load_feature_config(read_from_db: bool = False, limit: int = 1000) -> dict[str, Any]:
+def load_feature_config(
+    symbols: list[str] | None = None,
+    timeframes: list[str] | None = None,
+    limit: int | None = 1000,
+    read_from_db: bool = True,
+    enable_storage: bool = False,
+    enable_parquet: bool = True,
+    enable_postgres: bool = True,
+    require_freshness: bool = True,
+    allow_full_history: bool = False,
+) -> dict[str, Any]:
     settings = load_feature_settings()
+    selected_symbols = list(symbols or settings.default_symbols or DEFAULT_SYMBOLS)
+    selected_timeframes = list(
+        timeframes or settings.default_timeframes or DEFAULT_TIMEFRAMES
+    )
+    _validate_flow_controls(
+        read_from_db=read_from_db,
+        enable_storage=enable_storage,
+        limit=limit,
+        allow_full_history=allow_full_history,
+    )
     return {
         "run_id": str(uuid4()),
         "flow_name": "generate_features_flow",
         "feature_set": FEATURE_SET,
         "feature_version": FEATURE_VERSION,
-        "symbols": list(settings.default_symbols or DEFAULT_SYMBOLS),
-        "timeframes": list(settings.default_timeframes or DEFAULT_TIMEFRAMES),
+        "symbols": selected_symbols,
+        "timeframes": selected_timeframes,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "mode": "read_only_preview",
+        "mode": "controlled_storage" if enable_storage else "controlled_preview",
         "read_from_db": read_from_db,
         "limit": limit,
+        "enable_storage": enable_storage,
+        "enable_parquet": enable_parquet,
+        "enable_postgres": enable_postgres,
+        "require_freshness": require_freshness,
+        "allow_full_history": allow_full_history,
         "ohlcv_table": settings.ohlcv_table,
     }
 
 
 @task
 def check_ohlcv_freshness(config: dict[str, Any]) -> list[dict[str, Any]]:
+    if not config["require_freshness"]:
+        return []
     if config["read_from_db"]:
         return [
             db_freshness_gate(symbol=symbol, timeframe=timeframe).to_dict()
@@ -211,7 +243,13 @@ def summarize_feature_preview(
     candle_structure_quality_result: dict[str, Any],
     integrated_quality_result: dict[str, Any],
     freshness_results: list[dict[str, Any]],
+    config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    freshness_passed = (
+        all(item["passed"] for item in freshness_results)
+        if freshness_results
+        else True
+    )
     return {
         "rows_loaded": int(len(df)),
         "rows_with_return_features": int(len(features_df)),
@@ -234,7 +272,10 @@ def summarize_feature_preview(
         "integrated_data_quality_score": integrated_quality_result[
             "data_quality_score"
         ],
-        "freshness_passed": all(item["passed"] for item in freshness_results),
+        "freshness_passed": freshness_passed,
+        "enable_storage": bool(config.get("enable_storage")) if config else False,
+        "enable_parquet": bool(config.get("enable_parquet")) if config else False,
+        "enable_postgres": bool(config.get("enable_postgres")) if config else False,
         "return_features_calculated": [
             "simple_return",
             "log_return",
@@ -285,8 +326,12 @@ def summarize_feature_preview(
         and volume_quality_result["passed"]
         and candle_structure_quality_result["passed"]
         and integrated_quality_result["ready_for_storage"]
-        and all(item["passed"] for item in freshness_results),
-        "note": "Feature preview only. No Parquet or PostgreSQL persistence executed.",
+        and freshness_passed,
+        "note": (
+            "Storage enabled only if requested."
+            if config and config.get("enable_storage")
+            else "Feature preview only. No Parquet or PostgreSQL persistence executed."
+        ),
     }
 
 
@@ -310,12 +355,130 @@ def stop_before_persistence(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+@task
+def prepare_features_for_storage_task(
+    features_df: pd.DataFrame,
+    config: dict[str, Any],
+    integrated_quality_result: dict[str, Any],
+) -> pd.DataFrame:
+    return prepare_features_for_storage(
+        features_df=features_df,
+        run_id=config["run_id"],
+        integrated_quality_result=integrated_quality_result,
+        validated_at=datetime.now(timezone.utc),
+        created_at=datetime.fromisoformat(config["created_at"]),
+    )
+
+
+@task
+def write_features_parquet_task(
+    storage_df: pd.DataFrame,
+    config: dict[str, Any],
+) -> list[str]:
+    if not config["enable_parquet"]:
+        return []
+    return [
+        str(path)
+        for path in write_features_parquet(
+            storage_df=storage_df,
+            base_dir=DATA_FEATURES_DIR,
+            run_id=config["run_id"],
+        )
+    ]
+
+
+@task
+def store_features_postgres_task(
+    storage_df: pd.DataFrame,
+    config: dict[str, Any],
+    validation_result: dict[str, Any],
+    integrated_quality_result: dict[str, Any],
+    family_quality_results: dict[str, dict[str, Any]],
+    parquet_paths: list[str],
+) -> dict[str, Any]:
+    if not config["enable_postgres"]:
+        return {
+            "enabled": False,
+            "status": "skipped",
+            "rows_inserted": 0,
+            "features_upserted": False,
+        }
+
+    import psycopg2
+
+    settings = load_feature_settings()
+    run_payload = build_insert_feature_run_payload(
+        run_id=config["run_id"],
+        flow_name=config["flow_name"],
+        status="running",
+        started_at=datetime.fromisoformat(config["created_at"]),
+        feature_set=config["feature_set"],
+        feature_version=config["feature_version"],
+        symbols=config["symbols"],
+        timeframes=config["timeframes"],
+        rows_loaded=int(validation_result.get("rows_checked", len(storage_df))),
+        rows_generated=len(storage_df),
+        rows_validated=len(storage_df),
+        rows_inserted=0,
+        metadata={
+            "limit": config["limit"],
+            "allow_full_history": config["allow_full_history"],
+            "enable_parquet": config["enable_parquet"],
+            "enable_postgres": config["enable_postgres"],
+        },
+    )
+    with psycopg2.connect(build_postgres_dsn(settings.postgres), connect_timeout=5) as conn:
+        return store_features_postgres(
+            conn=conn,
+            storage_df=storage_df,
+            run_payload=run_payload,
+            integrated_quality_result=integrated_quality_result,
+            family_quality_results=family_quality_results,
+            parquet_paths=parquet_paths,
+        )
+
+
+@task
+def summarize_storage_result(
+    config: dict[str, Any],
+    storage_df: pd.DataFrame,
+    parquet_paths: list[str],
+    postgres_result: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "enabled": True,
+        "run_id": config["run_id"],
+        "rows_prepared": int(len(storage_df)),
+        "parquet_enabled": config["enable_parquet"],
+        "postgres_enabled": config["enable_postgres"],
+        "parquet_paths": parquet_paths,
+        "postgres": postgres_result,
+    }
+
+
 @flow(name="generate_features_flow")
 def generate_features_flow(
-    read_from_db: bool = False,
-    limit: int = 1000,
+    symbols: list[str] | None = None,
+    timeframes: list[str] | None = None,
+    limit: int | None = 1000,
+    read_from_db: bool = True,
+    enable_storage: bool = False,
+    enable_parquet: bool = True,
+    enable_postgres: bool = True,
+    require_freshness: bool = True,
+    allow_full_history: bool = False,
 ) -> dict[str, Any]:
-    config = load_feature_config(read_from_db=read_from_db, limit=limit)
+    config = load_feature_config(
+        symbols=symbols,
+        timeframes=timeframes,
+        limit=limit,
+        read_from_db=read_from_db,
+        enable_storage=enable_storage,
+        enable_parquet=enable_parquet,
+        enable_postgres=enable_postgres,
+        require_freshness=require_freshness,
+        allow_full_history=allow_full_history,
+    )
     freshness_results = check_ohlcv_freshness(config)
     ohlcv_df = load_ohlcv_data_read_only(config)
     validation_result = validate_ohlcv_data(ohlcv_df)
@@ -359,8 +522,50 @@ def generate_features_flow(
         candle_structure_quality_result,
         integrated_quality_result,
         freshness_results,
+        config,
     )
-    stop_result = stop_before_persistence(summary)
+    storage_result: dict[str, Any] | None = None
+    stop_result: dict[str, Any] | None = None
+
+    if not config["enable_storage"]:
+        stop_result = stop_before_persistence(summary)
+    elif not integrated_quality_result["ready_for_storage"]:
+        stop_result = {
+            "status": "storage_blocked_by_quality_gate",
+            "features_calculated": True,
+            "parquet_written": False,
+            "postgres_inserted": False,
+            "summary": summary,
+        }
+    else:
+        storage_df = prepare_features_for_storage_task(
+            candle_structure_features_df,
+            config,
+            integrated_quality_result,
+        )
+        parquet_paths = write_features_parquet_task(storage_df, config)
+        postgres_result = store_features_postgres_task(
+            storage_df,
+            config,
+            validation_result,
+            integrated_quality_result,
+            {
+                "returns": returns_quality_result,
+                "trend": trend_quality_result,
+                "volatility": volatility_quality_result,
+                "momentum": momentum_quality_result,
+                "breakout_context": breakout_context_quality_result,
+                "volume": volume_quality_result,
+                "candle_structure": candle_structure_quality_result,
+            },
+            parquet_paths,
+        )
+        storage_result = summarize_storage_result(
+            config,
+            storage_df,
+            parquet_paths,
+            postgres_result,
+        )
 
     return {
         "config": config,
@@ -376,7 +581,21 @@ def generate_features_flow(
         "integrated_quality": integrated_quality_result,
         "summary": summary,
         "stop": stop_result,
+        "storage": storage_result,
     }
+
+
+def _validate_flow_controls(
+    *,
+    read_from_db: bool,
+    enable_storage: bool,
+    limit: int | None,
+    allow_full_history: bool,
+) -> None:
+    if limit is None and not allow_full_history:
+        raise ValueError("limit_none_requires_allow_full_history_true")
+    if enable_storage and not read_from_db:
+        raise ValueError("enable_storage_requires_read_from_db_true")
 
 
 def _build_mock_ohlcv_dataframe(config: dict[str, Any]) -> pd.DataFrame:

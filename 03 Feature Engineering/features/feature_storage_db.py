@@ -68,6 +68,11 @@ OHLCV_FEATURES_CONFLICT_COLUMNS = [
     "feature_version",
 ]
 
+POSTGRES_BOOLEAN_COLUMNS = {
+    "price_above_sma20",
+    "ema20_above_ema50",
+}
+
 
 def build_insert_feature_run_payload(
     *,
@@ -275,11 +280,48 @@ def store_features_postgres(
 def dataframe_records_for_postgres(df: pd.DataFrame) -> list[dict[str, Any]]:
     return [
         {
-            column: normalize_value_for_postgres(value)
+            column: (
+                normalize_boolean_for_postgres(value, column)
+                if column in POSTGRES_BOOLEAN_COLUMNS
+                else normalize_value_for_postgres(value)
+            )
             for column, value in row.items()
         }
         for row in df.to_dict(orient="records")
     ]
+
+
+def normalize_boolean_for_postgres(value: Any, column: str) -> bool | None:
+    if value is None:
+        return None
+    if value is pd.NA or value is pd.NaT:
+        return None
+    if isinstance(value, float):
+        if math.isnan(value):
+            return None
+        if value == 1.0:
+            return True
+        if value == 0.0:
+            return False
+        raise ValueError(f"invalid_boolean_value_for_{column}={value!r}")
+    if isinstance(value, (np.floating,)):
+        float_value = float(value)
+        if math.isnan(float_value):
+            return None
+        if float_value == 1.0:
+            return True
+        if float_value == 0.0:
+            return False
+        raise ValueError(f"invalid_boolean_value_for_{column}={value!r}")
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    if isinstance(value, (int, np.integer)):
+        if int(value) == 1:
+            return True
+        if int(value) == 0:
+            return False
+        raise ValueError(f"invalid_boolean_value_for_{column}={value!r}")
+    raise ValueError(f"invalid_boolean_value_for_{column}={value!r}")
 
 
 def normalize_value_for_postgres(value: Any) -> Any:

@@ -84,3 +84,29 @@ Parquet usa el storage schema, no el preview schema. Por eso no incluye `open`, 
 ## Estado Bloque 11A
 
 Bloque 11A implementa solo contrato de storage y writer Parquet local controlado. PostgreSQL queda fuera de 11A y se reserva para 11B.
+
+## Estado Actual
+
+`07 Feature Storage` queda funcional para v1:
+
+- Storage contract listo con 37 columnas: 7 identity, 3 metadata y 27 features.
+- Parquet writer listo con ruta `data/features/{feature_set}/{feature_version}/{symbol}/{timeframe}/features_{run_id}.parquet`.
+- PostgreSQL writer listo para `feature_runs`, `feature_quality_checks` y `ohlcv_features`.
+- DDL ejecutado en PostgreSQL local `sultan_ai`.
+- Smoke test real exitoso con 200 filas.
+- Idempotencia PostgreSQL verificada: re-run sin duplicados por unique key.
+- `ready_for_storage` es gate obligatorio antes de escribir.
+
+Tablas PostgreSQL activas:
+
+- `feature_runs`
+- `feature_quality_checks`
+- `ohlcv_features`
+
+Indice adicional verificado:
+
+- `idx_ohlcv_features_set_version`
+
+Limitacion actual:
+
+- Todavia no existe orchestration real de Feature Storage. El smoke script es una herramienta manual/controlada, no un pipeline productivo.

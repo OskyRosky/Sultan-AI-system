@@ -19,9 +19,15 @@
 - Implementar Parquet writer local controlado. Completado en Bloque 11A con tests `tmp_path`.
 - Preparar PostgreSQL write path. Completado en Bloque 11B con tests mock, sin DB real.
 - Preparar SQL readiness de índices storage. Completado en Bloque 11B como SQL declarativo.
+- Ejecutar DDL controlado de Feature Storage. Completado en Bloque 11C sobre `sultan_ai`.
+- Ejecutar smoke test real Parquet + PostgreSQL. Completado en Bloque 11C con 200 filas.
+- Verificar idempotencia PostgreSQL. Completado en Bloque 11C sin duplicados por unique key.
+- Estabilizar y documentar Feature Storage. Completado en Bloque 11D.
+- Implementar Feature Orchestration real. Completado en Bloque 12 con storage opcional y guards.
 - Implementar no-lookahead checks.
 - Integrar guardado Parquet al pipeline controlado.
-- Ejecutar DDL controlado y smoke test real PostgreSQL.
+- Implementar Monitoring & Inspection.
+- Ejecutar Feature Closure final.
 - Crear vistas operativas.
 - Ver features en DBeaver.
 
