@@ -87,6 +87,8 @@ Per `symbol`, `timeframe`, `window`, `feature`, and `forward_return` pair, Block
 - `window_start`;
 - `window_end`.
 
+Correlation is calculated only when at least 5 non-null feature/return pairs are available. This avoids mechanically perfect correlations from two-point samples while still allowing lightweight synthetic validation. Correlations from small samples remain descriptive and should not be treated as inferential evidence.
+
 Across windows, Block 5 calculates:
 
 - `windows_observed`;

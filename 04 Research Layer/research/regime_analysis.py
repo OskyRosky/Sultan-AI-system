@@ -9,15 +9,27 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
+
+RESEARCH_DIR = Path(__file__).resolve().parent
+if str(RESEARCH_DIR) not in sys.path:
+    sys.path.insert(0, str(RESEARCH_DIR))
+
+from _common import (
+    group_key_values,
+    is_numeric_or_all_null,
+    require_columns,
+    safe_correlation,
+    validate_group_by,
+)
 
 
 DEFAULT_GROUP_BY: tuple[str, str] = ("symbol", "timeframe")
 DEFAULT_KEY_COLUMNS: tuple[str, str, str] = ("symbol", "timeframe", "timestamp")
 DEFAULT_FORWARD_RETURN_PREFIX = "forward_return_"
-MIN_CORRELATION_PAIRS = 2
 
 REGIME_LABELS: dict[str, tuple[str, ...]] = {
     "trend": ("bearish", "neutral", "bullish"),
@@ -55,9 +67,9 @@ def analyze_regimes(
 
     groups = tuple(group_by)
     keys = tuple(key_columns)
-    _validate_group_by(groups, keys)
-    _require_columns(research_dataset, keys, frame_name="research_dataset")
-    _require_columns(research_dataset, groups, frame_name="research_dataset")
+    validate_group_by(groups, keys)
+    require_columns(research_dataset, keys, frame_name="research_dataset")
+    require_columns(research_dataset, groups, frame_name="research_dataset")
     _validate_thresholds(positive_threshold, negative_threshold)
 
     context_columns = _context_columns(
@@ -68,7 +80,7 @@ def analyze_regimes(
     )
     if not context_columns:
         raise ValueError("at least one regime context column is required")
-    _require_columns(research_dataset, tuple(context_columns.values()), frame_name="research_dataset")
+    require_columns(research_dataset, tuple(context_columns.values()), frame_name="research_dataset")
 
     selected_features = _select_feature_columns(
         research_dataset,
@@ -76,6 +88,7 @@ def analyze_regimes(
         excluded_columns=(*keys, *groups, *context_columns.values()),
         forward_return_prefix=forward_return_prefix,
     )
+    _reject_feature_context_overlap(selected_features, context_columns.values())
     selected_returns = _select_forward_return_columns(
         research_dataset,
         columns=forward_return_columns,
@@ -135,9 +148,9 @@ def add_regime_labels(
 
     groups = tuple(group_by)
     keys = tuple(key_columns)
-    _validate_group_by(groups, keys)
-    _require_columns(research_dataset, keys, frame_name="research_dataset")
-    _require_columns(research_dataset, groups, frame_name="research_dataset")
+    validate_group_by(groups, keys)
+    require_columns(research_dataset, keys, frame_name="research_dataset")
+    require_columns(research_dataset, groups, frame_name="research_dataset")
     _validate_thresholds(positive_threshold, negative_threshold)
 
     context_columns = _context_columns(
@@ -148,7 +161,7 @@ def add_regime_labels(
     )
     if not context_columns:
         raise ValueError("at least one regime context column is required")
-    _require_columns(research_dataset, tuple(context_columns.values()), frame_name="research_dataset")
+    require_columns(research_dataset, tuple(context_columns.values()), frame_name="research_dataset")
 
     labeled = research_dataset.copy(deep=True)
     for column in context_columns.values():
@@ -203,7 +216,7 @@ def _build_regime_metrics(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
 
         for regime_type, regime_column in regime_columns.items():
             for regime_label in REGIME_LABELS[regime_type]:
@@ -213,8 +226,8 @@ def _build_regime_metrics(
                         pair = regime_frame.loc[:, [feature, forward_return]].dropna()
                         feature_series = pair[feature]
                         return_series = pair[forward_return]
-                        pearson_ic = _safe_correlation(feature_series, return_series, method="pearson")
-                        spearman_ic = _safe_correlation(feature_series, return_series, method="spearman")
+                        pearson_ic = safe_correlation(feature_series, return_series, method="pearson")
+                        spearman_ic = safe_correlation(feature_series, return_series, method="spearman")
 
                         rows.append(
                             {
@@ -245,7 +258,7 @@ def _build_regime_counts(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
         for regime_type, regime_column in regime_columns.items():
             for regime_label in REGIME_LABELS[regime_type]:
                 rows.append(
@@ -338,19 +351,6 @@ def _label_range_regime(
     return labels
 
 
-def _safe_correlation(feature: pd.Series, forward_return: pd.Series, *, method: str) -> float | pd.NA:
-    if len(feature) < MIN_CORRELATION_PAIRS:
-        return pd.NA
-    if feature.nunique(dropna=True) <= 1 or forward_return.nunique(dropna=True) <= 1:
-        return pd.NA
-    if method == "spearman":
-        return feature.rank(method="average").corr(
-            forward_return.rank(method="average"),
-            method="pearson",
-        )
-    return feature.corr(forward_return, method=method)
-
-
 def _context_columns(
     *,
     trend_column: str | None,
@@ -374,6 +374,19 @@ def _regime_columns_from_context(context_columns: dict[str, str]) -> dict[str, s
     return {regime_type: f"{regime_type}_regime" for regime_type in context_columns}
 
 
+def _reject_feature_context_overlap(
+    feature_columns: Sequence[str],
+    context_columns: Sequence[str],
+) -> None:
+    overlap = sorted(set(feature_columns).intersection(context_columns))
+    if overlap:
+        raise ValueError(
+            "regime context columns cannot also be analyzed as features; "
+            "this creates circular regime evidence: "
+            f"{overlap}"
+        )
+
+
 def _select_feature_columns(
     frame: pd.DataFrame,
     *,
@@ -383,7 +396,7 @@ def _select_feature_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         excluded = set(excluded_columns)
         selected = tuple(
@@ -391,7 +404,7 @@ def _select_feature_columns(
             for column in frame.columns
             if column not in excluded
             and not column.startswith(forward_return_prefix)
-            and _is_numeric_or_all_null(frame[column])
+            and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
@@ -401,7 +414,7 @@ def _select_feature_columns(
     if invalid:
         raise ValueError(f"feature columns must not include forward returns: {invalid}")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"feature columns must be numeric: {non_numeric}")
 
@@ -416,12 +429,12 @@ def _select_forward_return_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         selected = tuple(
             column
             for column in frame.columns
-            if column.startswith(forward_return_prefix) and _is_numeric_or_all_null(frame[column])
+            if column.startswith(forward_return_prefix) and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
@@ -431,47 +444,13 @@ def _select_forward_return_columns(
     if invalid:
         raise ValueError(f"forward return columns must start with '{forward_return_prefix}': {invalid}")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"forward return columns must be numeric: {non_numeric}")
 
     return selected
 
 
-def _group_key_values(group_key: object, group_by: Sequence[str]) -> dict[str, object]:
-    if len(group_by) == 1:
-        values = group_key if isinstance(group_key, tuple) else (group_key,)
-    else:
-        values = tuple(group_key)
-    return dict(zip(group_by, values, strict=True))
-
-
-def _is_numeric_or_all_null(series: pd.Series) -> bool:
-    return is_numeric_dtype(series) or series.dropna().empty
-
-
-def _validate_group_by(group_by: Sequence[str], key_columns: Sequence[str]) -> None:
-    allowed_groups = {"symbol", "timeframe"}
-    groups = tuple(group_by)
-
-    if not groups:
-        raise ValueError("group_by must include 'symbol', 'timeframe', or both")
-
-    unknown = [group for group in groups if group not in allowed_groups]
-    if unknown:
-        raise ValueError(f"group_by contains unsupported columns: {unknown}")
-
-    missing_from_keys = [group for group in groups if group not in key_columns]
-    if missing_from_keys:
-        raise ValueError(f"group_by columns must also be key columns: {missing_from_keys}")
-
-
 def _validate_thresholds(positive_threshold: float, negative_threshold: float) -> None:
     if positive_threshold < negative_threshold:
         raise ValueError("positive_threshold must be greater than or equal to negative_threshold")
-
-
-def _require_columns(frame: pd.DataFrame, columns: Sequence[str], *, frame_name: str) -> None:
-    missing = [column for column in columns if column not in frame.columns]
-    if missing:
-        raise ValueError(f"{frame_name} missing required columns: {missing}")

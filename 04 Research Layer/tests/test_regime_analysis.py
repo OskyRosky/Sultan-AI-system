@@ -25,6 +25,8 @@ def _research_dataset() -> pd.DataFrame:
         (1, 4, 40, 2, 0.01, 0.02),
         (2, 5, 50, 3, 0.02, 0.04),
         (3, 6, 60, 3, 0.03, 0.06),
+        (4, 7, 70, 4, 0.04, 0.08),
+        (5, 8, 80, 4, 0.05, 0.10),
     ]
     for idx, (trend, volatility, momentum, range_value, return_1, return_3) in enumerate(
         btc_one_hour
@@ -132,12 +134,16 @@ def test_regime_labeling_is_correct_for_all_supported_types() -> None:
         "bullish",
         "bullish",
         "bullish",
+        "bullish",
+        "bullish",
     ]
     assert set(labeled["volatility_regime"]) == {"low_vol", "medium_vol", "high_vol"}
     assert labeled["momentum_regime"].tolist() == [
         "negative",
         "negative",
         "negative",
+        "positive",
+        "positive",
         "positive",
         "positive",
         "positive",
@@ -149,6 +155,8 @@ def test_regime_labeling_is_correct_for_all_supported_types() -> None:
         "compressed",
         "expanded",
         "expanded",
+        "expanded",
+        "expanded",
     ]
 
 
@@ -158,7 +166,7 @@ def test_analysis_is_separated_by_symbol() -> None:
     btc = _metric_row(result, symbol="BTCUSDT", timeframe="1h", regime_type="trend", regime="bullish")
     eth = _metric_row(result, symbol="ETHUSDT", timeframe="1h", regime_type="trend", regime="bullish")
 
-    assert btc["sample_count"] == 3
+    assert btc["sample_count"] == 5
     assert eth["sample_count"] == 2
 
 
@@ -168,7 +176,7 @@ def test_analysis_is_separated_by_timeframe() -> None:
     one_hour = _metric_row(result, symbol="BTCUSDT", timeframe="1h", regime_type="trend", regime="bullish")
     four_hour = _metric_row(result, symbol="BTCUSDT", timeframe="4h", regime_type="trend", regime="bullish")
 
-    assert one_hour["mean_forward_return"] == pytest.approx(0.02)
+    assert one_hour["mean_forward_return"] == pytest.approx(0.03)
     assert four_hour["mean_forward_return"] == pytest.approx(0.115)
 
 
@@ -191,6 +199,16 @@ def test_conditional_ic_is_calculated_by_regime() -> None:
 
     assert bullish["pearson_ic"] == pytest.approx(1.0)
     assert bullish["spearman_ic"] == pytest.approx(1.0)
+
+
+def test_regime_context_columns_cannot_also_be_analyzed_as_features() -> None:
+    with pytest.raises(ValueError, match="cannot also be analyzed as features"):
+        regime_analysis.analyze_regimes(
+            _research_dataset(),
+            feature_columns=("trend_context",),
+            forward_return_columns=("forward_return_1",),
+            trend_column="trend_context",
+        )
 
 
 def test_conditional_hit_rate_is_calculated_by_regime() -> None:
@@ -221,8 +239,8 @@ def test_nan_pairs_are_excluded_without_losing_regime_count_traceability() -> No
         & result.regime_counts["regime"].eq("bullish")
     ].iloc[0]
 
-    assert bullish["sample_count"] == 2
-    assert count["row_count"] == 3
+    assert bullish["sample_count"] == 4
+    assert count["row_count"] == 5
 
 
 def test_small_datasets_keep_metrics_without_fabricating_correlation() -> None:

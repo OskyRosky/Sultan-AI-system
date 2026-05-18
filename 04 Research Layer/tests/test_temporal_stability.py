@@ -24,10 +24,12 @@ def _research_dataset() -> pd.DataFrame:
         (2, 0.02),
         (3, 0.03),
         (4, 0.04),
+        (5, 0.05),
         (1, -0.01),
         (2, -0.02),
         (3, -0.03),
         (4, -0.04),
+        (5, -0.05),
     ]
     for idx, (feature, forward_return) in enumerate(btc_values):
         rows.append(
@@ -100,12 +102,12 @@ def test_equal_count_temporal_segmentation_is_chronological_per_group() -> None:
     first = _window_row(result, window="window_1")
     second = _window_row(result, window="window_2")
 
-    assert first["sample_count"] == 4
-    assert second["sample_count"] == 4
+    assert first["sample_count"] == 5
+    assert second["sample_count"] == 5
     assert first["window_start"] == pd.Timestamp("2026-01-01 00:00:00")
-    assert first["window_end"] == pd.Timestamp("2026-01-01 03:00:00")
-    assert second["window_start"] == pd.Timestamp("2026-01-01 04:00:00")
-    assert second["window_end"] == pd.Timestamp("2026-01-01 07:00:00")
+    assert first["window_end"] == pd.Timestamp("2026-01-01 04:00:00")
+    assert second["window_start"] == pd.Timestamp("2026-01-01 05:00:00")
+    assert second["window_end"] == pd.Timestamp("2026-01-01 09:00:00")
 
 
 def test_window_stability_metrics_capture_positive_and_negative_periods() -> None:
@@ -171,7 +173,7 @@ def test_analysis_is_separated_by_timeframe() -> None:
 
     one_hour = _window_row(result, symbol="BTCUSDT", timeframe="1h", window="window_1")
     four_hour = _window_row(result, symbol="BTCUSDT", timeframe="4h", window="window_1")
-    assert one_hour["feature_mean"] == pytest.approx(2.5)
+    assert one_hour["feature_mean"] == pytest.approx(3.0)
     assert four_hour["feature_mean"] == pytest.approx(20.5)
 
 
@@ -190,7 +192,7 @@ def test_nan_pairs_are_ignored_without_dropping_window_traceability() -> None:
     )
 
     first = _window_row(result, window="window_1")
-    assert first["sample_count"] == 2
+    assert first["sample_count"] == 3
     assert pd.notna(first["window_start"])
     assert pd.notna(first["window_end"])
 

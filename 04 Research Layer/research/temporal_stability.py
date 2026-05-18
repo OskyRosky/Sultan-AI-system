@@ -9,9 +9,22 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
+
+RESEARCH_DIR = Path(__file__).resolve().parent
+if str(RESEARCH_DIR) not in sys.path:
+    sys.path.insert(0, str(RESEARCH_DIR))
+
+from _common import (
+    group_key_values,
+    is_numeric_or_all_null,
+    require_columns,
+    safe_correlation,
+    validate_group_by,
+)
 
 
 DEFAULT_GROUP_BY: tuple[str, str] = ("symbol", "timeframe")
@@ -19,7 +32,6 @@ DEFAULT_KEY_COLUMNS: tuple[str, str, str] = ("symbol", "timeframe", "timestamp")
 DEFAULT_TIMESTAMP_COLUMN = "timestamp"
 DEFAULT_FORWARD_RETURN_PREFIX = "forward_return_"
 DEFAULT_N_WINDOWS = 3
-MIN_CORRELATION_PAIRS = 2
 
 
 @dataclass(frozen=True)
@@ -55,10 +67,10 @@ def analyze_temporal_stability(
 
     groups = tuple(group_by)
     keys = tuple(key_columns)
-    _validate_group_by(groups, keys)
-    _require_columns(research_dataset, keys, frame_name="research_dataset")
-    _require_columns(research_dataset, groups, frame_name="research_dataset")
-    _require_columns(research_dataset, (timestamp_column,), frame_name="research_dataset")
+    validate_group_by(groups, keys)
+    require_columns(research_dataset, keys, frame_name="research_dataset")
+    require_columns(research_dataset, groups, frame_name="research_dataset")
+    require_columns(research_dataset, (timestamp_column,), frame_name="research_dataset")
     _validate_n_windows(n_windows)
 
     selected_features = _select_numeric_columns(
@@ -108,7 +120,7 @@ def _build_window_metrics(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
         grouped_windows = (
             _explicit_window_slices(group, windows, timestamp_column)
             if windows is not None
@@ -122,7 +134,7 @@ def _build_window_metrics(
                     sample_count = int(len(pair))
                     feature_series = pair[feature]
                     return_series = pair[forward_return]
-                    correlation = _safe_correlation(feature_series, return_series)
+                    correlation = safe_correlation(feature_series, return_series)
 
                     rows.append(
                         {
@@ -267,7 +279,7 @@ def _select_numeric_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         excluded = set(excluded_columns)
         selected = tuple(
@@ -275,13 +287,13 @@ def _select_numeric_columns(
             for column in frame.columns
             if column not in excluded
             and not column.startswith(prefix_to_exclude)
-            and _is_numeric_or_all_null(frame[column])
+            and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
         raise ValueError(f"research_dataset must contain at least one numeric {error_label} column")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"{error_label} columns must be numeric: {non_numeric}")
 
@@ -300,12 +312,12 @@ def _select_forward_return_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         selected = tuple(
             column
             for column in frame.columns
-            if column.startswith(forward_return_prefix) and _is_numeric_or_all_null(frame[column])
+            if column.startswith(forward_return_prefix) and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
@@ -315,19 +327,11 @@ def _select_forward_return_columns(
     if invalid:
         raise ValueError(f"forward return columns must start with '{forward_return_prefix}': {invalid}")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"forward return columns must be numeric: {non_numeric}")
 
     return selected
-
-
-def _safe_correlation(feature: pd.Series, forward_return: pd.Series) -> float | pd.NA:
-    if len(feature) < MIN_CORRELATION_PAIRS:
-        return pd.NA
-    if feature.nunique(dropna=True) <= 1 or forward_return.nunique(dropna=True) <= 1:
-        return pd.NA
-    return feature.corr(forward_return, method="pearson")
 
 
 def _correlation_sign(correlation: object) -> int | pd.NA:
@@ -352,42 +356,8 @@ def _sign_consistency_ratio(signs: pd.Series) -> float | pd.NA:
     return signs.value_counts().max() / len(signs)
 
 
-def _group_key_values(group_key: object, group_by: Sequence[str]) -> dict[str, object]:
-    if len(group_by) == 1:
-        values = group_key if isinstance(group_key, tuple) else (group_key,)
-    else:
-        values = tuple(group_key)
-    return dict(zip(group_by, values, strict=True))
-
-
-def _is_numeric_or_all_null(series: pd.Series) -> bool:
-    return is_numeric_dtype(series) or series.dropna().empty
-
-
-def _validate_group_by(group_by: Sequence[str], key_columns: Sequence[str]) -> None:
-    allowed_groups = {"symbol", "timeframe"}
-    groups = tuple(group_by)
-
-    if not groups:
-        raise ValueError("group_by must include 'symbol', 'timeframe', or both")
-
-    unknown = [group for group in groups if group not in allowed_groups]
-    if unknown:
-        raise ValueError(f"group_by contains unsupported columns: {unknown}")
-
-    missing_from_keys = [group for group in groups if group not in key_columns]
-    if missing_from_keys:
-        raise ValueError(f"group_by columns must also be key columns: {missing_from_keys}")
-
-
 def _validate_n_windows(n_windows: int) -> None:
     if not isinstance(n_windows, int):
         raise TypeError("n_windows must be an integer")
     if n_windows <= 0:
         raise ValueError("n_windows must be greater than zero")
-
-
-def _require_columns(frame: pd.DataFrame, columns: Sequence[str], *, frame_name: str) -> None:
-    missing = [column for column in columns if column not in frame.columns]
-    if missing:
-        raise ValueError(f"{frame_name} missing required columns: {missing}")

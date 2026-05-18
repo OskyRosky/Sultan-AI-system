@@ -21,6 +21,8 @@ Block 7 supports simple labels for:
 
 Labels are derived from caller-provided numeric context columns already present in memory. The component does not read raw OHLCV, calculate complex indicators, train models, cluster observations, or forecast regimes.
 
+Columns used to create regime labels cannot also be analyzed as feature columns in the same call. That overlap creates circular evidence: the feature would partly define the segment used to evaluate itself. The engine rejects this case explicitly.
+
 ## Regime Analysis Versus Regime Strategy
 
 Regime Analysis is conditional research. It can show that feature metrics differ by context.
@@ -77,6 +79,8 @@ For each `symbol`, `timeframe`, `forward_return`, `regime_type`, `regime`, and f
 - Spearman IC
 
 These metrics are descriptive research diagnostics. They are not strategy performance metrics.
+
+IC is calculated only when at least 5 non-null feature/return pairs exist inside the conditional segment. Smaller regime segments keep their sample counts and return summaries, but IC remains null to avoid mechanically perfect small-sample correlations.
 
 ## Separation Requirements
 

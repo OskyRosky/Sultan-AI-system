@@ -62,6 +62,10 @@ The IC calculation drops rows where either the feature or the forward return is 
 
 IC is not causality, not alpha, not profitability, and not a signal.
 
+Block 6 uses pooled IC within each `symbol/timeframe/feature/horizon` group. Pooled IC is descriptive: it summarizes association across all available rows in that group. It does not replace time-series IC, ICIR, t-statistics, confidence intervals, or formal inference. A pooled IC can be dominated by one period, one volatility regime, or one cluster of observations. Time-series IC and inferential diagnostics are deferred to future methodology.
+
+IC is calculated only when at least 5 non-null feature/return pairs are available. This avoids reporting mechanically perfect two-point correlations as evidence.
+
 ## Preliminary Technical Ranking
 
 Block 6 creates a preliminary technical ranking table ordered within each `symbol`, `timeframe`, and `forward_return` by:
@@ -94,6 +98,7 @@ Main risks:
 
 - multiple testing across many features, horizons, assets, and timeframes;
 - cherry-picking favorable buckets or horizons;
+- pooled IC dominated by a specific period or regime;
 - interpreting correlation as causality;
 - mistaking hit rate for tradable edge;
 - treating a preliminary ranking as a strategy;

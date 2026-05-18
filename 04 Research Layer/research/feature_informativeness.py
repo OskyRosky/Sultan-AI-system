@@ -9,16 +9,28 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
+
+RESEARCH_DIR = Path(__file__).resolve().parent
+if str(RESEARCH_DIR) not in sys.path:
+    sys.path.insert(0, str(RESEARCH_DIR))
+
+from _common import (
+    group_key_values,
+    is_numeric_or_all_null,
+    require_columns,
+    safe_correlation,
+    validate_group_by,
+)
 
 
 DEFAULT_GROUP_BY: tuple[str, str] = ("symbol", "timeframe")
 DEFAULT_KEY_COLUMNS: tuple[str, str, str] = ("symbol", "timeframe", "timestamp")
 DEFAULT_FORWARD_RETURN_PREFIX = "forward_return_"
 DEFAULT_N_BUCKETS = 5
-MIN_CORRELATION_PAIRS = 2
 
 
 @dataclass(frozen=True)
@@ -44,10 +56,10 @@ def analyze_feature_informativeness(
 
     groups = tuple(group_by)
     keys = tuple(key_columns)
-    _validate_group_by(groups, keys)
+    validate_group_by(groups, keys)
     _validate_n_buckets(n_buckets)
-    _require_columns(research_dataset, keys, frame_name="research_dataset")
-    _require_columns(research_dataset, groups, frame_name="research_dataset")
+    require_columns(research_dataset, keys, frame_name="research_dataset")
+    require_columns(research_dataset, groups, frame_name="research_dataset")
 
     selected_features = _select_feature_columns(
         research_dataset,
@@ -99,7 +111,7 @@ def _build_bucket_metrics(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
 
         for feature in feature_columns:
             for forward_return in forward_return_columns:
@@ -156,15 +168,15 @@ def _build_ic_metrics(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
 
         for feature in feature_columns:
             for forward_return in forward_return_columns:
                 pair = group.loc[:, [feature, forward_return]].dropna()
                 feature_series = pair[feature]
                 return_series = pair[forward_return]
-                pearson_ic = _safe_correlation(feature_series, return_series, method="pearson")
-                spearman_ic = _safe_correlation(feature_series, return_series, method="spearman")
+                pearson_ic = safe_correlation(feature_series, return_series, method="pearson")
+                spearman_ic = safe_correlation(feature_series, return_series, method="spearman")
 
                 rows.append(
                     {
@@ -225,19 +237,6 @@ def _assign_quantile_buckets(series: pd.Series, n_buckets: int) -> pd.Series:
     return (buckets.astype("Int64") + 1).astype("Int64")
 
 
-def _safe_correlation(feature: pd.Series, forward_return: pd.Series, *, method: str) -> float | pd.NA:
-    if len(feature) < MIN_CORRELATION_PAIRS:
-        return pd.NA
-    if feature.nunique(dropna=True) <= 1 or forward_return.nunique(dropna=True) <= 1:
-        return pd.NA
-    if method == "spearman":
-        return feature.rank(method="average").corr(
-            forward_return.rank(method="average"),
-            method="pearson",
-        )
-    return feature.corr(forward_return, method=method)
-
-
 def _select_feature_columns(
     frame: pd.DataFrame,
     *,
@@ -247,7 +246,7 @@ def _select_feature_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         excluded = set(excluded_columns)
         selected = tuple(
@@ -255,7 +254,7 @@ def _select_feature_columns(
             for column in frame.columns
             if column not in excluded
             and not column.startswith(forward_return_prefix)
-            and _is_numeric_or_all_null(frame[column])
+            and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
@@ -265,7 +264,7 @@ def _select_feature_columns(
     if invalid:
         raise ValueError(f"feature columns must not include forward returns: {invalid}")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"feature columns must be numeric: {non_numeric}")
 
@@ -280,12 +279,12 @@ def _select_forward_return_columns(
 ) -> tuple[str, ...]:
     if columns is not None:
         selected = tuple(columns)
-        _require_columns(frame, selected, frame_name="research_dataset")
+        require_columns(frame, selected, frame_name="research_dataset")
     else:
         selected = tuple(
             column
             for column in frame.columns
-            if column.startswith(forward_return_prefix) and _is_numeric_or_all_null(frame[column])
+            if column.startswith(forward_return_prefix) and is_numeric_or_all_null(frame[column])
         )
 
     if not selected:
@@ -295,39 +294,11 @@ def _select_forward_return_columns(
     if invalid:
         raise ValueError(f"forward return columns must start with '{forward_return_prefix}': {invalid}")
 
-    non_numeric = [column for column in selected if not _is_numeric_or_all_null(frame[column])]
+    non_numeric = [column for column in selected if not is_numeric_or_all_null(frame[column])]
     if non_numeric:
         raise ValueError(f"forward return columns must be numeric: {non_numeric}")
 
     return selected
-
-
-def _group_key_values(group_key: object, group_by: Sequence[str]) -> dict[str, object]:
-    if len(group_by) == 1:
-        values = group_key if isinstance(group_key, tuple) else (group_key,)
-    else:
-        values = tuple(group_key)
-    return dict(zip(group_by, values, strict=True))
-
-
-def _is_numeric_or_all_null(series: pd.Series) -> bool:
-    return is_numeric_dtype(series) or series.dropna().empty
-
-
-def _validate_group_by(group_by: Sequence[str], key_columns: Sequence[str]) -> None:
-    allowed_groups = {"symbol", "timeframe"}
-    groups = tuple(group_by)
-
-    if not groups:
-        raise ValueError("group_by must include 'symbol', 'timeframe', or both")
-
-    unknown = [group for group in groups if group not in allowed_groups]
-    if unknown:
-        raise ValueError(f"group_by contains unsupported columns: {unknown}")
-
-    missing_from_keys = [group for group in groups if group not in key_columns]
-    if missing_from_keys:
-        raise ValueError(f"group_by columns must also be key columns: {missing_from_keys}")
 
 
 def _validate_n_buckets(n_buckets: int) -> None:
@@ -335,9 +306,3 @@ def _validate_n_buckets(n_buckets: int) -> None:
         raise TypeError("n_buckets must be an integer")
     if n_buckets <= 0:
         raise ValueError("n_buckets must be greater than zero")
-
-
-def _require_columns(frame: pd.DataFrame, columns: Sequence[str], *, frame_name: str) -> None:
-    missing = [column for column in columns if column not in frame.columns]
-    if missing:
-        raise ValueError(f"{frame_name} missing required columns: {missing}")

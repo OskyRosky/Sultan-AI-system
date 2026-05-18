@@ -96,3 +96,13 @@
 | Conditional metrics include IC, hit rate, mean forward return, median forward return, and average absolute forward return. | Accepted | These match informativeness diagnostics without creating strategy performance metrics. |
 | Empty expected regimes are retained with `sample_count = 0` and null metrics. | Accepted | Missing regime coverage should be visible rather than silently omitted. |
 | Block 7 does not create regime strategy, switching logic, or operational thresholds. | Accepted | Detecting conditional differences is not equivalent to trading on them. |
+
+## Framework Hardening Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Minimum non-null pairs for Pearson/Spearman correlation is 5 across stability, informativeness, and regime modules. | Accepted | Two-point correlations are mechanically perfect when both series vary and should not be reported as research evidence. |
+| Shared helper logic lives in `research/_common.py`. | Accepted | Common validation and correlation behavior should remain consistent without introducing a larger framework. |
+| Regime context columns cannot also be analyzed as feature columns. | Accepted | This prevents tautological regime segmentation and circular informativeness evidence. |
+| Current Research Layer assumes caller-provided single-exchange series. | Accepted | 04 groups by `symbol/timeframe`; multi-exchange support needs an explicit join and lineage contract before use. |
+| Block 6 pooled IC is descriptive and not inferential. | Accepted | Pooled IC can be dominated by specific periods or regimes and does not replace IC time-series, ICIR, t-stats, or confidence intervals. |

@@ -30,6 +30,8 @@ Features and forward returns are joined strictly on:
 
 These keys define one research observation. The same `symbol`, `timeframe`, and `timestamp` must refer to the same completed candle state in both inputs.
 
+The current Block 3 contract assumes single-exchange input. If upstream data includes `exchange`, the caller must prefilter to one exchange before building a research dataset. The builder does not currently support `exchange` as a join key. Mixing exchanges under the same `symbol/timeframe/timestamp` would create ambiguous observations and can invalidate downstream research metrics.
+
 The join is an inner join in Block 3. Rows without matching keys on both sides are excluded from the research dataset rather than filled or fabricated. Missing labels inside matched forward return rows, such as terminal `NaN` values from insufficient future candles, are preserved.
 
 ## Minimum Required Columns
@@ -91,6 +93,8 @@ The builder defines:
 - Validation status for in-memory research datasets.
 
 Later blocks may add source feature set/version metadata, forward return version metadata, asset/timeframe scope metadata, lineage manifests, and storage contracts.
+
+Multi-exchange lineage and join contracts are deferred until explicitly scoped.
 
 ## Boundary
 

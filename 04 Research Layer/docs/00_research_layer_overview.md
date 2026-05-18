@@ -12,6 +12,14 @@ The layer is data-first, risk-first, and audit-first. It must preserve reproduci
 
 04 Research Layer consumes those features from approved storage surfaces, such as PostgreSQL or Parquet, without changing feature definitions, calculation logic, quality gates, or orchestration owned by 03.
 
+## Exchange Assumption
+
+The current 04 Research Layer grouping key is `symbol` + `timeframe`, with `timestamp` used as the observation key where needed. Upstream 03 Feature Engineering may use `exchange`, `symbol`, `timeframe`, and `timestamp`.
+
+Until multi-exchange support is explicitly designed, 04 assumes the caller provides single-exchange series or prefilters to one exchange before calling in-memory research functions. Mixing the same `symbol/timeframe/timestamp` from multiple exchanges would contaminate research observations and can create misleading feature, return, stability, informativeness, and regime metrics.
+
+Multi-exchange research support is out of scope for the current framework.
+
 ## Relationship with 05 Strategy Engine
 
 05 Strategy Engine is the downstream consumer of research outputs. 04 may provide ranked feature evidence, hypothesis candidates, caveats, and structured findings for consideration.
@@ -52,4 +60,3 @@ The layer is data-first, risk-first, and audit-first. It must preserve reproduci
 ## Initial State
 
 This block creates the initial folder structure, conceptual documentation, initial backlog, and decision log for 04 Research Layer. It does not read real data, write research datasets, calculate forward returns, execute SQL, or generate findings.
-

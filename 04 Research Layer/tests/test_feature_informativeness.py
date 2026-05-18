@@ -42,7 +42,7 @@ def _research_dataset() -> pd.DataFrame:
             }
         )
 
-    eth_one_hour = [(10, -0.10), (11, -0.11), (12, -0.12), (13, -0.13)]
+    eth_one_hour = [(10, -0.10), (11, -0.11), (12, -0.12), (13, -0.13), (14, -0.14)]
     for idx, (feature, return_1) in enumerate(eth_one_hour):
         rows.append(
             {
@@ -58,7 +58,7 @@ def _research_dataset() -> pd.DataFrame:
             }
         )
 
-    btc_four_hour = [(20, 0.20), (21, 0.21), (22, 0.22), (23, 0.23)]
+    btc_four_hour = [(20, 0.20), (21, 0.21), (22, 0.22), (23, 0.23), (24, 0.24)]
     for idx, (feature, return_1) in enumerate(btc_four_hour):
         rows.append(
             {
@@ -224,7 +224,7 @@ def test_analysis_is_separated_by_symbol() -> None:
     btc = _ic_row(result, symbol="BTCUSDT", timeframe="1h")
     eth = _ic_row(result, symbol="ETHUSDT", timeframe="1h")
     assert btc["sample_count"] == 6
-    assert eth["sample_count"] == 4
+    assert eth["sample_count"] == 5
     assert eth["pearson_ic"] == pytest.approx(-1.0)
 
 
@@ -238,7 +238,7 @@ def test_analysis_is_separated_by_timeframe() -> None:
     one_hour = _ic_row(result, symbol="BTCUSDT", timeframe="1h")
     four_hour = _ic_row(result, symbol="BTCUSDT", timeframe="4h")
     assert one_hour["sample_count"] == 6
-    assert four_hour["sample_count"] == 4
+    assert four_hour["sample_count"] == 5
     assert four_hour["pearson_ic"] == pytest.approx(1.0)
 
 

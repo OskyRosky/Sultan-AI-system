@@ -8,9 +8,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
+
+RESEARCH_DIR = Path(__file__).resolve().parent
+if str(RESEARCH_DIR) not in sys.path:
+    sys.path.insert(0, str(RESEARCH_DIR))
+
+from _common import group_key_values, require_columns, validate_group_by
 
 
 DEFAULT_KEY_COLUMNS: tuple[str, str, str] = ("symbol", "timeframe", "timestamp")
@@ -42,9 +50,9 @@ def profile_features(
 
     groups = tuple(group_by)
     keys = tuple(key_columns)
-    _validate_group_by(groups, keys)
-    _require_columns(features, keys, frame_name="features")
-    _require_columns(features, groups, frame_name="features")
+    validate_group_by(groups, keys)
+    require_columns(features, keys, frame_name="features")
+    require_columns(features, groups, frame_name="features")
     _validate_redundancy_threshold(redundancy_threshold)
 
     selected_features = _select_feature_columns(
@@ -77,7 +85,7 @@ def _build_summary(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
         total_rows = len(group)
 
         for feature in feature_columns:
@@ -121,7 +129,7 @@ def _build_correlation_matrix(
     rows: list[dict[str, object]] = []
 
     for group_key, group in frame.groupby(list(group_by), sort=True, dropna=False):
-        group_values = _group_key_values(group_key, group_by)
+        group_values = group_key_values(group_key, group_by)
         correlations = group.loc[:, list(feature_columns)].corr(method="pearson")
 
         for feature_x in feature_columns:
@@ -158,7 +166,7 @@ def _select_feature_columns(
 ) -> tuple[str, ...]:
     if feature_columns is not None:
         selected = tuple(feature_columns)
-        _require_columns(frame, selected, frame_name="features")
+        require_columns(frame, selected, frame_name="features")
     else:
         excluded = set(key_columns)
         selected = tuple(
@@ -204,40 +212,10 @@ def _iqr_outlier_count(series: pd.Series) -> int:
     return int(series.lt(lower_bound).sum() + series.gt(upper_bound).sum())
 
 
-def _group_key_values(group_key: object, group_by: Sequence[str]) -> dict[str, object]:
-    if len(group_by) == 1:
-        values = group_key if isinstance(group_key, tuple) else (group_key,)
-    else:
-        values = tuple(group_key)
-    return dict(zip(group_by, values, strict=True))
-
-
 def _is_profileable_numeric(series: pd.Series) -> bool:
     return is_numeric_dtype(series) or series.dropna().empty
-
-
-def _validate_group_by(group_by: Sequence[str], key_columns: Sequence[str]) -> None:
-    allowed_groups = {"symbol", "timeframe"}
-    groups = tuple(group_by)
-
-    if not groups:
-        raise ValueError("group_by must include 'symbol', 'timeframe', or both")
-
-    unknown = [group for group in groups if group not in allowed_groups]
-    if unknown:
-        raise ValueError(f"group_by contains unsupported columns: {unknown}")
-
-    missing_from_keys = [group for group in groups if group not in key_columns]
-    if missing_from_keys:
-        raise ValueError(f"group_by columns must also be key columns: {missing_from_keys}")
 
 
 def _validate_redundancy_threshold(threshold: float) -> None:
     if threshold <= 0 or threshold > 1:
         raise ValueError("redundancy_threshold must be greater than 0 and less than or equal to 1")
-
-
-def _require_columns(frame: pd.DataFrame, columns: Sequence[str], *, frame_name: str) -> None:
-    missing = [column for column in columns if column not in frame.columns]
-    if missing:
-        raise ValueError(f"{frame_name} missing required columns: {missing}")
