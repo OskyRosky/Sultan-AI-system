@@ -30,3 +30,15 @@
 | Future Feature Profiling must include correlation and redundancy analysis. | Accepted | Redundancy control is required before feature evidence can be interpreted or ranked. |
 | Block 8 must define a Hypothesis Registry schema/template before use. | Accepted | Hypotheses need consistent fields, evidence links, status, and review metadata. |
 | Block 10 must define a multiple testing correction method. | Accepted | Broad feature scans require explicit anti-overfitting controls before conclusions are trusted. |
+
+## Block 3 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Research datasets are built by joining features and forward returns on `symbol`, `timeframe`, and `timestamp`. | Accepted | These keys define one completed candle observation and preserve the Block 2 label alignment. |
+| Block 3 uses an inner join for matched research observations. | Accepted | The builder must not fabricate features or labels for unmatched keys. |
+| Duplicate join keys are invalid in both feature and forward return inputs. | Accepted | Duplicate keys make the research observation ambiguous and can hide upstream data defects. |
+| The builder consumes forward returns but does not calculate them. | Accepted | Forward return calculation belongs to the Forward Returns Engine and should remain independently validated. |
+| Terminal `NaN` forward return labels are preserved. | Accepted | Missing future candles at series boundaries are valid labels state and must not be filled. |
+| The builder does not modify feature definitions or feature values. | Accepted | Feature definitions and calculation logic belong to 03 Feature Engineering. |
+| Block 3 creates only in-memory research datasets. | Accepted | Storage contracts and real dataset creation are outside this block. |
