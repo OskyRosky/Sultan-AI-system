@@ -5,8 +5,8 @@
 - Block 1: Research Architecture. Completed.
 - Block 2: Forward Returns Engine. Completed with pure in-memory implementation and synthetic tests.
 - Block 3: Research Dataset Builder. Completed with pure in-memory implementation and synthetic tests.
-- Block 4: Feature Profiling. In progress in Block 4 with pure in-memory implementation, distribution profiling, and correlation/redundancy diagnostics.
-- Block 5: Temporal Stability Analysis.
+- Block 4: Feature Profiling. Completed with pure in-memory implementation, distribution profiling, and correlation/redundancy diagnostics.
+- Block 5: Temporal Stability Analysis. In progress in Block 5 with pure in-memory windowed stability diagnostics.
 
 ## Medium Priority
 

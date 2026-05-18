@@ -55,3 +55,17 @@
 | Correlation uses pairwise Pearson correlation between numeric feature columns. | Accepted | Pearson correlation is a transparent first-pass redundancy diagnostic. |
 | Extreme redundancy is flagged at `abs(correlation) >= 0.95`. | Accepted | The threshold marks candidates for review but does not imply causality, alpha, or automatic removal. |
 | Block 4 does not normalize, scale, select, cluster, or transform features. | Accepted | Profiling should describe feature state before later methodology decides transformations. |
+
+## Block 5 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Temporal Stability Analysis evaluates windowed behavior of feature-to-forward-return relationships. | Accepted | One-period relationships can be unstable, episodic, or cherry-picked. |
+| Metrics are grouped by `symbol`, `timeframe`, and `window`. | Accepted | Assets, timeframes, and temporal periods must remain traceable and isolated. |
+| Block 5 supports explicit timestamp windows and equal-count chronological windows. | Accepted | Explicit windows support audit reviews, while equal-count windows support early methodology and synthetic tests. |
+| Empty explicit windows are retained with `sample_count = 0` and null metrics. | Accepted | Missing coverage should be visible instead of silently dropped. |
+| Window-level relationship uses Pearson correlation between feature and forward return columns. | Accepted | Pearson correlation is a simple diagnostic for drift, not a final informativeness metric. |
+| Drift metrics summarize ranges and standard deviations across windows. | Accepted | Cross-window variation helps expose instability without creating a ranking or score. |
+| Sign consistency is descriptive and not an alpha signal. | Accepted | Stable signs do not prove causality, profitability, or strategy usefulness. |
+| Block 5 does not create thresholds for acceptance or rejection. | Accepted | Automatic feature selection and ranking are outside this block. |
+| Block 5 does not perform rolling optimization, ML, forecasting, or composite scoring. | Accepted | The block must remain limited to auditable statistical stability diagnostics. |
