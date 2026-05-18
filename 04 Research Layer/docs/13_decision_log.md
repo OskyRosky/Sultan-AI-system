@@ -82,3 +82,17 @@
 | Constant features or constant forward returns produce null IC. | Accepted | Correlation is undefined when either side has no variation. |
 | Preliminary ranking is ordered by absolute Pearson IC, absolute Spearman IC, and sample count. | Accepted | The ranking is technical metadata only and must not become a signal or automatic feature selection. |
 | Block 6 does not address formal multiple testing correction. | Accepted | Multiple testing correction belongs to Block 10 before broad conclusions are trusted. |
+
+## Block 7 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Regime Analysis uses simple auditable labels derived from caller-provided in-memory context columns. | Accepted | Labels must be reproducible and reviewable before complex regime models are considered. |
+| Trend labels are `bullish`, `bearish`, and `neutral`. | Accepted | Sign-based trend labels provide a simple first-pass context split. |
+| Momentum labels are `positive`, `negative`, and `flat`. | Accepted | Sign-based momentum labels are explicit and easy to audit. |
+| Volatility labels are `low_vol`, `medium_vol`, and `high_vol` using within-group terciles. | Accepted | Terciles avoid hard-coded market thresholds while preserving group isolation. |
+| Range labels are `compressed` and `expanded` using the within-group median. | Accepted | Median split is simple and avoids complex range models in this block. |
+| Conditional metrics are grouped by `symbol`, `timeframe`, `forward_return`, `regime_type`, `regime`, and `feature`. | Accepted | This preserves traceability and prevents silent mixing of horizons or regimes. |
+| Conditional metrics include IC, hit rate, mean forward return, median forward return, and average absolute forward return. | Accepted | These match informativeness diagnostics without creating strategy performance metrics. |
+| Empty expected regimes are retained with `sample_count = 0` and null metrics. | Accepted | Missing regime coverage should be visible rather than silently omitted. |
+| Block 7 does not create regime strategy, switching logic, or operational thresholds. | Accepted | Detecting conditional differences is not equivalent to trading on them. |

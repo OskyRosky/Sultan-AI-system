@@ -10,8 +10,8 @@
 
 ## Medium Priority
 
-- Block 6: Feature Informativeness Analysis. In progress in Block 6 with pure in-memory bucket analysis, IC metrics, and preliminary technical ranking metadata.
-- Block 7: Regime Analysis.
+- Block 6: Feature Informativeness Analysis. Completed with pure in-memory bucket analysis, IC metrics, and preliminary technical ranking metadata.
+- Block 7: Regime Analysis. In progress in Block 7 with simple in-memory regime labels and conditional metrics.
 - Block 8: Hypothesis Registry. Requires an explicit schema/template before any real hypotheses are recorded.
 - Block 9: Research Findings Registry.
 - Block 10: Research Quality / Anti-overfitting. Must define the method for multiple testing correction before interpreting broad feature scans.
