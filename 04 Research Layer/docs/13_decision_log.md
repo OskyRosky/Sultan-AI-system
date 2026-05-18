@@ -106,3 +106,15 @@
 | Regime context columns cannot also be analyzed as feature columns. | Accepted | This prevents tautological regime segmentation and circular informativeness evidence. |
 | Current Research Layer assumes caller-provided single-exchange series. | Accepted | 04 groups by `symbol/timeframe`; multi-exchange support needs an explicit join and lineage contract before use. |
 | Block 6 pooled IC is descriptive and not inferential. | Accepted | Pooled IC can be dominated by specific periods or regimes and does not replace IC time-series, ICIR, t-stats, or confidence intervals. |
+
+## Block 8 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Hypothesis Registry records human-authored research hypotheses; it does not generate hypotheses automatically. | Accepted | Hypotheses must remain grounded in evidence, assumptions, and human review. |
+| Hypotheses require explicit falsification conditions. | Accepted | Falsifiability reduces narrative fitting and prevents vague claims from entering the registry. |
+| Allowed statuses are `draft`, `proposed`, `rejected`, `archived`, and `promoted_for_strategy_review`. | Accepted | The lifecycle supports research governance without implying trading approval. |
+| Trading statuses such as `approved_for_trading`, `live_strategy`, and `deploy_ready` are excluded. | Accepted | Strategy approval and deployment are outside 04 Research Layer. |
+| Registry operations are pure in-memory transformations. | Accepted | Block 8 defines governance structure without storage, SQL, datasets, or orchestration. |
+| Registry uniqueness is enforced by `hypothesis_id`. | Accepted | Stable identifiers are required for auditability and future review. |
+| Evidence source is structured metadata, not proof. | Accepted | Observational research evidence should remain traceable without being overstated. |
