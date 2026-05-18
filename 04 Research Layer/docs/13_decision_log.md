@@ -42,3 +42,16 @@
 | Terminal `NaN` forward return labels are preserved. | Accepted | Missing future candles at series boundaries are valid labels state and must not be filled. |
 | The builder does not modify feature definitions or feature values. | Accepted | Feature definitions and calculation logic belong to 03 Feature Engineering. |
 | Block 3 creates only in-memory research datasets. | Accepted | Storage contracts and real dataset creation are outside this block. |
+
+## Block 4 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Feature Profiling describes standalone feature behavior and does not use forward returns. | Accepted | Predictive feature-to-return analysis belongs to later research components. |
+| Profiling output is structured in memory as summary statistics, correlation diagnostics, and redundancy diagnostics. | Accepted | This keeps the block reproducible and audit-friendly without creating stored research datasets. |
+| Default profiling grouping is `symbol` + `timeframe`. | Accepted | Assets and timeframes must not be mixed silently. |
+| Profiling also supports explicit grouping by only `symbol` or only `timeframe`. | Accepted | Block 4 needs basic stability views across assets and across timeframes without predictive analysis. |
+| Outliers are counted using the IQR rule with `1.5 * IQR` bounds. | Accepted | The method is simple, explicit, and appropriate before introducing more complex robust statistics. |
+| Correlation uses pairwise Pearson correlation between numeric feature columns. | Accepted | Pearson correlation is a transparent first-pass redundancy diagnostic. |
+| Extreme redundancy is flagged at `abs(correlation) >= 0.95`. | Accepted | The threshold marks candidates for review but does not imply causality, alpha, or automatic removal. |
+| Block 4 does not normalize, scale, select, cluster, or transform features. | Accepted | Profiling should describe feature state before later methodology decides transformations. |
