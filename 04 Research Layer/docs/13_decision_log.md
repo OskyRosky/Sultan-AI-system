@@ -118,3 +118,16 @@
 | Registry operations are pure in-memory transformations. | Accepted | Block 8 defines governance structure without storage, SQL, datasets, or orchestration. |
 | Registry uniqueness is enforced by `hypothesis_id`. | Accepted | Stable identifiers are required for auditability and future review. |
 | Evidence source is structured metadata, not proof. | Accepted | Observational research evidence should remain traceable without being overstated. |
+
+## Block 9 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Research Findings Registry records human-reviewed structured observations; it does not generate findings automatically. | Accepted | Findings must remain grounded in quantitative evidence and reviewable context. |
+| Findings require structured `supporting_metrics` and `sample_scope`. | Accepted | Evidence and scope must be auditable before Quality Gates can evaluate the finding. |
+| Findings require explicit limitations and caveats. | Accepted | Caveats reduce narrative fitting and prevent observational metrics from being overstated. |
+| Finding decisions are limited to `advance_to_quality_review`, `defer`, `reject`, `needs_more_data`, and `archive`. | Accepted | Decisions should support research governance without implying trading action. |
+| Finding statuses are limited to `draft`, `observed`, `under_review`, `rejected`, `archived`, and `promoted_to_quality_review`. | Accepted | Status lifecycle prepares findings for quality review without trading approval. |
+| Trading decisions and trading statuses are excluded from the registry. | Accepted | Trading approval, deployment, and live logic are outside 04 Research Layer. |
+| Registry operations are pure in-memory transformations. | Accepted | Block 9 defines evidence management without storage, SQL, datasets, or orchestration. |
+| Finding uniqueness is enforced by `finding_id`. | Accepted | Stable identifiers are required for traceability and future review. |

@@ -12,8 +12,8 @@
 
 - Block 6: Feature Informativeness Analysis. Completed with pure in-memory bucket analysis, IC metrics, and preliminary technical ranking metadata.
 - Block 7: Regime Analysis. Completed with simple in-memory regime labels and conditional metrics.
-- Block 8: Hypothesis Registry. In progress in Block 8 with structured schema, lifecycle states, and in-memory validation.
-- Block 9: Research Findings Registry.
+- Block 8: Hypothesis Registry. Completed with structured schema, lifecycle states, and in-memory validation.
+- Block 9: Research Findings Registry. In progress in Block 9 with structured schema, lifecycle states, and in-memory validation.
 - Block 10: Research Quality / Anti-overfitting. Must define the method for multiple testing correction before interpreting broad feature scans.
 
 ## Future
