@@ -131,3 +131,17 @@
 | Trading decisions and trading statuses are excluded from the registry. | Accepted | Trading approval, deployment, and live logic are outside 04 Research Layer. |
 | Registry operations are pure in-memory transformations. | Accepted | Block 9 defines evidence management without storage, SQL, datasets, or orchestration. |
 | Finding uniqueness is enforced by `finding_id`. | Accepted | Stable identifiers are required for traceability and future review. |
+
+## Block 10 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Quality Gates evaluate methodological readiness, not edge or profitability. | Accepted | Passing quality review must not be interpreted as strategy validation. |
+| Default minimum sample count is 30. | Accepted | Smaller samples are too fragile for broad research interpretation and should be marked insufficient. |
+| Default weak absolute IC threshold is 0.03. | Accepted | Very small IC values should be surfaced as weak evidence while remaining descriptive. |
+| Default maximum NaN ratio is 0.20. | Accepted | Heavy missingness can distort evidence and should trigger review. |
+| Default maximum regime or period concentration is 0.80. | Accepted | Evidence concentrated in one regime or period is vulnerable to cherry-picking and instability. |
+| Default minimum regime sample count is 10. | Accepted | Sparse conditional segments should be flagged before interpretation. |
+| Pooled-only IC receives a warning. | Accepted | Pooled IC is descriptive and does not replace IC time-series, ICIR, or inferential checks. |
+| Quality results include passed checks, failed checks, warnings, reviewer notes, and evaluated timestamp. | Accepted | Auditability requires explicit check-level traceability. |
+| Quality statuses are limited to `pass`, `warning`, `fail`, and `insufficient_evidence`. | Accepted | Statuses must not imply alpha, deployment readiness, or trading action. |
