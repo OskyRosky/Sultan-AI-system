@@ -69,3 +69,16 @@
 | Sign consistency is descriptive and not an alpha signal. | Accepted | Stable signs do not prove causality, profitability, or strategy usefulness. |
 | Block 5 does not create thresholds for acceptance or rejection. | Accepted | Automatic feature selection and ranking are outside this block. |
 | Block 5 does not perform rolling optimization, ML, forecasting, or composite scoring. | Accepted | The block must remain limited to auditable statistical stability diagnostics. |
+
+## Block 6 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Feature Informativeness compares feature values at `t` with already aligned forward returns at `t`. | Accepted | Reusing aligned labels avoids extra shifting and reduces lookahead risk. |
+| Block 6 does not calculate or modify forward returns. | Accepted | Label construction belongs to the Forward Returns Engine. |
+| Bucket analysis uses quantile buckets inside each `symbol`, `timeframe`, `feature`, and `forward_return` scope. | Accepted | Local buckets avoid silently mixing assets, timeframes, features, or horizons. |
+| Bucket metrics include count, mean forward return, median forward return, hit rate, and average absolute forward return. | Accepted | These provide simple descriptive research evidence without strategy simulation. |
+| Information Coefficient includes Pearson and Spearman correlation. | Accepted | Pearson captures linear association; Spearman captures rank association. |
+| Constant features or constant forward returns produce null IC. | Accepted | Correlation is undefined when either side has no variation. |
+| Preliminary ranking is ordered by absolute Pearson IC, absolute Spearman IC, and sample count. | Accepted | The ranking is technical metadata only and must not become a signal or automatic feature selection. |
+| Block 6 does not address formal multiple testing correction. | Accepted | Multiple testing correction belongs to Block 10 before broad conclusions are trusted. |
