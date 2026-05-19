@@ -36,6 +36,8 @@ The current 04 implementation assumes caller-provided single-exchange series. If
 
 04 outputs are not strategy-ready by themselves. Rankings, IC metrics, bucket results, regime diagnostics, quality statuses, findings, and hypotheses must not be interpreted as trading signals.
 
+Pooled IC and current technical rankings are descriptive metadata only. Pooled IC does not distinguish temporal consistency and must not be interpreted as robust evidence. Rolling IC and ICIR remain pending and are required before serious strategy research.
+
 ## Modules Created
 
 Implemented pure in-memory modules:
@@ -93,6 +95,11 @@ Remaining methodological risks:
 - real regime behavior is unknown;
 - multiple testing correction is documented as required but not formally implemented;
 - pooled IC remains descriptive and not inferential;
+- pooled IC does not distinguish temporal consistency;
+- stationarity testing has not been implemented;
+- non-stationary features may create spurious correlations, especially in crypto trending markets;
+- volatility and range regime labels use global group statistics and are not online labels;
+- inner-join row loss has not been measured on real data;
 - quality gates depend on honestly recorded supporting metadata;
 - multi-exchange support is not implemented;
 - no out-of-sample validation has been run.
@@ -102,18 +109,24 @@ Remaining methodological risks:
 Deferred items:
 
 - IC time-series.
+- Rolling IC.
 - ICIR.
 - t-statistics.
 - Confidence intervals.
+- Stationarity testing.
 - Formal multiple testing correction.
 - Out-of-sample validation.
 - Automatic bridge from Blocks 5-7 outputs into `supporting_metrics`.
 - Cross-asset robustness.
 - Cross-horizon robustness.
+- Rolling or online regime labeling.
 - Multi-exchange support.
 - Dataset fingerprinting.
+- Row-loss monitoring for real research dataset joins.
 - Real research execution.
 - Strategy conversion.
+
+These deferred items are methodological, not architectural blockers for closing the 04 framework build.
 
 ## Readiness Criteria For 05 Strategy Engine
 

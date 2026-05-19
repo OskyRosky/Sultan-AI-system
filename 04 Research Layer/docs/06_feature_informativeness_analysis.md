@@ -66,6 +66,8 @@ Block 6 uses pooled IC within each `symbol/timeframe/feature/horizon` group. Poo
 
 IC is calculated only when at least 5 non-null feature/return pairs are available. This avoids reporting mechanically perfect two-point correlations as evidence.
 
+Pooled IC does not distinguish temporal consistency. A feature can have a favorable pooled IC while being unstable across windows or concentrated in a short period. Rolling IC and ICIR remain pending and are required before serious strategy research. Current technical rankings are descriptive metadata only and must not be interpreted as robust evidence.
+
 ## Preliminary Technical Ranking
 
 Block 6 creates a preliminary technical ranking table ordered within each `symbol`, `timeframe`, and `forward_return` by:

@@ -156,3 +156,14 @@
 | Outputs valid for future 05 review are structured evidence, reviewed hypotheses, reviewed findings, caveats, quality gate results, and methodology notes. | Accepted | These preserve research governance while maintaining separation from strategy logic. |
 | Outputs not valid as strategy-ready artifacts include rankings, IC values, findings, hypotheses, and quality statuses by themselves. | Accepted | No 04 artifact confirms edge, profitability, or trading readiness. |
 | Deferred items remain explicit at closure. | Accepted | IC time-series, ICIR, t-stats, confidence intervals, formal multiple testing correction, out-of-sample validation, metadata bridges, cross-asset/cross-horizon robustness, multi-exchange support, dataset fingerprinting, real research execution, and strategy conversion are not part of framework closure. |
+
+## Final Documentation Hardening
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| Pooled IC limitation is explicitly documented across informativeness, quality, and closure docs. | Accepted | Pooled IC is descriptive, does not measure temporal consistency, and must not be treated as robust evidence. |
+| Rolling IC and ICIR remain deferred but required before serious strategy research. | Accepted | Strategy research needs temporal consistency diagnostics beyond pooled association. |
+| Regime look-ahead caveat is documented for volatility and range labels. | Accepted | Global group statistics can use later rows and affect causal interpretation, even without target leakage. |
+| Stationarity testing remains deferred. | Accepted | Non-stationary features can create spurious correlations, especially in crypto trending markets. |
+| Dataset row-loss monitoring remains deferred for real runs. | Accepted | Inner joins and forward-return horizons can discard rows and must be measured during real research execution. |
+| Final hardening items are methodological caveats, not architectural blockers. | Accepted | The framework can close while these research-methodology checks remain required before 05 strategy research. |

@@ -66,6 +66,12 @@ Block 7 uses simple reproducible labels:
 
 Volatility and range labels are calculated independently inside each `symbol/timeframe` group. Constant volatility values map to `medium_vol`. Constant range values map to `compressed`.
 
+## Regime Look-ahead Caveat
+
+Volatility and range regime labels use global statistics from the full `symbol/timeframe` group, such as terciles or the median. This means those labels can incorporate information from later rows in the same group.
+
+This does not alter forward return labels and is not target leakage from future returns. However, it can affect causal interpretation of regime-conditioned results because regime boundaries are not online or rolling. Rolling or online regime labeling is deferred.
+
 ## Conditional Metrics
 
 For each `symbol`, `timeframe`, `forward_return`, `regime_type`, `regime`, and feature, Block 7 calculates:

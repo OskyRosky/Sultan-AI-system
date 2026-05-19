@@ -87,6 +87,12 @@ abs(correlation) >= 0.95
 
 This threshold marks candidate redundancy for review. It does not imply causality, predictive power, alpha, or an automatic decision to remove a feature.
 
+## Stationarity Limitation
+
+Stationarity testing is not implemented in Block 4. Feature profiling describes distributions, nulls, outliers, variance, and redundancy, but it does not test whether feature series are stationary.
+
+Non-stationary features can produce spurious correlations when they share a trend with another variable. This is especially relevant in crypto markets, where long trending periods can make unrelated time series appear informative. Stationarity analysis is deferred.
+
 ## Grouping Contract
 
 Profiling must be executable by:

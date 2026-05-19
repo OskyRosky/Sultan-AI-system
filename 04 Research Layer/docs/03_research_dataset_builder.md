@@ -34,6 +34,12 @@ The current Block 3 contract assumes single-exchange input. If upstream data inc
 
 The join is an inner join in Block 3. Rows without matching keys on both sides are excluded from the research dataset rather than filled or fabricated. Missing labels inside matched forward return rows, such as terminal `NaN` values from insufficient future candles, are preserved.
 
+## Row-loss Caveat
+
+The inner join can discard observations when feature rows and forward return rows do not share identical keys. Row loss can also occur naturally because longer forward return horizons leave terminal rows without sufficient future observations.
+
+Real research execution must monitor row counts before and after the merge. Future real runs should record feature input count, forward return input count, matched output count, dropped row count, and drop ratio by `symbol` and `timeframe`.
+
 ## Minimum Required Columns
 
 Feature input must contain:

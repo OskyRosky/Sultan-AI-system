@@ -81,6 +81,8 @@ Cherry-picking risk appears when evidence depends on one horizon, one period, on
 
 Pooled IC can be dominated by a specific period, regime, or cluster of observations. It does not replace IC time-series, ICIR, t-statistics, confidence intervals, or out-of-sample validation. Findings that only provide pooled IC receive a warning.
 
+Pooled IC is descriptive, not inferential. It does not distinguish temporal consistency and must not be treated as robust evidence by itself. Current informativeness rankings are not robust evidence; they are metadata for review. Rolling IC and ICIR remain pending and are required before serious strategy research.
+
 ## Temporal And Regime Risk
 
 Temporal instability means evidence may be episodic rather than durable. Regime dependency means evidence may exist only in one context segment. Both risks must be documented before future strategy research considers the evidence.
