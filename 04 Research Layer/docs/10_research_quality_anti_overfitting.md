@@ -37,9 +37,12 @@ Block 10 implements explicit in-memory gates:
   - insufficient sample detection;
   - sample scope presence.
 - Temporal quality:
+  - missing temporal stability assessment warnings;
   - temporal instability warnings;
-  - concentrated-period warnings.
+  - missing period concentration warnings;
+  - period concentration warnings.
 - Regime quality:
+  - missing regime concentration warnings;
   - regime concentration warnings;
   - sparse regime evidence warnings.
 - Statistical quality:
@@ -81,6 +84,14 @@ Pooled IC can be dominated by a specific period, regime, or cluster of observati
 ## Temporal And Regime Risk
 
 Temporal instability means evidence may be episodic rather than durable. Regime dependency means evidence may exist only in one context segment. Both risks must be documented before future strategy research considers the evidence.
+
+## Trust Dependency
+
+Block 10 evaluates declared metadata and evidence recorded on findings and hypotheses. It does not automatically recompute IC, temporal stability, regime concentration, period concentration, or other supporting metrics from raw research outputs.
+
+This means the quality gate depends on the finding author recording `supporting_metrics` honestly and completely. Missing metadata is surfaced as warnings, but the v1 engine does not independently verify the metric values against Blocks 5-7 outputs.
+
+This trust dependency is a known limitation of the current implementation. An automatic bridge from Temporal Stability, Feature Informativeness, and Regime Analysis outputs into `supporting_metrics` is deferred.
 
 ## Interpretation Boundary
 

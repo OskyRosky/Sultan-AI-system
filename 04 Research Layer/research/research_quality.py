@@ -111,16 +111,20 @@ def evaluate_finding_quality(
         passed.append("nan_ratio_within_limit")
 
     regime_concentration = _numeric_metric(supporting_metrics, "regime_concentration")
-    if regime_concentration is not None:
+    if regime_concentration is None:
+        warnings.append("missing_regime_concentration")
+    else:
         if regime_concentration > thresholds.max_regime_concentration:
             warnings.append("regime_concentration")
         else:
             passed.append("regime_concentration_within_limit")
 
     period_concentration = _numeric_metric(supporting_metrics, "period_concentration")
-    if period_concentration is not None:
+    if period_concentration is None:
+        warnings.append("missing_period_concentration")
+    else:
         if period_concentration > thresholds.max_period_concentration:
-            warnings.append("temporal_concentration")
+            warnings.append("period_concentration")
         else:
             passed.append("period_concentration_within_limit")
 
@@ -132,7 +136,9 @@ def evaluate_finding_quality(
             passed.append("regime_sample_count")
 
     temporal_stability = _string_metric(supporting_metrics, "temporal_stability")
-    if temporal_stability in {"unstable", "degraded"}:
+    if not temporal_stability:
+        warnings.append("missing_temporal_stability_assessment")
+    elif temporal_stability in {"unstable", "degraded"}:
         warnings.append("temporal_instability")
 
     if _string_metric(supporting_metrics, "ic_type") == "pooled":

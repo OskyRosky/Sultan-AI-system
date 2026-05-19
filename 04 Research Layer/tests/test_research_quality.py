@@ -108,7 +108,34 @@ def test_temporal_instability_warning() -> None:
     result = research_quality.evaluate_finding_quality(finding)
 
     assert "temporal_instability" in result.warnings
-    assert "temporal_concentration" in result.warnings
+    assert "period_concentration" in result.warnings
+
+
+def test_missing_temporal_stability_assessment_warning() -> None:
+    metrics = dict(_finding()["supporting_metrics"])
+    del metrics["temporal_stability"]
+
+    result = research_quality.evaluate_finding_quality(_finding(supporting_metrics=metrics))
+
+    assert "missing_temporal_stability_assessment" in result.warnings
+
+
+def test_missing_regime_concentration_warning() -> None:
+    metrics = dict(_finding()["supporting_metrics"])
+    del metrics["regime_concentration"]
+
+    result = research_quality.evaluate_finding_quality(_finding(supporting_metrics=metrics))
+
+    assert "missing_regime_concentration" in result.warnings
+
+
+def test_missing_period_concentration_warning() -> None:
+    metrics = dict(_finding()["supporting_metrics"])
+    del metrics["period_concentration"]
+
+    result = research_quality.evaluate_finding_quality(_finding(supporting_metrics=metrics))
+
+    assert "missing_period_concentration" in result.warnings
 
 
 def test_invalid_finding_status_fails() -> None:
@@ -183,6 +210,9 @@ def test_missing_metrics_warning() -> None:
 
     assert "missing_ic_metric" in result.warnings
     assert "missing_multiple_testing_control" in result.warnings
+    assert "missing_temporal_stability_assessment" in result.warnings
+    assert "missing_regime_concentration" in result.warnings
+    assert "missing_period_concentration" in result.warnings
 
 
 def test_results_to_frame_preserves_audit_fields() -> None:
