@@ -145,3 +145,14 @@
 | Pooled-only IC receives a warning. | Accepted | Pooled IC is descriptive and does not replace IC time-series, ICIR, or inferential checks. |
 | Quality results include passed checks, failed checks, warnings, reviewer notes, and evaluated timestamp. | Accepted | Auditability requires explicit check-level traceability. |
 | Quality statuses are limited to `pass`, `warning`, `fail`, and `insufficient_evidence`. | Accepted | Statuses must not imply alpha, deployment readiness, or trading action. |
+
+## Block 11 Decisions
+
+| Decision | Status | Rationale |
+| --- | --- | --- |
+| 04 Research Layer is closed as a framework build, not as completed empirical research. | Accepted | Infrastructure can be complete before real research execution. |
+| Research dossier outputs are placeholders until real research is executed. | Accepted | Closure must avoid invented findings, hypotheses, or edge claims. |
+| 05 Strategy Engine readiness requires real research execution and human-reviewed evidence. | Accepted | Strategy work must not start from framework scaffolding alone. |
+| Outputs valid for future 05 review are structured evidence, reviewed hypotheses, reviewed findings, caveats, quality gate results, and methodology notes. | Accepted | These preserve research governance while maintaining separation from strategy logic. |
+| Outputs not valid as strategy-ready artifacts include rankings, IC values, findings, hypotheses, and quality statuses by themselves. | Accepted | No 04 artifact confirms edge, profitability, or trading readiness. |
+| Deferred items remain explicit at closure. | Accepted | IC time-series, ICIR, t-stats, confidence intervals, formal multiple testing correction, out-of-sample validation, metadata bridges, cross-asset/cross-horizon robustness, multi-exchange support, dataset fingerprinting, real research execution, and strategy conversion are not part of framework closure. |

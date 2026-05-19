@@ -14,13 +14,15 @@
 - Block 7: Regime Analysis. Completed with simple in-memory regime labels and conditional metrics.
 - Block 8: Hypothesis Registry. Completed with structured schema, lifecycle states, and in-memory validation.
 - Block 9: Research Findings Registry. Completed with structured schema, lifecycle states, and in-memory validation.
-- Block 10: Research Quality / Anti-overfitting. In progress in Block 10 with explicit in-memory quality gates and anti-overfitting warnings.
+- Block 10: Research Quality / Anti-overfitting. Completed with explicit in-memory quality gates and anti-overfitting warnings.
+- Block 11: Research Closure. Completed with closure document and base research dossier placeholders.
 
 ## Future
 
-- Block 11: Research Closure.
-- Final Feature Intelligence Report.
-- Final Findings Registry export.
-- Final Hypothesis Candidates package.
-- Final Research Methodology Document.
-- Final Anti-overfitting Certification.
+- Real research dataset execution.
+- Real Feature Intelligence Report.
+- Real Findings Registry export.
+- Real Hypothesis Candidates package.
+- Final Research Methodology Document from executed evidence.
+- Final Anti-overfitting Certification from quality-reviewed evidence.
+- Strategy Engine handoff only after readiness criteria are satisfied.
