@@ -43,3 +43,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-023 | Evidence decisions cannot originate or directly support signal definitions. | Accepted |
 | D-024 | Signal orientations are conceptual labels only and are not orders, rules, trades, or execution instructions. | Accepted |
 | D-025 | Block 03 creates synthetic mockups and tests only; it does not create real signals or advance to rule construction. | Accepted |
+
+## Block 04 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-026 | Regime context frames must originate from valid signal definitions produced by Block 03. | Accepted |
+| D-027 | Regime context frames cannot originate directly from evidence, findings, hypotheses, or eligibility decisions. | Accepted |
+| D-028 | Block 04 declares conceptual context only; it does not calculate, classify, forecast, or switch regimes. | Accepted |
+| D-029 | Regime context framing cannot modify hypothesis eligibility, signal origin, or Block 02 decisions. | Accepted |
+| D-030 | Block 04 creates synthetic mockups and tests only; it does not create rules, strategy candidates, backtests, or performance claims. | Accepted |
