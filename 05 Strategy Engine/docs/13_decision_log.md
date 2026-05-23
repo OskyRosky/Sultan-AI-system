@@ -53,3 +53,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-028 | Block 04 declares conceptual context only; it does not calculate, classify, forecast, or switch regimes. | Accepted |
 | D-029 | Regime context framing cannot modify hypothesis eligibility, signal origin, or Block 02 decisions. | Accepted |
 | D-030 | Block 04 creates synthetic mockups and tests only; it does not create rules, strategy candidates, backtests, or performance claims. | Accepted |
+
+## Block 05 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-031 | Rule definitions must originate from a valid signal definition and a valid regime context frame. | Accepted |
+| D-032 | The regime context frame referenced by a rule must reference the same signal definition. | Accepted |
+| D-033 | Rule definitions are declarative and conceptual; they are not executable trading rules. | Accepted |
+| D-034 | Block 05 does not define position sizing, stop loss, take profit, leverage, portfolio logic, or execution. | Accepted |
+| D-035 | Block 05 creates synthetic mockups and tests only; it does not create strategy candidates, backtests, PnL, or performance claims. | Accepted |
