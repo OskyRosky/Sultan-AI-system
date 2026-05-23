@@ -10,9 +10,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from strategy.inputs_contract import (
-    ApprovalStatus,
+    FindingInput,
     HypothesisInput,
     ResearchEvidenceInput,
+    SourceStatus,
 )
 
 
@@ -30,16 +31,79 @@ FICTITIOUS_EVIDENCE_INELIGIBLE = ResearchEvidenceInput(
     temporal_scope="synthetic_time_window",
     asset_scope="synthetic_asset_scope",
     timeframe_scope="synthetic_timeframe",
-    evidence_status="closed",
-    approval_status=ApprovalStatus.APPROVED,
+    source_status="closed",
     created_at=MOCK_CREATED_AT,
     limitations=("Synthetic evidence mockup; not real market evidence.",),
     audit_reference="mock-audit-evidence-001",
 )
 
 
-FICTITIOUS_HYPOTHESIS_UNAPPROVED = HypothesisInput(
-    hypothesis_id="mock-hypothesis-unapproved",
+FICTITIOUS_FINDING_UNADMISSIBLE_STATUS = FindingInput(
+    finding_id="mock-finding-unadmissible-status",
+    linked_evidence_ids=("mock-evidence-001",),
+    finding_summary="Fictitious finding with source status under review.",
+    finding_type="synthetic_example",
+    regime_scope="mock_regime_context",
+    stability_assessment="synthetic_stability_assessment",
+    informativeness_assessment="synthetic_informativeness_assessment",
+    falsification_reference=None,
+    source_status=SourceStatus.UNDER_REVIEW,
+    closure_reference="mock-closure-reference",
+    audit_reference="mock-audit-finding-unadmissible-status",
+    limitations=("Synthetic finding; not real research.",),
+)
+
+
+FICTITIOUS_FINDING_INCOMPLETE_TRACEABILITY = FindingInput(
+    finding_id="mock-finding-incomplete-traceability",
+    linked_evidence_ids=(),
+    finding_summary="Fictitious finding without linked evidence.",
+    finding_type="synthetic_example",
+    regime_scope="mock_regime_context",
+    stability_assessment="synthetic_stability_assessment",
+    informativeness_assessment="synthetic_informativeness_assessment",
+    falsification_reference=None,
+    source_status=SourceStatus.PROMOTED_TO_QUALITY_REVIEW,
+    closure_reference="mock-closure-reference",
+    audit_reference="mock-audit-finding-incomplete-traceability",
+    limitations=("Synthetic finding; not real research.",),
+)
+
+
+FICTITIOUS_FINDING_MISSING_LIMITATIONS = FindingInput(
+    finding_id="mock-finding-missing-limitations",
+    linked_evidence_ids=("mock-evidence-001",),
+    finding_summary="Fictitious finding without limitations.",
+    finding_type="synthetic_example",
+    regime_scope="mock_regime_context",
+    stability_assessment="synthetic_stability_assessment",
+    informativeness_assessment="synthetic_informativeness_assessment",
+    falsification_reference=None,
+    source_status=SourceStatus.PROMOTED_TO_QUALITY_REVIEW,
+    closure_reference="mock-closure-reference",
+    audit_reference="mock-audit-finding-missing-limitations",
+    limitations=(),
+)
+
+
+FICTITIOUS_FINDING_ELIGIBLE = FindingInput(
+    finding_id="mock-finding-eligible",
+    linked_evidence_ids=("mock-evidence-001",),
+    finding_summary="Fictitious finding eligible for conceptual design only.",
+    finding_type="synthetic_example",
+    regime_scope="mock_regime_context",
+    stability_assessment="synthetic_stability_assessment",
+    informativeness_assessment="synthetic_informativeness_assessment",
+    falsification_reference=None,
+    source_status=SourceStatus.PROMOTED_TO_QUALITY_REVIEW,
+    closure_reference="mock-closure-reference",
+    audit_reference="mock-audit-finding-eligible",
+    limitations=("Synthetic finding; not real research or edge.",),
+)
+
+
+FICTITIOUS_HYPOTHESIS_NONADMISSIBLE_STATUS = HypothesisInput(
+    hypothesis_id="mock-hypothesis-nonadmissible-status",
     linked_finding_ids=("mock-finding-001",),
     linked_evidence_ids=("mock-evidence-001",),
     hypothesis_statement="Fictitious hypothesis for contract rejection testing.",
@@ -47,9 +111,8 @@ FICTITIOUS_HYPOTHESIS_UNAPPROVED = HypothesisInput(
     applicable_regime_context="mock_regime_context",
     falsification_criteria=("Synthetic falsification criterion.",),
     limitations=("Synthetic hypothesis; not real research.",),
-    approval_status=ApprovalStatus.PENDING_REVIEW,
-    eligible_for_strategy_design=False,
-    audit_reference="mock-audit-hypothesis-unapproved",
+    source_status=SourceStatus.PROPOSED,
+    audit_reference="mock-audit-hypothesis-nonadmissible-status",
 )
 
 
@@ -62,8 +125,7 @@ FICTITIOUS_HYPOTHESIS_MISSING_FALSIFICATION = HypothesisInput(
     applicable_regime_context="mock_regime_context",
     falsification_criteria=(),
     limitations=("Synthetic hypothesis; not real research.",),
-    approval_status=ApprovalStatus.APPROVED,
-    eligible_for_strategy_design=True,
+    source_status=SourceStatus.PROMOTED_FOR_STRATEGY_REVIEW,
     audit_reference="mock-audit-hypothesis-missing-falsification",
 )
 
@@ -77,8 +139,7 @@ FICTITIOUS_HYPOTHESIS_INCOMPLETE_TRACEABILITY = HypothesisInput(
     applicable_regime_context="mock_regime_context",
     falsification_criteria=("Synthetic falsification criterion.",),
     limitations=("Synthetic hypothesis; not real research.",),
-    approval_status=ApprovalStatus.APPROVED,
-    eligible_for_strategy_design=True,
+    source_status=SourceStatus.PROMOTED_FOR_STRATEGY_REVIEW,
     audit_reference="mock-audit-hypothesis-incomplete-traceability",
 )
 
@@ -92,7 +153,6 @@ FICTITIOUS_HYPOTHESIS_ELIGIBLE = HypothesisInput(
     applicable_regime_context="mock_regime_context",
     falsification_criteria=("Synthetic rejection criterion exists.",),
     limitations=("Synthetic hypothesis; not real research or edge.",),
-    approval_status=ApprovalStatus.APPROVED,
-    eligible_for_strategy_design=True,
+    source_status=SourceStatus.PROMOTED_FOR_STRATEGY_REVIEW,
     audit_reference="mock-audit-hypothesis-eligible",
 )

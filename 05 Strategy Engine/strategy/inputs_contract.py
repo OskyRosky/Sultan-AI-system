@@ -14,14 +14,17 @@ from enum import Enum
 from typing import Protocol
 
 
-class ApprovalStatus(str, Enum):
-    """Research governance approval state."""
+class SourceStatus(str, Enum):
+    """Known upstream lifecycle states emitted by 04 Research Layer."""
 
     DRAFT = "draft"
-    PENDING_REVIEW = "pending_review"
-    APPROVED = "approved"
+    PROPOSED = "proposed"
+    OBSERVED = "observed"
+    UNDER_REVIEW = "under_review"
     REJECTED = "rejected"
-    CLOSED = "closed"
+    ARCHIVED = "archived"
+    PROMOTED_FOR_STRATEGY_REVIEW = "promoted_for_strategy_review"
+    PROMOTED_TO_QUALITY_REVIEW = "promoted_to_quality_review"
 
 
 class EligibilityStatus(str, Enum):
@@ -57,8 +60,7 @@ class ResearchEvidenceInput:
     temporal_scope: str
     asset_scope: str
     timeframe_scope: str
-    evidence_status: str
-    approval_status: ApprovalStatus
+    source_status: str
     created_at: datetime
     limitations: tuple[str, ...]
     audit_reference: str
@@ -76,8 +78,7 @@ class FindingInput:
     stability_assessment: str
     informativeness_assessment: str
     falsification_reference: str | None
-    finding_status: str
-    approval_status: ApprovalStatus
+    source_status: SourceStatus
     closure_reference: str
     audit_reference: str
     limitations: tuple[str, ...]
@@ -95,15 +96,14 @@ class HypothesisInput:
     applicable_regime_context: str | None
     falsification_criteria: tuple[str, ...]
     limitations: tuple[str, ...]
-    approval_status: ApprovalStatus
-    eligible_for_strategy_design: bool
+    source_status: SourceStatus
     audit_reference: str
 
 
 class StrategyInput(Protocol):
     """Shared fields required for eligibility evaluation."""
 
-    approval_status: ApprovalStatus
+    source_status: str | SourceStatus
     limitations: tuple[str, ...]
     audit_reference: str
 
@@ -114,9 +114,11 @@ class StrategyInputEligibilityDecision:
 
     input_id: str
     input_type: InputType
+    source_status: str
+    source_status_admissible: bool
     eligibility_status: EligibilityStatus
+    eligible_for_strategy_design: bool
     decision_reason: str
-    required_approvals_present: bool
     falsification_criteria_present: bool | None
     traceability_complete: bool
     limitations_acknowledged: bool
@@ -133,7 +135,8 @@ def decide_strategy_input_eligibility(
 
     input_type = _input_type(strategy_input)
     input_id = _input_id(strategy_input)
-    required_approvals_present = strategy_input.approval_status is ApprovalStatus.APPROVED
+    source_status = _source_status_value(strategy_input.source_status)
+    source_status_admissible = _source_status_admissible(strategy_input, input_type)
     traceability_complete = _traceability_complete(strategy_input)
     limitations_acknowledged = bool(strategy_input.limitations)
     falsification_criteria_present = _falsification_criteria_present(strategy_input)
@@ -142,8 +145,8 @@ def decide_strategy_input_eligibility(
     failures: list[str] = []
     if not audit_reference_present:
         failures.append("missing audit reference")
-    if not required_approvals_present:
-        failures.append("approval status is not approved")
+    if not source_status_admissible:
+        failures.append(f"source status is not admissible for 05: {source_status}")
     if not traceability_complete:
         failures.append("traceability is incomplete")
     if not limitations_acknowledged:
@@ -152,22 +155,21 @@ def decide_strategy_input_eligibility(
         failures.append("evidence alone cannot feed strategy design")
     if input_type is InputType.HYPOTHESIS and not falsification_criteria_present:
         failures.append("hypothesis falsification criteria are missing")
-    if input_type is InputType.HYPOTHESIS and not strategy_input.eligible_for_strategy_design:
-        failures.append("hypothesis is not marked eligible by source governance")
 
-    eligibility_status = (
-        EligibilityStatus.ELIGIBLE_FOR_STRATEGY_DESIGN
-        if not failures
-        else EligibilityStatus.INELIGIBLE_FOR_STRATEGY_DESIGN
-    )
+    eligible_for_strategy_design = not failures
+    eligibility_status = EligibilityStatus.ELIGIBLE_FOR_STRATEGY_DESIGN if (
+        eligible_for_strategy_design
+    ) else EligibilityStatus.INELIGIBLE_FOR_STRATEGY_DESIGN
     reason = "eligible for conceptual strategy design only" if not failures else "; ".join(failures)
 
     return StrategyInputEligibilityDecision(
         input_id=input_id,
         input_type=input_type,
+        source_status=source_status,
+        source_status_admissible=source_status_admissible,
         eligibility_status=eligibility_status,
+        eligible_for_strategy_design=eligible_for_strategy_design,
         decision_reason=reason,
-        required_approvals_present=required_approvals_present,
         falsification_criteria_present=falsification_criteria_present,
         traceability_complete=traceability_complete,
         limitations_acknowledged=limitations_acknowledged,
@@ -194,6 +196,29 @@ def _input_id(strategy_input: ResearchEvidenceInput | FindingInput | HypothesisI
     if isinstance(strategy_input, FindingInput):
         return strategy_input.finding_id
     return strategy_input.hypothesis_id
+
+
+def _source_status_value(source_status: str | SourceStatus) -> str:
+    if isinstance(source_status, SourceStatus):
+        return source_status.value
+    return str(source_status)
+
+
+def _source_status_admissible(
+    strategy_input: ResearchEvidenceInput | FindingInput | HypothesisInput,
+    input_type: InputType,
+) -> bool:
+    if input_type is InputType.RESEARCH_EVIDENCE:
+        return False
+    if input_type is InputType.FINDING:
+        return _source_status_value(strategy_input.source_status) == (
+            SourceStatus.PROMOTED_TO_QUALITY_REVIEW.value
+        )
+    if input_type is InputType.HYPOTHESIS:
+        return _source_status_value(strategy_input.source_status) == (
+            SourceStatus.PROMOTED_FOR_STRATEGY_REVIEW.value
+        )
+    return False
 
 
 def _traceability_complete(
@@ -234,6 +259,4 @@ def _falsification_criteria_present(
 ) -> bool | None:
     if isinstance(strategy_input, HypothesisInput):
         return bool(strategy_input.falsification_criteria)
-    if isinstance(strategy_input, FindingInput):
-        return bool(strategy_input.falsification_reference or strategy_input.limitations)
     return None

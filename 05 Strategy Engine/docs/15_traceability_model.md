@@ -34,7 +34,7 @@ Every future eligible input must preserve:
 - source component;
 - source identifier;
 - audit reference;
-- approval status;
+- real 04 source status;
 - temporal scope;
 - asset scope;
 - timeframe scope;
@@ -61,6 +61,8 @@ This block does not create those candidates.
 ## Audit Requirement
 
 Every eligibility decision must be reproducible from the declared input metadata. If a decision cannot explain why the input was eligible or ineligible, the decision is invalid.
+
+The eligibility decision is owned by 05. Upstream 04 artifacts do not carry `eligible_for_strategy_design`; 05 produces that result after interpreting source status, traceability, limitations, audit references, and falsification criteria where applicable.
 
 ## Boundary With 06
 

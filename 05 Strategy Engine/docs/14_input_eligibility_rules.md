@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the eligibility rules that protect 05 Strategy Engine from consuming incomplete, unapproved, or non-auditable research outputs.
+This document defines the eligibility rules that protect 05 Strategy Engine from consuming incomplete, non-admissible, or non-auditable research outputs.
 
 Eligibility is a governance decision. It is not a signal, rule, strategy candidate, backtest result, edge claim, or trading approval.
 
@@ -10,9 +10,9 @@ Eligibility is a governance decision. It is not a signal, rule, strategy candida
 
 1. Evidence alone does not create a signal.
 2. Evidence alone is not eligible for strategy design.
-3. A finding without approval cannot feed strategy design.
+3. A finding without admissible 04 source status cannot feed strategy design.
 4. A finding without linked evidence cannot feed strategy design.
-5. A hypothesis without approval cannot feed strategy design.
+5. A hypothesis without admissible 04 source status cannot feed strategy design.
 6. A hypothesis without falsification criteria cannot feed strategy design.
 7. A hypothesis with incomplete traceability cannot feed strategy design.
 8. Every eligible input must have an audit reference.
@@ -24,7 +24,7 @@ Eligibility is a governance decision. It is not a signal, rule, strategy candida
 
 ## Approval Boundary
 
-Approved for strategy design is not the same as:
+Eligible for strategy design is not the same as:
 
 - approved for trading;
 - approved for deployment;
@@ -32,11 +32,23 @@ Approved for strategy design is not the same as:
 - validated as profitable;
 - validated by historical simulation.
 
+## Source Status Translation
+
+04 Research Layer retains its own lifecycle states. 05 Strategy Engine stores those states as `source_status` and interprets them inside the Strategy Inputs Contract.
+
+Admissible source statuses for 05 eligibility evaluation:
+
+- Hypothesis: `promoted_for_strategy_review`.
+- Finding: `promoted_to_quality_review`.
+- Evidence: no source status is sufficient by itself.
+
+No 04 status is interpreted as edge, profitability, trading approval, or deployment approval.
+
 ## Rejection Reasons
 
 An input must be rejected or marked ineligible when:
 
-- approval is missing;
+- source status is not admissible for the input type;
 - traceability is incomplete;
 - audit reference is missing;
 - limitations are missing;
@@ -51,11 +63,13 @@ Research evidence is admissible context only. It may support a finding or hypoth
 
 ## Finding Rule
 
-A finding may become eligible only when it is approved, linked to evidence, scoped, limited, and auditable.
+A finding may become eligible only when its 04 source status is `promoted_to_quality_review`, it is linked to evidence, scoped, limited, and auditable.
+
+Findings do not require hypothesis `falsification_criteria`. That requirement applies only to hypotheses.
 
 ## Hypothesis Rule
 
-A hypothesis may become eligible only when it is approved, linked to evidence and optionally findings, falsifiable, limited, auditable, and traceable.
+A hypothesis may become eligible only when its 04 source status is `promoted_for_strategy_review`, it is linked to evidence and optionally findings, falsifiable, limited, auditable, and traceable.
 
 ## No Strategy Leakage
 

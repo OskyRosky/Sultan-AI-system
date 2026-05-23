@@ -6,7 +6,7 @@ This document defines the governed input contract for 05 Strategy Engine.
 
 The contract exists because no future signal, rule, or strategy candidate may be legitimate unless it can trace back to admissible research evidence, findings, or hypotheses from 04 Research Layer.
 
-This block is contractual and auditable. It does not consume real data and does not assume that real approved findings or hypotheses exist.
+This block is contractual and auditable. It does not consume real data and does not assume that real admissible findings or hypotheses exist.
 
 ## Source Boundary
 
@@ -32,8 +32,7 @@ Required conceptual fields:
 - `temporal_scope`
 - `asset_scope`
 - `timeframe_scope`
-- `evidence_status`
-- `approval_status`
+- `source_status`
 - `created_at`
 - `limitations`
 - `audit_reference`
@@ -52,10 +51,10 @@ Required conceptual fields:
 - `stability_assessment`
 - `informativeness_assessment`
 - `falsification_reference` or documented limitations
-- `finding_status`
-- `approval_status`
+- `source_status`
 - `closure_reference`
 - `audit_reference`
+- `limitations`
 
 ### Hypothesis Input
 
@@ -71,8 +70,7 @@ Required conceptual fields:
 - `applicable_regime_context`, when applicable
 - `falsification_criteria`
 - `limitations`
-- `approval_status`
-- `eligible_for_strategy_design`
+- `source_status`
 - `audit_reference`
 
 ### Strategy Input Eligibility Decision
@@ -83,9 +81,11 @@ Required conceptual fields:
 
 - `input_id`
 - `input_type`
+- `source_status`
+- `source_status_admissible`
 - `eligibility_status`
+- `eligible_for_strategy_design`
 - `decision_reason`
-- `required_approvals_present`
 - `falsification_criteria_present`, when applicable
 - `traceability_complete`
 - `limitations_acknowledged`
@@ -94,22 +94,45 @@ Required conceptual fields:
 
 ## Status Model
 
-The contract separates documentation state from strategy design eligibility.
+The contract separates upstream lifecycle state from 05 strategy design eligibility.
 
-Approval states:
+05 must preserve the real `source_status` emitted by 04 Research Layer. It must not pretend that 04 emits a generic `approved` value.
+
+Known 04 hypothesis statuses:
 
 - `draft`
-- `pending_review`
-- `approved`
+- `proposed`
 - `rejected`
-- `closed`
+- `archived`
+- `promoted_for_strategy_review`
+
+Known 04 finding statuses:
+
+- `draft`
+- `observed`
+- `under_review`
+- `rejected`
+- `archived`
+- `promoted_to_quality_review`
 
 Eligibility states:
 
 - `ineligible_for_strategy_design`
 - `eligible_for_strategy_design`
 
-An input can be documented and still be ineligible. An input can be approved as research context and still imply no edge, no profitability, no signal, and no trading permission.
+An input can be documented or promoted in 04 and still be ineligible in 05. An input can be eligible in 05 and still imply no edge, no profitability, no signal, and no trading permission.
+
+## 04 To 05 Status Interpretation
+
+05 interprets upstream status by input type:
+
+- Hypothesis: `promoted_for_strategy_review` is the only 04 hypothesis status admissible for 05 eligibility evaluation.
+- Finding: `promoted_to_quality_review` is the only 04 finding status admissible for 05 eligibility evaluation.
+- Evidence: evidence is context only and is never eligible by itself, regardless of status.
+
+This interpretation is not a trading approval and not an edge claim. It only means the artifact can be evaluated by 05's contract.
+
+Policy for findings: a finding with `promoted_to_quality_review` may be eligible as governed research context if it is linked to evidence, has limitations, has closure and audit references, and passes traceability checks. It does not require hypothesis falsification criteria, because falsification criteria are hypothesis-specific. A future strategy design may still require a linked eligible hypothesis depending on later 05 blocks.
 
 ## Eligibility Requirements
 
@@ -118,11 +141,11 @@ At minimum, an eligible input must satisfy:
 1. It originates from 04 Research Layer.
 2. It has a stable audit reference.
 3. It has complete traceability to evidence, findings, or hypotheses as applicable.
-4. It has approval status `approved`.
+4. Its real 04 `source_status` is admissible for its input type.
 5. It declares limitations.
 6. It preserves temporal, asset, timeframe, and regime context when applicable.
 7. If it is a hypothesis, it has falsification criteria.
-8. If it is a finding, it is approved and linked to evidence.
+8. If it is a finding, it has `source_status = promoted_to_quality_review` and is linked to evidence.
 9. If it is evidence, it cannot alone create strategy design eligibility.
 
 ## Explicit Prohibitions
