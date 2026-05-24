@@ -63,3 +63,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-033 | Rule definitions are declarative and conceptual; they are not executable trading rules. | Accepted |
 | D-034 | Block 05 does not define position sizing, stop loss, take profit, leverage, portfolio logic, or execution. | Accepted |
 | D-035 | Block 05 creates synthetic mockups and tests only; it does not create strategy candidates, backtests, PnL, or performance claims. | Accepted |
+
+## Block 06 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-036 | Strategy candidates must originate from one or more valid rule definitions produced by Block 05. | Accepted |
+| D-037 | Block 06 candidates must remain `pending_risk_template` and cannot assign risk templates. | Accepted |
+| D-038 | Block 06 does not register candidates, run quality gates, close candidates, or prepare dossier handoff. | Accepted |
+| D-039 | Strategy candidates composed in Block 06 are conceptual artifacts, not validated or profitable strategies. | Accepted |
+| D-040 | Block 06 creates synthetic mockups and tests only; it does not create backtests, PnL, performance claims, sizing, capital allocation, or execution. | Accepted |
