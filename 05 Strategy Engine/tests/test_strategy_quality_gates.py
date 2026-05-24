@@ -23,6 +23,7 @@ from quality.quality_gates import (  # noqa: E402
     QualityGateType,
     create_quality_gate_assessment,
     create_quality_gate_result,
+    validate_quality_gate_assessment,
 )
 
 
@@ -126,6 +127,16 @@ def test_failed_gate_derives_revision_status() -> None:
     assert assessment.assessment_status is QualityAssessmentStatus.FAILED_REQUIRES_REVISION
 
 
+def test_manual_assessment_status_override_is_rejected() -> None:
+    manipulated_assessment = replace(
+        FICTITIOUS_QUALITY_GATE_ASSESSMENT,
+        assessment_status=QualityAssessmentStatus.FAILED_REQUIRES_REVISION,
+    )
+
+    with pytest.raises(ValueError, match="assessment_status must be derived from gate_results"):
+        validate_quality_gate_assessment(manipulated_assessment)
+
+
 def test_quality_gate_result_rejects_non_quality_gate_type() -> None:
     with pytest.raises(TypeError, match="gate_type must be a QualityGateType"):
         create_quality_gate_result(
@@ -208,4 +219,3 @@ def test_quality_gate_assessment_does_not_expose_closure_handoff_or_performance_
     assert not hasattr(assessment, "position_size")
     assert not hasattr(assessment, "order")
     assert not hasattr(assessment, "execution")
-

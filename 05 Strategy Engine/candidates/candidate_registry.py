@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from candidates.strategy_candidate import StrategyCandidate, validate_strategy_candidate
 from risk_templates.risk_template import RiskTemplate, validate_risk_template
@@ -201,7 +201,7 @@ def _require_non_empty_tuple(values: tuple[str, ...], field_name: str) -> None:
         _require_text(value, field_name)
 
 
-def _reject_duplicate_values(values: Sequence[str], field_name: str) -> None:
+def _reject_duplicate_values(values: Iterable[str], field_name: str) -> None:
     seen: set[str] = set()
     duplicates: set[str] = set()
     for value in values:

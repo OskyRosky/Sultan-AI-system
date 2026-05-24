@@ -20,6 +20,8 @@ Validation proves only that a registered conceptual candidate can be assessed fo
 
 It does not approve, close, hand off, backtest, validate performance, confirm edge, or authorize trading.
 
+`StrategyQualityGateAssessment` is a procedural governance-evaluation artifact. It verifies and preserves upstream falsification references, but does not generate new falsification references of its own.
+
 ## Expected Test Coverage
 
 The Block 09 tests must show that:
@@ -29,6 +31,7 @@ The Block 09 tests must show that:
 - registry entries must remain `registered_pending_quality_gates`;
 - all required quality gate types are required;
 - a failed gate derives `failed_requires_revision`;
+- manually inconsistent assessment status is rejected;
 - unsupported gate types are rejected;
 - assumptions, limitations, non-approval statement, and audit reference are enforced;
 - assessments are immutable;
@@ -50,4 +53,3 @@ Block 09 is closed when:
 ## Non-Approval Statement
 
 No quality-gate assessment created under this block confirms edge, profitability, safety, empirical robustness, tradability, deployability, backtest readiness, closure, dossier readiness, or execution readiness.
-

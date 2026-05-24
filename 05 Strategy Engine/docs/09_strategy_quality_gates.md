@@ -55,6 +55,10 @@ Block 09 allows only derived assessment statuses:
 
 `passed_pending_strategy_closure` means the conceptual registry entry may later be reviewed by Block 10. It does not mean closure, dossier readiness, backtest authorization, trading approval, or validated strategy status.
 
+## Falsification References
+
+`StrategyQualityGateAssessment` is a procedural governance-evaluation artifact. It verifies that upstream falsification references remain present through the registry entry, candidate, and risk template chain, but it does not generate a new falsification reference set of its own.
+
 ## Complexity
 
 Candidate design should avoid unnecessary degrees of freedom. Complexity must be justified before downstream testing.

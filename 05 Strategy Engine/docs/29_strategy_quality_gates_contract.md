@@ -60,6 +60,12 @@ Assessment status is derived from gate results:
 
 No manual override is allowed in Block 09.
 
+## Falsification References
+
+`StrategyQualityGateAssessment` is procedural. It verifies and preserves the upstream falsification references carried by the registry entry and its source artifacts.
+
+The assessment itself does not need to create a new `falsification_references` field, because Block 09 evaluates governance readiness rather than proposing a new strategic hypothesis, signal, rule, candidate, or risk template.
+
 ## Explicit Prohibitions
 
 Quality Gates must not define:
@@ -91,4 +97,3 @@ Block 11 may later use closed candidates for dossier handoff.
 06 Backtesting Engine may later evaluate historical behavior only after proper handoff.
 
 Block 09 does not perform those responsibilities.
-

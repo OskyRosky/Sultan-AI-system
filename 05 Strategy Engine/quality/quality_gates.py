@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Sequence
+from typing import Iterable, Sequence
 
 from candidates.candidate_registry import (
     RegistryStatus,
@@ -217,7 +217,7 @@ def _normalize_text_sequence(values: Sequence[str], field_name: str) -> tuple[st
     return tuple(normalized)
 
 
-def _reject_duplicate_values(values: Sequence[str], field_name: str) -> None:
+def _reject_duplicate_values(values: Iterable[str], field_name: str) -> None:
     seen: set[str] = set()
     duplicates: set[str] = set()
     for value in values:
@@ -226,4 +226,3 @@ def _reject_duplicate_values(values: Sequence[str], field_name: str) -> None:
         seen.add(value)
     if duplicates:
         raise ValueError(f"duplicate {field_name}: {sorted(duplicates)}")
-
