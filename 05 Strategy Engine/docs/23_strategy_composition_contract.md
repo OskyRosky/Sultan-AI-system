@@ -36,10 +36,23 @@ Block 06 may produce only `pending_risk_template` candidates. That status means 
 
 1. A strategy candidate must contain at least one valid `RuleDefinition`.
 2. Each rule definition must validate under Block 05.
-3. A candidate cannot originate directly from evidence, findings, hypotheses, signals, or regime context frames.
-4. A candidate cannot assign risk templates.
-5. A candidate cannot self-register in a registry.
-6. A candidate cannot mark itself as quality-approved, validated, profitable, deployable, or tradeable.
+3. For V1, every rule in the same candidate must share the same source hypothesis.
+4. For V1, every rule in the same candidate must share the same `SignalDefinition`.
+5. For V1, every rule in the same candidate must share the same `RegimeContextFrame`.
+6. A candidate cannot originate directly from evidence, findings, hypotheses, signals, or regime context frames.
+7. A candidate cannot assign risk templates.
+8. A candidate cannot self-register in a registry.
+9. A candidate cannot mark itself as quality-approved, validated, profitable, deployable, or tradeable.
+
+## V1 Compatibility Policy
+
+Block 06 V1 intentionally permits only narrow composition. Multiple rules may be grouped together only when they are different declarative interpretations of the same conceptual chain:
+
+```text
+same source hypothesis -> same signal definition -> same regime context frame -> compatible rule definitions
+```
+
+Cross-signal, cross-regime, or cross-hypothesis composition is deferred to a future design decision. It must not be inferred in Block 06.
 
 ## Required Governance Fields
 

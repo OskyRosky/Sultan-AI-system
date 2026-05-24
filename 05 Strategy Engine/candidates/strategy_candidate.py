@@ -84,10 +84,15 @@ def validate_strategy_candidate(candidate: StrategyCandidate) -> StrategyCandida
     if not candidate.rule_definitions:
         raise ValueError("strategy candidate must contain at least one rule definition")
 
+    reference_rule: RuleDefinition | None = None
     for rule in candidate.rule_definitions:
         if not isinstance(rule, RuleDefinition):
             raise ValueError("strategy candidate rules must be RuleDefinition instances")
         validate_rule_definition(rule)
+        if reference_rule is None:
+            reference_rule = rule
+            continue
+        _validate_rule_compatibility(reference_rule, rule)
 
     if not isinstance(candidate.status, CandidateStatus):
         raise TypeError("status must be a CandidateStatus")
@@ -104,6 +109,21 @@ def validate_strategy_candidate(candidate: StrategyCandidate) -> StrategyCandida
     _normalize_text_sequence(candidate.falsification_references, "falsification_references")
 
     return candidate
+
+
+def _validate_rule_compatibility(reference_rule: RuleDefinition, candidate_rule: RuleDefinition) -> None:
+    reference_hypothesis_id = (
+        reference_rule.signal_definition.source_hypothesis_decision.input_id
+    )
+    candidate_hypothesis_id = (
+        candidate_rule.signal_definition.source_hypothesis_decision.input_id
+    )
+    if candidate_hypothesis_id != reference_hypothesis_id:
+        raise ValueError("all strategy candidate rules must share the same source hypothesis")
+    if candidate_rule.signal_definition != reference_rule.signal_definition:
+        raise ValueError("all strategy candidate rules must share the same signal definition")
+    if candidate_rule.regime_context_frame != reference_rule.regime_context_frame:
+        raise ValueError("all strategy candidate rules must share the same regime context frame")
 
 
 def _require_text(value: object, field_name: str) -> str:

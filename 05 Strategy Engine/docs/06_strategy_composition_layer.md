@@ -10,6 +10,12 @@ A strategy candidate in this block is a structured composition artifact. It is n
 
 Every `StrategyCandidate` must originate from one or more valid rule definitions from Block 05.
 
+For V1 composition, all rules inside the same candidate must share:
+
+- the same source hypothesis;
+- the same `SignalDefinition`;
+- the same `RegimeContextFrame`.
+
 The required flow is:
 
 ```text
@@ -23,6 +29,7 @@ Composition may reference:
 - valid rule definitions;
 - their underlying signal definitions;
 - their underlying regime context frames;
+- shared hypothesis lineage;
 - assumptions;
 - limitations;
 - conflict notes;

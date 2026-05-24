@@ -24,6 +24,9 @@ The Block 06 tests must show that:
 - a valid strategy candidate can be composed from one or more valid rule definitions;
 - an empty rule set is rejected;
 - non-rule origins are rejected;
+- rules from different signal definitions are rejected;
+- rules from different regime context frames are rejected;
+- rules from different source hypotheses are rejected;
 - unsupported candidate status is rejected;
 - Block 06 candidates are constrained to `pending_risk_template`;
 - required summary, rationale, assumptions, limitations, falsification references, and audit references are enforced;
@@ -37,6 +40,7 @@ Block 06 is closed when:
 - the strategy composition contract is documented;
 - implementation is covered by tests;
 - every strategy candidate is constrained to valid rule definitions;
+- every multi-rule strategy candidate is constrained to one source hypothesis, one signal definition, and one regime context frame;
 - every created candidate is pending future risk-template assignment;
 - no real strategy candidates are created from real data;
 - no risk templates, registries, quality gates, backtesting, PnL, performance metrics, execution, or data integration are created;

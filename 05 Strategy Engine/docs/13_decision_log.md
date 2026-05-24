@@ -73,3 +73,5 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-038 | Block 06 does not register candidates, run quality gates, close candidates, or prepare dossier handoff. | Accepted |
 | D-039 | Strategy candidates composed in Block 06 are conceptual artifacts, not validated or profitable strategies. | Accepted |
 | D-040 | Block 06 creates synthetic mockups and tests only; it does not create backtests, PnL, performance claims, sizing, capital allocation, or execution. | Accepted |
+| D-041 | Block 06 V1 permits multi-rule composition only when all rules share the same source hypothesis, signal definition, and regime context frame. | Accepted |
+| D-042 | Cross-hypothesis, cross-signal, or cross-regime candidate composition is deferred beyond Block 06 V1. | Accepted |
