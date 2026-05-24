@@ -2,33 +2,65 @@
 
 ## Purpose
 
-The Strategy Candidate Registry is the governed inventory of strategy candidates created by 05 Strategy Engine.
+The Strategy Candidate Registry is the governed inventory of conceptual strategy candidates created by 05 Strategy Engine.
 
-## Candidate Status
+Registry entries are immutable audit records. They state that a candidate and its uncalibrated risk template have been received with sufficient traceability for future quality-gate review.
 
-Registry inclusion does not approve trading. It only means a candidate has been described and can be reviewed against Strategy Engine requirements.
+## Required Origin
 
-## Future Required Fields
+Every registry entry must originate from:
 
-Future registry entries should include:
+1. one valid `StrategyCandidate` from Block 06;
+2. one valid uncalibrated `RiskTemplate` from Block 07;
+3. the risk template must reference the same strategy candidate.
 
-- Candidate identifier.
-- Source research artifact references.
-- Signal definitions.
-- Regime context.
-- Rule summary.
-- Risk template.
-- Assumptions.
-- Limitations.
-- Falsification criteria.
-- Quality gate status.
-- Closure status.
-- Dossier readiness.
+The required flow is:
+
+```text
+Eligible Hypothesis Decision -> SignalDefinition -> RegimeContextFrame -> RuleDefinition -> StrategyCandidate -> RiskTemplate -> Registry Entry
+```
+
+## Registry Status
+
+Block 08 may create only:
+
+- `registered_pending_quality_gates`
+
+This status means the candidate is registered as a conceptual artifact and awaits Block 09. It does not mean quality approval, closure, dossier readiness, backtest authorization, deployment approval, or trading authorization.
+
+## Required Fields
+
+Registry entries include:
+
+- registry entry identifier;
+- strategy candidate;
+- risk template;
+- registry status;
+- source hypothesis identifiers;
+- signal identifiers;
+- regime frame identifiers;
+- rule identifiers;
+- assumptions;
+- limitations;
+- falsification references;
+- audit reference;
+- registration timestamp.
 
 ## Falsification Criteria
 
-Falsification criteria will be mandatory. A candidate must define what evidence would weaken, reject, or retire the strategic idea before downstream validation work begins.
+Falsification references remain mandatory. A candidate must preserve what evidence would weaken, reject, or retire the conceptual idea before downstream validation work begins.
 
 ## Explicit Non-Scope
 
-The registry does not validate profitability, approve deployment, or authorize trading.
+The registry does not:
+
+- validate profitability;
+- approve deployment;
+- authorize trading;
+- run quality gates;
+- close candidates;
+- prepare dossier handoff;
+- authorize backtesting;
+- calculate PnL or performance metrics;
+- assign risk parameters;
+- execute orders.

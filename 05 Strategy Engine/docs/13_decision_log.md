@@ -87,3 +87,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-047 | Block 07 creates synthetic mockups and tests only; it does not create backtests, PnL, risk calibration, safety claims, or trading approval. | Accepted |
 | D-048 | `draft` and `composed` candidate statuses are reserved or deferred and remain disabled in the current V1 flow. | Accepted |
 | D-049 | Risk templates must carry falsification references for governance consistency with prior Strategy Engine artifacts. | Accepted |
+
+## Block 08 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-050 | Registry entries must reference a valid strategy candidate and a matching valid uncalibrated risk template. | Accepted |
+| D-051 | Registry entries are immutable audit records and do not approve, validate, close, hand off, or authorize candidates. | Accepted |
+| D-052 | Block 08 registry status is limited to `registered_pending_quality_gates`. | Accepted |
+| D-053 | Registry collections reject duplicate registry entry IDs and duplicate candidate IDs. | Accepted |
+| D-054 | Block 08 creates synthetic mockups and tests only; it does not create quality gates, closure, dossier, backtests, PnL, performance claims, or trading approval. | Accepted |
