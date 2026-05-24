@@ -97,3 +97,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-052 | Block 08 registry status is limited to `registered_pending_quality_gates`. | Accepted |
 | D-053 | Registry collections reject duplicate registry entry IDs and duplicate candidate IDs. | Accepted |
 | D-054 | Block 08 creates synthetic mockups and tests only; it does not create quality gates, closure, dossier, backtests, PnL, performance claims, or trading approval. | Accepted |
+
+## Block 09 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-055 | Quality gate assessments must reference a valid registry entry with status `registered_pending_quality_gates`. | Accepted |
+| D-056 | Block 09 quality gate status is derived from gate results and is limited to `passed_pending_strategy_closure` or `failed_requires_revision`. | Accepted |
+| D-057 | Every quality assessment must cover traceability, governance fields, structural complexity, evidence governance readiness, risk template completeness, falsification readiness, and non-performance scope. | Accepted |
+| D-058 | Passing Quality Gates permits only future Strategy Closure review; it does not close, hand off, approve backtesting, validate edge, or authorize trading. | Accepted |
+| D-059 | Block 09 creates synthetic mockups and tests only; it does not create closure, dossier, backtests, PnL, performance claims, execution, or trading approval. | Accepted |
