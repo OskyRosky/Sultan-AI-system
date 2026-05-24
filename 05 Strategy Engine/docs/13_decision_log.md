@@ -75,3 +75,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-040 | Block 06 creates synthetic mockups and tests only; it does not create backtests, PnL, performance claims, sizing, capital allocation, or execution. | Accepted |
 | D-041 | Block 06 V1 permits multi-rule composition only when all rules share the same source hypothesis, signal definition, and regime context frame. | Accepted |
 | D-042 | Cross-hypothesis, cross-signal, or cross-regime candidate composition is deferred beyond Block 06 V1. | Accepted |
+
+## Block 07 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-043 | Risk templates must reference valid strategy candidates from Block 06 with status `pending_risk_template`. | Accepted |
+| D-044 | Risk templates in Block 07 are conceptual and must remain explicitly uncalibrated. | Accepted |
+| D-045 | Risk templates declare governance dimensions only and do not define capital allocation, position sizing, stop loss, take profit, leverage, or execution controls. | Accepted |
+| D-046 | Risk template assignment does not register, quality-approve, validate, close, or hand off a candidate. | Accepted |
+| D-047 | Block 07 creates synthetic mockups and tests only; it does not create backtests, PnL, risk calibration, safety claims, or trading approval. | Accepted |
