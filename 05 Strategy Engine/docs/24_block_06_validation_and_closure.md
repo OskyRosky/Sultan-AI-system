@@ -29,6 +29,7 @@ The Block 06 tests must show that:
 - rules from different source hypotheses are rejected;
 - unsupported candidate status is rejected;
 - Block 06 candidates are constrained to `pending_risk_template`;
+- `draft` and `composed` remain reserved or deferred statuses and are not enabled in V1;
 - required summary, rationale, assumptions, limitations, falsification references, and audit references are enforced;
 - the candidate preserves the rule -> regime -> signal -> hypothesis eligibility chain;
 - candidates do not expose risk templates, registry status, quality gate status, backtests, PnL, drawdown, hit rate, performance metrics, position sizing, capital allocation, stop loss, take profit, leverage, orders, or execution fields.

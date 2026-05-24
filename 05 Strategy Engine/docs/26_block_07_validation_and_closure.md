@@ -28,7 +28,7 @@ The Block 07 tests must show that:
 - empty risk dimensions are rejected;
 - invalid risk dimensions are rejected;
 - unsupported calibration status is rejected;
-- required constraint intent, assumptions, limitations, non-calibrated rationale, and audit references are enforced;
+- required constraint intent, assumptions, limitations, falsification references, non-calibrated rationale, and audit references are enforced;
 - the risk template preserves the candidate -> rule -> regime -> signal -> hypothesis chain;
 - risk templates do not expose registry status, quality gate status, backtests, PnL, performance metrics, position sizing, capital allocation, stop loss, take profit, leverage, orders, or execution fields.
 

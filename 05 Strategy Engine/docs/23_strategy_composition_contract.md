@@ -32,6 +32,8 @@ Initial status values:
 
 Block 06 may produce only `pending_risk_template` candidates. That status means the candidate is structurally composed and awaits Block 07. It does not mean registry approval, quality approval, validation, or readiness for trading.
 
+`draft` and `composed` are reserved lifecycle states for future workflow design. They are not enabled in the current V1 flow and must be rejected by Block 06 validation.
+
 ## Origin Rules
 
 1. A strategy candidate must contain at least one valid `RuleDefinition`.

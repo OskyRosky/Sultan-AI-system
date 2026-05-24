@@ -85,3 +85,5 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-045 | Risk templates declare governance dimensions only and do not define capital allocation, position sizing, stop loss, take profit, leverage, or execution controls. | Accepted |
 | D-046 | Risk template assignment does not register, quality-approve, validate, close, or hand off a candidate. | Accepted |
 | D-047 | Block 07 creates synthetic mockups and tests only; it does not create backtests, PnL, risk calibration, safety claims, or trading approval. | Accepted |
+| D-048 | `draft` and `composed` candidate statuses are reserved or deferred and remain disabled in the current V1 flow. | Accepted |
+| D-049 | Risk templates must carry falsification references for governance consistency with prior Strategy Engine artifacts. | Accepted |

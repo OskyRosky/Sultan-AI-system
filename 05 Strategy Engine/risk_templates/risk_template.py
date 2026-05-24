@@ -49,6 +49,7 @@ class RiskTemplate:
     exclusion_criteria: tuple[str, ...]
     assumptions: tuple[str, ...]
     limitations: tuple[str, ...]
+    falsification_references: tuple[str, ...]
     calibration_status: CalibrationStatus
     non_calibrated_rationale: str
     audit_reference: str
@@ -63,6 +64,7 @@ def create_risk_template(
     constraint_intent: str,
     assumptions: Sequence[str],
     limitations: Sequence[str],
+    falsification_references: Sequence[str],
     non_calibrated_rationale: str,
     audit_reference: str,
     exclusion_criteria: Sequence[str] = (),
@@ -85,6 +87,10 @@ def create_risk_template(
         ),
         assumptions=_normalize_text_sequence(assumptions, "assumptions"),
         limitations=_normalize_text_sequence(limitations, "limitations"),
+        falsification_references=_normalize_text_sequence(
+            falsification_references,
+            "falsification_references",
+        ),
         calibration_status=calibration_status,
         non_calibrated_rationale=_require_text(
             non_calibrated_rationale,
@@ -116,6 +122,7 @@ def validate_risk_template(template: RiskTemplate) -> RiskTemplate:
     _normalize_optional_text_sequence(template.exclusion_criteria, "exclusion_criteria")
     _normalize_text_sequence(template.assumptions, "assumptions")
     _normalize_text_sequence(template.limitations, "limitations")
+    _normalize_text_sequence(template.falsification_references, "falsification_references")
     _require_text(template.non_calibrated_rationale, "non_calibrated_rationale")
     _require_text(template.audit_reference, "audit_reference")
 

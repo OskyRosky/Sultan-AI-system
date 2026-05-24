@@ -33,6 +33,7 @@ def test_valid_risk_template_requires_pending_strategy_candidate() -> None:
         exclusion_criteria=("Synthetic exclusion criterion.",),
         assumptions=("Synthetic assumption.",),
         limitations=("Synthetic limitation.",),
+        falsification_references=("Synthetic falsification reference.",),
         non_calibrated_rationale="Synthetic rationale for uncalibrated status.",
         audit_reference="mock-audit-risk-template-valid",
         created_at=MOCK_RISK_TEMPLATE_CREATED_AT,
@@ -53,6 +54,7 @@ def test_non_candidate_origin_is_rejected() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-bad-origin",
         )
@@ -69,6 +71,7 @@ def test_candidate_not_pending_risk_template_is_rejected() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-bad-candidate-status",
         )
@@ -83,6 +86,7 @@ def test_empty_risk_dimensions_are_rejected() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-empty-dimensions",
         )
@@ -97,6 +101,7 @@ def test_invalid_risk_dimensions_are_rejected() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-invalid-dimension",
         )
@@ -111,6 +116,7 @@ def test_unsupported_calibration_status_is_rejected() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-bad-calibration",
             calibration_status="calibrated",
@@ -126,6 +132,7 @@ def test_required_governance_fields_are_enforced() -> None:
             constraint_intent="",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-missing-intent",
         )
@@ -138,6 +145,7 @@ def test_required_governance_fields_are_enforced() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=(),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-missing-assumptions",
         )
@@ -150,8 +158,22 @@ def test_required_governance_fields_are_enforced() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=(),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="mock-audit-risk-template-missing-limitations",
+        )
+
+    with pytest.raises(ValueError, match="falsification_references must contain at least one item"):
+        create_risk_template(
+            template_id="mock-risk-template-missing-falsification",
+            strategy_candidate=FICTITIOUS_STRATEGY_CANDIDATE,
+            risk_dimensions=(RiskDimension.MARKET_EXPOSURE,),
+            constraint_intent="Synthetic constraint intent.",
+            assumptions=("Synthetic assumption.",),
+            limitations=("Synthetic limitation.",),
+            falsification_references=(),
+            non_calibrated_rationale="Synthetic rationale.",
+            audit_reference="mock-audit-risk-template-missing-falsification",
         )
 
     with pytest.raises(ValueError, match="non_calibrated_rationale must be a non-empty string"):
@@ -162,6 +184,7 @@ def test_required_governance_fields_are_enforced() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="",
             audit_reference="mock-audit-risk-template-missing-rationale",
         )
@@ -174,6 +197,7 @@ def test_required_governance_fields_are_enforced() -> None:
             constraint_intent="Synthetic constraint intent.",
             assumptions=("Synthetic assumption.",),
             limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
             non_calibrated_rationale="Synthetic rationale.",
             audit_reference="",
         )

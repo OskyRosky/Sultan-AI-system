@@ -313,6 +313,19 @@ def test_block_06_candidates_must_remain_pending_risk_template() -> None:
             status=CandidateStatus.COMPOSED,
         )
 
+    with pytest.raises(ValueError, match="must remain pending_risk_template"):
+        create_strategy_candidate(
+            candidate_id="mock-candidate-draft-status",
+            rule_definitions=(FICTITIOUS_RULE_DEFINITION,),
+            composition_summary="Synthetic composition summary.",
+            composition_rationale="Synthetic composition rationale.",
+            assumptions=("Synthetic assumption.",),
+            limitations=("Synthetic limitation.",),
+            falsification_references=("Synthetic falsification reference.",),
+            audit_reference="mock-audit-candidate-draft-status",
+            status=CandidateStatus.DRAFT,
+        )
+
 
 def test_required_governance_fields_are_enforced() -> None:
     with pytest.raises(ValueError, match="composition_summary must be a non-empty string"):

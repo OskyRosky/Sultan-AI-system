@@ -17,6 +17,7 @@ A risk template must include:
 - `exclusion_criteria`
 - `assumptions`
 - `limitations`
+- `falsification_references`
 - `calibration_status`
 - `non_calibrated_rationale`
 - `audit_reference`
@@ -61,6 +62,7 @@ Every valid risk template must include:
 - non-empty constraint intent;
 - non-empty assumptions;
 - non-empty limitations;
+- non-empty falsification references;
 - non-empty non-calibrated rationale;
 - non-empty audit reference.
 

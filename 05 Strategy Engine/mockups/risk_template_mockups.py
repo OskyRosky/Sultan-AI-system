@@ -29,6 +29,7 @@ FICTITIOUS_RISK_TEMPLATE = create_risk_template(
     exclusion_criteria=("Synthetic exclusion criterion; not an operational control.",),
     assumptions=("Synthetic risk assumption; not calibrated.",),
     limitations=("Synthetic risk limitation; no real protection implied.",),
+    falsification_references=("Synthetic risk-template falsification reference.",),
     non_calibrated_rationale=(
         "Synthetic template is uncalibrated because no real data or backtesting is used."
     ),
