@@ -108,3 +108,13 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-058 | Passing Quality Gates permits only future Strategy Closure review; it does not close, hand off, approve backtesting, validate edge, or authorize trading. | Accepted |
 | D-059 | Block 09 creates synthetic mockups and tests only; it does not create closure, dossier, backtests, PnL, performance claims, execution, or trading approval. | Accepted |
 | D-060 | `StrategyQualityGateAssessment` is a procedural governance-evaluation artifact, not a new strategic design artifact; it verifies and preserves upstream `falsification_references`, especially from `RiskTemplate`, but does not generate new `falsification_references` because it does not formulate a new hypothesis, signal, rule, strategy candidate, or risk template. If future Quality Gates introduce new conceptual claims, this decision must be reviewed. | Accepted |
+
+## Block 10 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-061 | Strategy Closure records must reference a valid positive quality assessment with status `passed_pending_strategy_closure`. | Accepted |
+| D-062 | Block 10 closure status is limited to `closed_pending_dossier_handoff`. | Accepted |
+| D-063 | Strategy Closure is internal governance completion only and does not create dossier handoff, authorize backtesting, validate edge, or approve trading. | Accepted |
+| D-064 | Strategy Closure preserves upstream traceability and falsification references but does not create new strategic claims or new falsification criteria. | Accepted |
+| D-065 | Block 10 creates synthetic mockups and tests only; it does not create dossier, handoff, backtests, PnL, performance claims, execution, or trading approval. | Accepted |
