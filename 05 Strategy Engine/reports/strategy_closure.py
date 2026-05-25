@@ -151,7 +151,19 @@ def _upstream_falsification_references(
     quality_assessment: StrategyQualityGateAssessment,
 ) -> tuple[str, ...]:
     registry_entry = quality_assessment.registry_entry
+    rule_definitions = registry_entry.strategy_candidate.rule_definitions
     values = (
+        *(
+            reference
+            for rule in rule_definitions
+            for reference in rule.signal_definition.falsification_references
+        ),
+        *(
+            reference
+            for rule in rule_definitions
+            for reference in rule.regime_context_frame.falsification_references
+        ),
+        *(reference for rule in rule_definitions for reference in rule.falsification_references),
         *registry_entry.falsification_references,
         *registry_entry.strategy_candidate.falsification_references,
         *registry_entry.risk_template.falsification_references,
@@ -179,4 +191,3 @@ def _normalize_text_sequence(values: Sequence[str], field_name: str) -> tuple[st
     if not normalized:
         raise ValueError(f"{field_name} must contain at least one item")
     return tuple(normalized)
-

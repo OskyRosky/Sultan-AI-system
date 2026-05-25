@@ -154,6 +154,7 @@ def test_strategy_closure_required_governance_fields_are_enforced() -> None:
 def test_strategy_closure_preserves_upstream_traceability_and_falsification() -> None:
     record = FICTITIOUS_STRATEGY_CLOSURE_RECORD
     registry_entry = record.quality_assessment.registry_entry
+    rule = registry_entry.strategy_candidate.rule_definitions[0]
 
     assert record.registry_entry_id == registry_entry.entry_id
     assert record.quality_assessment_id == record.quality_assessment.assessment_id
@@ -161,7 +162,14 @@ def test_strategy_closure_preserves_upstream_traceability_and_falsification() ->
     assert record.signal_ids == registry_entry.signal_ids
     assert record.regime_frame_ids == registry_entry.regime_frame_ids
     assert record.rule_ids == registry_entry.rule_ids
+    assert rule.signal_definition.falsification_references[0] in record.upstream_falsification_references
+    assert rule.regime_context_frame.falsification_references[0] in record.upstream_falsification_references
+    assert rule.falsification_references[0] in record.upstream_falsification_references
     assert registry_entry.falsification_references[0] in record.upstream_falsification_references
+    assert (
+        registry_entry.strategy_candidate.falsification_references[0]
+        in record.upstream_falsification_references
+    )
     assert (
         registry_entry.risk_template.falsification_references[0]
         in record.upstream_falsification_references
@@ -205,4 +213,3 @@ def test_strategy_closure_does_not_expose_handoff_backtest_or_performance_fields
     assert not hasattr(record, "position_size")
     assert not hasattr(record, "order")
     assert not hasattr(record, "execution")
-

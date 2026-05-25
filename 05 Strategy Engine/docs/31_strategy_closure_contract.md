@@ -48,7 +48,14 @@ No backtest-ready, dossier-ready, deployment-ready, live, trading-approved, prof
 
 ## Falsification References
 
-Strategy Closure preserves upstream falsification references from registry, candidate, and risk template artifacts.
+Strategy Closure preserves upstream falsification references from every upstream conceptual layer that carries explicit `falsification_references`:
+
+- `SignalDefinition`;
+- `RegimeContextFrame`;
+- `RuleDefinition`;
+- `StrategyCandidate`;
+- `RiskTemplate`;
+- `StrategyCandidateRegistryEntry`.
 
 Closure does not create a new strategic claim and does not create new falsification criteria of its own.
 
@@ -79,4 +86,3 @@ Strategy Closure must not define:
 Block 11 may later use a closed package to create a Strategy Dossier & Handoff artifact.
 
 Block 10 does not perform that handoff and does not package a final dossier.
-

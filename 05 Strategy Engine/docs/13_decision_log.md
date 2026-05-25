@@ -118,3 +118,14 @@ These decisions are architectural constraints for Block 1. They do not validate 
 | D-063 | Strategy Closure is internal governance completion only and does not create dossier handoff, authorize backtesting, validate edge, or approve trading. | Accepted |
 | D-064 | Strategy Closure preserves upstream traceability and falsification references but does not create new strategic claims or new falsification criteria. | Accepted |
 | D-065 | Block 10 creates synthetic mockups and tests only; it does not create dossier, handoff, backtests, PnL, performance claims, execution, or trading approval. | Accepted |
+
+## Block 11 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-066 | Strategy Dossiers must reference a valid Strategy Closure record with status `closed_pending_dossier_handoff`. | Accepted |
+| D-067 | Block 11 handoff status is limited to `dossier_prepared_pending_final_audit`. | Accepted |
+| D-068 | Strategy Dossier & Handoff is documentation preparation only and does not execute operational handoff, authorize backtesting, validate edge, or approve trading. | Accepted |
+| D-069 | Strategy Dossiers must preserve upstream traceability and falsification references from the closure record. | Accepted |
+| D-070 | Block 11 creates synthetic mockups, tests, and a conceptual template only; it does not create 06 Backtesting Engine, operational handoff, backtests, PnL, performance claims, execution, or trading approval. | Accepted |
+| D-071 | 05 Strategy Engine is closed as an 11-block conceptual framework, B01 through B11, with no claim of real evidence, confirmed edge, performance validation, backtesting authorization, or trading approval. | Accepted |
