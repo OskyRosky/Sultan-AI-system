@@ -1,0 +1,47 @@
+# 06 Decision Log
+
+## Initial Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-001 | 06 Backtesting Engine is historical evaluation only, not trading authorization. | Accepted |
+| D-002 | StrategyDossier is the upstream governed input, but it is not proof of edge. | Accepted |
+| D-003 | Operational assumptions added by 06 must be explicit, versioned, auditable, and separate from 05. | Accepted |
+| D-004 | Temporal admissibility is blocking before operationalization. | Accepted |
+| D-005 | Experiment protocol must be frozen before results are observed. | Accepted |
+| D-006 | Positive backtest results do not authorize paper trading, deployment, capital allocation, or live trading. | Accepted |
+| D-007 | Feedback to 04 and 05 is governed handoff only, not direct upstream mutation. | Accepted |
+| D-008 | 06 does not use LLMs to decide trades. | Accepted |
+| D-009 | 06 does not use reinforcement learning. | Accepted |
+| D-010 | Indiscriminate parameter mining is prohibited. | Accepted |
+| D-011 | Block 01 creates documentation architecture only and does not implement simulation, metrics, data loading, risk models, frictions, PnL, execution, paper trading, or exchange integration. | Accepted |
+
+## Notes
+
+These decisions initialize the architectural constraints for Block 01. They do not validate any strategy, edge, performance claim, operational readiness, paper trading path, live trading path, or deployment path.
+
+Future blocks may append decisions to this log as contracts, schemas, tests, and governance artifacts are introduced.
+
+## Block 02 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-012 | Eligibility depends on dossier integrity, traceability, governance completeness, candidate clarity, and absence of unresolved contradictions rather than expected performance. | Accepted |
+| D-013 | Operational parameters intentionally absent from StrategyDossier cannot be used as eligibility rejection criteria. | Accepted |
+| D-014 | 06 Backtesting Engine must never infer missing strategic information. | Accepted |
+| D-015 | Eligibility rejection generates auditable feedback without mutating upstream artifacts. | Accepted |
+| D-016 | StrategyDossier is the only conceptual input to Block 02. | Accepted |
+| D-017 | Block 03 may receive only dossiers marked `eligible_for_backtest_evaluation` by Block 02. | Accepted |
+| D-018 | Block 02 creates documentation only and does not create historical snapshots, temporal controls, operationalization, simulation, metrics, risk models, frictions, executable schemas, paper trading, live trading, or deployment paths. | Accepted |
+
+## Block 03 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-019 | Every historical evaluation must reference a uniquely identifiable snapshot. | Accepted |
+| D-020 | Snapshot definition precedes temporal admissibility validation. | Accepted |
+| D-021 | Feature lineage must remain traceable to 03 Feature Engineering outputs. | Accepted |
+| D-022 | Known limitations must be registered explicitly rather than hidden. | Accepted |
+| D-023 | Snapshot certification confirms documentation completeness but does not certify temporal validity. | Accepted |
+| D-024 | Block 04 is the exclusive authority for lookahead review, leakage review, temporal admissibility, future information contamination, and availability-at-decision-time review. | Accepted |
+| D-025 | Block 03 creates documentation only and does not create datasets, storage artifacts, SQL, pipelines, temporal validation controls, leakage checks, simulation, metrics, risk models, or executable schemas. | Accepted |
