@@ -180,3 +180,18 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-118 | Selective presentation of favorable robustness outcomes is prohibited. | Accepted |
 | D-119 | Block 11 consumes Block 10 metrics but cannot modify, recalculate, or reinterpret them to hide results. | Accepted |
 | D-120 | Block 12 receives Block 11 outcomes but cannot rewrite robustness, falsification, fragility, or anti-overfitting findings. | Accepted |
+| D-121 | StrategyDossier falsification criteria are presumed applicable and cannot be declared inapplicable by Block 11 alone. | Accepted |
+| D-122 | Confirmed experiment shopping blocks `robust_result`. | Accepted |
+| D-123 | Predefined challenge outcomes dominate post-outcome challenge outcomes. | Accepted |
+| D-124 | Post-outcome challenges are supplementary and cannot offset adverse predefined findings. | Accepted |
+| D-125 | Iterative returns from Block 11 are limited and must escalate after repeated returns. | Accepted |
+| D-126 | `overfit_result` maps to the blocking lifecycle state `overfit_detected`. | Accepted |
+| D-127 | Metric defects are verifiable calculation or implementation errors, not methodology preferences. | Accepted |
+| D-128 | Materiality criteria must be predefined before challenge execution. | Accepted |
+| D-129 | Challenge scope and depth must be predefined and recorded. | Accepted |
+| D-130 | Robustness variants must not hide new experiments. | Accepted |
+| D-131 | Primary experiment designation must be timestamped before simulation or result inspection. | Accepted |
+| D-132 | Not-applicable challenge categories require positive, verifiable, non-result-based justification. | Accepted |
+| D-133 | Assumption Registry entries cannot be retroactively selected as falsification criteria. | Accepted |
+| D-134 | Core challenge failures cannot be overridden by peripheral successes. | Accepted |
+| D-135 | Block 12 cannot alter Block 11 classifications. | Accepted |

@@ -49,7 +49,9 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `robustness_findings_recorded` | Robustness, falsification, fragility, overfitting, or inconclusive findings have been documented with lineage and audit evidence. No validation is implied. |
 | `robustness_review_completed` | Required Block 11 challenge categories and falsification review have been completed and recorded. No proof of edge, deployment readiness, or trading authorization is implied. |
 | `robustness_review_failed` | Block 11 cannot close because challenge scope, lineage, criteria, artifacts, or audit evidence are missing, inconsistent, selective, or invalid. |
+| `falsification_applicability_disputed` | Block 11 cannot resolve whether a StrategyDossier falsification criterion applies. The dispute is blocking and must return to the StrategyDossier owner or upstream governance. |
 | `falsified` | The evaluation met predefined falsification criteria. |
+| `overfit_detected` | Block 11 classified the result as `overfit_result`. This is a blocking state, cannot transition to `robust_pending_review`, and must be registered downstream as overfitting evidence. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
 | `not_robust` | Results were materially unstable, fragile, cost-sensitive, regime-dependent, or otherwise failed robustness checks. |
 | `robust_pending_review` | Results passed defined robustness checks but still require governance review. No trading authorization is implied. |
@@ -62,6 +64,10 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 `performance_measured` means governed simulation outputs have been described by versioned metrics and diagnostics. It does not imply edge, robustness, superiority, future profitability, strategy approval, paper trading authorization, live trading authorization, deployment readiness, or capital allocation.
 
 `robustness_review_completed` means governed challenge review has been documented. It does not imply validation, confirmation of edge, future profitability, deployment readiness, paper trading authorization, live trading authorization, or capital allocation.
+
+Block 11 classification transitions are constrained as follows: `robust_result` maps to `robust_pending_review`, `fragile_result` maps to `not_robust`, `falsified_result` maps to `falsified`, `overfit_result` maps to `overfit_detected`, and `inconclusive_result` maps to `inconclusive`.
+
+`overfit_detected` may trigger governed feedback handoff, but it is never a promotion state.
 
 `operationalized` means the dossier has a historically evaluable specification. It does not mean the strategy is approved, profitable, validated, or eligible for trading.
 
@@ -106,6 +112,12 @@ If required Block 09 simulation outputs are missing, inconsistent, corrupted, un
 If metrics are created after result inspection, if metric cherry-picking occurs, if missing simulation data is reconstructed, or if Block 10 attempts to repair simulation defects, the lifecycle must stop at `performance_measurement_invalid`.
 
 If falsification criteria are absent, experiment lineage is unavailable, the assumptions registry is incomplete, robustness scope is undefined, upstream defects remain unresolved, evidence is contradictory and unresolved, or Block 11 attempts to optimize, repair, rerun, recalculate, or redesign, the lifecycle must stop at `robustness_review_failed`.
+
+If Block 11 disputes applicability of a StrategyDossier falsification criterion, the lifecycle must stop at `falsification_applicability_disputed` or `robustness_review_failed` until the StrategyDossier owner or upstream governance formally resolves the dispute. Block 11 cannot declare the criterion inapplicable unilaterally.
+
+If Block 11 confirms experiment shopping, favorable selection from a larger unfavorable or inconclusive experiment family, retroactive falsification criteria selection, post-outcome challenge dilution of predefined adverse findings, missing primary experiment timestamp, missing challenge scope or depth, missing predefined materiality criteria for core challenges, or hidden new experiments presented as robustness variants, the lifecycle cannot transition to `robust_pending_review`.
+
+Iterative returns from Block 11 to prior blocks must be counted for the same StrategyDossier, snapshot, and experiment family. The first return is allowed with documented reason, the second requires explicit escalation note, and the third blocks further iteration until governance review authorizes any new experiment.
 
 If Block 11 detects falsification, fragility, overfitting, or inconclusive evidence, the lifecycle must record the finding rather than repair the strategy, protocol, execution assumptions, risk assumptions, simulation outputs, or metrics.
 
