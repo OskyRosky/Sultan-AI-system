@@ -14,6 +14,10 @@ Block 02 adds the Backtest Inputs & Eligibility Contract as documentation.
 
 Block 03 adds the Historical Data & Feature Snapshot Contract as documentation.
 
+Block 04 adds the Temporal Data Admissibility & Leakage Baseline Controls as documentation.
+
+Block 05 adds the Strategy Operationalization & Simulation Specification as documentation.
+
 The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine
@@ -35,7 +39,7 @@ It does not authorize trading, paper trading, deployment, capital allocation, or
 1. Backtesting Architecture.
 2. Backtest Inputs & Eligibility Contract.
 3. Historical Data & Feature Snapshot Contract.
-4. Temporal Data Admissibility & Leakage Baseline Controls.
+4. Temporal Data Admissibility & Leakage Baseline Controls. This is a blocking prerequisite before operationalization or simulation.
 5. Strategy Operationalization & Simulation Specification.
 6. Experiment & Evaluation Protocol.
 7. Execution & Market Friction Simulation.
@@ -48,3 +52,5 @@ It does not authorize trading, paper trading, deployment, capital allocation, or
 ## Core Warning
 
 Historical evaluation is evidence generation under explicit assumptions. It is not confirmation of edge, not permission to trade, not permission to paper trade, and not deployment approval.
+
+Snapshot certification does not imply temporal certification. Event time alone is insufficient without availability-at-decision-time evidence.

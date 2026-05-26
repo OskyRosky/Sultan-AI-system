@@ -31,6 +31,8 @@ Block 11 is critical because positive performance metrics are insufficient witho
 
 ## Recommended Claude Code Audits
 
+Run an external Claude Code audit after Block 04 to review temporal admissibility, leakage and lookahead definitions, the Block 03 to Block 04 boundary, and whether Block 05 can receive only temporally certified snapshots.
+
 Run an external Claude Code audit after Block 05 to review the operationalization boundary and separation between 05 content and 06 assumptions.
 
 Run an external Claude Code audit after Block 08 to review friction simulation, risk simulation, and whether assumptions remain controlled before execution.

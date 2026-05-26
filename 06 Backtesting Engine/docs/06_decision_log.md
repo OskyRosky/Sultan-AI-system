@@ -45,3 +45,33 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-023 | Snapshot certification confirms documentation completeness but does not certify temporal validity. | Accepted |
 | D-024 | Block 04 is the exclusive authority for lookahead review, leakage review, temporal admissibility, future information contamination, and availability-at-decision-time review. | Accepted |
 | D-025 | Block 03 creates documentation only and does not create datasets, storage artifacts, SQL, pipelines, temporal validation controls, leakage checks, simulation, metrics, risk models, or executable schemas. | Accepted |
+
+## Block 04 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-026 | Temporal admissibility is a blocking prerequisite before operationalization or simulation. | Accepted |
+| D-027 | Snapshot certification does not imply temporal validity. | Accepted |
+| D-028 | Data must be evaluated by availability time, not only event time. | Accepted |
+| D-029 | Feature windows must close before the simulated decision point; any intraperiod or incomplete-bar exception must be pre-approved by Block 04 before temporal certification. | Accepted |
+| D-030 | Confirmed lookahead, leakage, or unresolved temporal ambiguity prevents advancement to operationalization. | Accepted |
+| D-031 | Block 05 may only consume temporally certified snapshots. | Accepted |
+| D-032 | An independent Claude Code audit is required after Block 04 before starting Block 05. | Accepted |
+| D-033 | Block 05 cannot introduce new feature timing exceptions without returning to Block 04 for re-certification. | Accepted |
+| D-034 | Exchange OHLCV availability may use conservative documented inference; non-market, delayed-publication, manually curated, or revisable datasets require explicit availability, publication, point-in-time, or revision-as-of metadata. | Accepted |
+| D-035 | Point-in-time or revision-as-of governance is required for revisable datasets. | Accepted |
+| D-036 | Composite feature availability is governed by the latest availability time of all constituent inputs, dependencies, revisions, and lags. | Accepted |
+| D-037 | Cross-sectional transformations must use contemporaneously available universes, not final snapshot universes or retrospectively included assets. | Accepted |
+| D-038 | Audit trails must document both risks found and risks reviewed but not found. | Accepted |
+| D-039 | Declared survivorship or retrospective universe limitations do not automatically qualify for clean temporal certification and must be carried into later governance when material. | Accepted |
+
+## Block 05 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-040 | Operationalization is translation of governed intent, not strategy creation. | Accepted |
+| D-041 | Material assumptions belong to Backtesting Engine and never become retroactive outputs of Strategy Engine. | Accepted |
+| D-042 | Every operationalized rule must remain traceable to StrategyDossier content or explicit assumptions. | Accepted |
+| D-043 | Operationalization must fail when strategic ambiguity cannot be resolved without introducing material interpretation. | Accepted |
+| D-044 | Assumption explosion is evidence of insufficient operationalizability rather than justification for additional interpretation. | Accepted |
+| D-045 | Preservation of strategic intent takes precedence over simulation convenience. | Accepted |
