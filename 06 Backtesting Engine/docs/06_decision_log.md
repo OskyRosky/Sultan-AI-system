@@ -75,3 +75,11 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-043 | Operationalization must fail when strategic ambiguity cannot be resolved without introducing material interpretation. | Accepted |
 | D-044 | Assumption explosion is evidence of insufficient operationalizability rather than justification for additional interpretation. | Accepted |
 | D-045 | Preservation of strategic intent takes precedence over simulation convenience. | Accepted |
+| D-046 | All ambiguity resolutions must be registered regardless of materiality. | Accepted |
+| D-047 | Multiple plausible mappings from conceptual rule to evaluable representation require an interpretation record. | Accepted |
+| D-048 | Block 05 may only accept `temporally_certified` or `temporally_certified_with_declared_limitations` unless the lifecycle and decision log are explicitly updated. | Accepted |
+| D-049 | Cumulative interpretation drift must be assessed after individual assumption and interpretation classification. | Accepted |
+| D-050 | Originating gaps must be shown to be structurally required for operationalizability, not merely convenient. | Accepted |
+| D-051 | Material assumptions classified as preserving intent must be reviewed against rationale, hypothesis, conceptual rules, falsification criteria, and relevant risk references. | Accepted |
+| D-052 | Block 06 cannot use protocol design to repair or hide unresolved operationalization limitations. | Accepted |
+| D-053 | Pending assumptions or interpretation records cannot be passed downstream. | Accepted |

@@ -52,7 +52,7 @@ If eligibility fails, the lifecycle must stop at `not_eligible`.
 
 If temporal integrity fails, if temporal metadata is missing, if availability is ambiguous, if leakage or lookahead risk remains unresolved, if survivorship bias is undeclared, or if the snapshot is rejected for temporal review failure, the lifecycle must stop until the issues are resolved through governed upstream processes.
 
-Only `temporally_certified`, or a future formally accepted limitation-bearing equivalent, permits movement to operationalization. Block 05 cannot introduce new feature timing exceptions; any unapproved timing exception must return to Block 04 for re-certification.
+Only `temporally_certified` or `temporally_certified_with_declared_limitations` permits movement to operationalization. Any additional admissible temporal state must be explicitly added to this lifecycle and the decision log before Block 05 may accept it. Block 05 cannot introduce new feature timing exceptions; any unapproved timing exception must return to Block 04 for re-certification.
 
 If operationalization requires unjustified assumptions, the lifecycle must stop at `not_operationalizable`.
 
