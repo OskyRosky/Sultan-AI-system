@@ -139,3 +139,16 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-092 | Block 09 must validate the integrated assumption set before simulation. | Accepted |
 | D-093 | Protocol freeze requires an explicit audit-trail event before downstream use. | Accepted |
 | D-094 | Returned-to-prior-block correction states must preserve traceability. | Accepted |
+
+## Block 09 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-095 | Simulation engine executes governed instructions and does not design strategy, protocol, execution, or risk. | Accepted |
+| D-096 | Block 09 requires integrated assumption set validation before simulation. | Accepted |
+| D-097 | Unresolved pending assumptions block simulation. | Accepted |
+| D-098 | Same governed inputs must produce the same simulation trace. | Accepted |
+| D-099 | Mutable external dependencies are not admissible during simulation execution. | Accepted |
+| D-100 | Simulation outputs are simulated artifacts and not real trades, recommendations, or execution instructions. | Accepted |
+| D-101 | Block 10 cannot modify simulation events, trades, or positions. | Accepted |
+| D-102 | Simulation convenience never overrides governed input integrity. | Accepted |

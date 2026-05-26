@@ -24,6 +24,8 @@ Block 07 adds the Execution & Market Friction Simulation contract as documentati
 
 Block 08 adds the Risk & Exposure Simulation contract as documentation.
 
+Block 09 adds the Backtest Simulation Engine contract as documentation.
+
 The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine

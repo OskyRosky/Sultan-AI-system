@@ -39,6 +39,9 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `risk_exposure_invalid` | Risk or exposure assumptions are missing, unrealistic, untraceable, inconsistent, selected after observing results, or used to repair prior defects. |
 | `risk_exposure_superseded_by_new_experiment` | A material risk change created a new experiment rather than overwriting prior evidence. |
 | `returned_to_prior_block_pending_correction` | A downstream block detected an issue requiring correction by a prior owning block before evaluation can continue. |
+| `simulation_ready` | All pre-simulation gates, including integrated assumption set validation, are complete and the simulation may execute under governed inputs. |
+| `simulation_blocked` | Simulation cannot execute because required governed inputs, validation records, versions, or audit metadata are missing or inconsistent. |
+| `simulation_failed` | Simulation execution started but failed due to deterministic execution, event trace, input consistency, or assumption consistency failure. |
 | `simulation_executed` | A historical simulation has run under approved contracts. No favorable result is implied. |
 | `falsified` | The evaluation met predefined falsification criteria. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
@@ -85,5 +88,7 @@ If risk or exposure assumptions are undocumented, unrealistic, untraceable, inco
 Any material risk change creates a new experiment and must not overwrite prior evidence.
 
 Before Block 09 may execute simulation, the integrated assumption set from Blocks 05-08 must be validated for contradictions, duplicate or conflicting assumptions, timing consistency, ownership clarity, version completeness, traceability completeness, and interaction risks.
+
+If pre-simulation gates are incomplete, if integrated assumption validation fails, if governed inputs are unversioned or inconsistent, or if mutable external dependencies are required, the lifecycle must stop at `simulation_blocked` or `simulation_failed`.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.
