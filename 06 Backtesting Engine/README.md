@@ -30,7 +30,9 @@ Block 10 adds the Performance Metrics & Diagnostics Engine contract as documenta
 
 Block 11 adds the Robustness, Falsification & Anti-Overfitting Framework as documentation.
 
-The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, robustness framework, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
+Block 12 adds the Results Registry, Closure & Feedback Handoff contract as documentation.
+
+The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, robustness framework, results database, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine
 
@@ -66,3 +68,5 @@ It does not authorize trading, paper trading, deployment, capital allocation, or
 Historical evaluation is evidence generation under explicit assumptions. It is not confirmation of edge, not permission to trade, not permission to paper trade, and not deployment approval.
 
 Snapshot certification does not imply temporal certification. Event time alone is insufficient without availability-at-decision-time evidence.
+
+Closing 06 Backtesting Engine means architecture and framework closure only. It does not imply production backtesting implementation, paper trading authorization, live trading authorization, deployment approval, or capital allocation.

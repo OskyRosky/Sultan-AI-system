@@ -55,7 +55,15 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
 | `not_robust` | Results were materially unstable, fragile, cost-sensitive, regime-dependent, or otherwise failed robustness checks. |
 | `robust_pending_review` | Results passed defined robustness checks but still require governance review. No trading authorization is implied. |
+| `result_registered` | Block 12 registered the governed evaluation evidence and preserved its Block 11 classification. No approval is implied. |
+| `evaluation_closed` | The 06 evaluation record is closed under registry governance. Closure is not deployment, trading approval, or capital allocation. |
+| `closed_falsified` | The registry closed the evaluation with falsification preserved. |
+| `closed_not_robust` | The registry closed the evaluation with fragility or non-robust classification preserved. |
+| `closed_overfit_detected` | The registry closed the evaluation with overfitting evidence preserved. |
+| `closed_inconclusive` | The registry closed the evaluation with inconclusive evidence preserved. |
+| `closed_robust_pending_review` | The registry closed a `robust_result` as pending review only. This is not edge confirmation or trading authorization. |
 | `closed_with_feedback` | The evaluation is closed and feedback has been recorded for governed handoff to 04 and 05. |
+| `registry_rejected` | Block 12 rejected registry closure because required classifications, lineage, audit trail, or closure consistency were missing, contradictory, or promotional. |
 
 ## Lifecycle Notes
 
@@ -74,6 +82,10 @@ Block 11 classification transitions are constrained as follows: `robust_result` 
 `protocol_frozen` means the evaluation plan was fixed by an explicit freeze event before observing results. The freeze event must record reviewer or process identity, timestamp, protocol version, complete component definition, no result inspection, and locked partitions, windows, benchmarks, and assumptions.
 
 `robust_pending_review` means the historical result passed the defined robustness checks for that protocol. It does not authorize trading, paper trading, deployment, leverage, or capital allocation.
+
+`result_registered`, `evaluation_closed`, and all `closed_*` states are evidence registry states. They do not authorize trading, paper trading, live trading, deployment, production risk actions, broker connectivity, or capital allocation.
+
+Closing 06 means architecture and framework closure. It does not mean production backtesting implementation is complete.
 
 ## Blocking Conditions
 
@@ -120,5 +132,11 @@ If Block 11 confirms experiment shopping, favorable selection from a larger unfa
 Iterative returns from Block 11 to prior blocks must be counted for the same StrategyDossier, snapshot, and experiment family. The first return is allowed with documented reason, the second requires explicit escalation note, and the third blocks further iteration until governance review authorizes any new experiment.
 
 If Block 11 detects falsification, fragility, overfitting, or inconclusive evidence, the lifecycle must record the finding rather than repair the strategy, protocol, execution assumptions, risk assumptions, simulation outputs, or metrics.
+
+Block 12 must preserve Block 11 classifications. `falsified_result`, `fragile_result`, `overfit_result`, and `inconclusive_result` cannot transition to `closed_robust_pending_review`.
+
+If Block 12 lacks a Block 11 classification, experiment lineage, assumptions lineage, simulation record, metrics artifact reference, audit trail, or consistent closure state, the lifecycle must stop at `registry_rejected`.
+
+If Block 12 attempts to upgrade a classification, hide unfavorable experiments, omit superseded or abandoned experiments, mutate Research Layer or Strategy Engine artifacts, or authorize paper trading, live trading, deployment, or capital allocation, the lifecycle must stop at `registry_rejected`.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.

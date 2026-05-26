@@ -195,3 +195,17 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-133 | Assumption Registry entries cannot be retroactively selected as falsification criteria. | Accepted |
 | D-134 | Core challenge failures cannot be overridden by peripheral successes. | Accepted |
 | D-135 | Block 12 cannot alter Block 11 classifications. | Accepted |
+
+## Block 12 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-136 | Results registration preserves evidence and does not approve trading. | Accepted |
+| D-137 | Block 12 must preserve Block 11 classifications without upgrading them. | Accepted |
+| D-138 | Falsified, fragile, overfit, or inconclusive results cannot be converted into `robust_pending_review`. | Accepted |
+| D-139 | Superseded and abandoned experiments remain reportable evidence. | Accepted |
+| D-140 | Feedback handoff does not mutate Research Layer or Strategy Engine artifacts. | Accepted |
+| D-141 | Registry records are immutable after closure; corrections create new versions. | Accepted |
+| D-142 | `robust_pending_review` is not edge confirmation, paper trading authorization, or deployment approval. | Accepted |
+| D-143 | Future layers must perform separate governance before paper trading, live trading, deployment, or capital allocation. | Accepted |
+| D-144 | Closing 06 means architecture and framework closure, not executable production implementation. | Accepted |
