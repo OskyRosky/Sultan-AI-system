@@ -35,6 +35,9 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `execution_friction_configured` | Execution and market-friction assumptions have been documented, versioned, and linked to the frozen protocol. |
 | `execution_friction_invalid` | Execution or friction assumptions are missing, unrealistic, temporally inconsistent, untraceable, or selected after observing results. |
 | `execution_friction_superseded_by_new_experiment` | A material friction change created a new experiment rather than overwriting prior evidence. |
+| `risk_exposure_configured` | Risk, sizing, exposure, leverage, allocation, concentration, and portfolio assumptions have been documented, versioned, and linked to the frozen protocol and execution configuration. |
+| `risk_exposure_invalid` | Risk or exposure assumptions are missing, unrealistic, untraceable, inconsistent, selected after observing results, or used to repair prior defects. |
+| `risk_exposure_superseded_by_new_experiment` | A material risk change created a new experiment rather than overwriting prior evidence. |
 | `simulation_executed` | A historical simulation has run under approved contracts. No favorable result is implied. |
 | `falsified` | The evaluation met predefined falsification criteria. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
@@ -71,5 +74,9 @@ Any protocol change creates a new experiment and must not overwrite the prior pr
 If execution or friction assumptions are undocumented, unrealistic, temporally inconsistent, untraceable, tuned from observed results, or depend on infinite liquidity, the lifecycle must stop at `execution_friction_invalid`.
 
 Any material friction change creates a new experiment and must not overwrite prior evidence.
+
+If risk or exposure assumptions are undocumented, unrealistic, untraceable, inconsistent with prior governed artifacts, tuned from observed results, or used to repair operationalization, protocol, or execution defects, the lifecycle must stop at `risk_exposure_invalid`.
+
+Any material risk change creates a new experiment and must not overwrite prior evidence.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.

@@ -110,3 +110,18 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-068 | Execution assumptions cannot be tuned using observed results. | Accepted |
 | D-069 | Material friction changes create new experiments and never overwrite prior evidence. | Accepted |
 | D-070 | Execution realism takes precedence over result attractiveness. | Accepted |
+
+## Block 08 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-071 | Risk simulation exists to represent exposure realism and not to improve performance. | Accepted |
+| D-072 | Risk assumptions are protocol assumptions and must be explicitly documented. | Accepted |
+| D-073 | Absence of position sizing assumptions is itself a risk assumption. | Accepted |
+| D-074 | Absence of exposure limits is an exposure assumption. | Accepted |
+| D-075 | Absence of leverage constraints is a leverage assumption. | Accepted |
+| D-076 | Risk assumptions cannot be selected using observed results. | Accepted |
+| D-077 | Material risk changes create new experiments and never overwrite prior evidence. | Accepted |
+| D-078 | Portfolio constraints must be explicit and traceable. | Accepted |
+| D-079 | Unconstrained concentration assumptions are not admissible unless explicitly declared. | Accepted |
+| D-080 | Exposure realism takes precedence over result attractiveness. | Accepted |
