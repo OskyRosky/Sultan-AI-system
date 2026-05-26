@@ -26,7 +26,11 @@ Block 08 adds the Risk & Exposure Simulation contract as documentation.
 
 Block 09 adds the Backtest Simulation Engine contract as documentation.
 
-The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
+Block 10 adds the Performance Metrics & Diagnostics Engine contract as documentation.
+
+Block 11 adds the Robustness, Falsification & Anti-Overfitting Framework as documentation.
+
+The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, robustness framework, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine
 

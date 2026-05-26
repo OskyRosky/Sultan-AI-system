@@ -13,8 +13,8 @@
 | 07 | Execution & Market Friction Simulation | Define simulated fills, fees, slippage, latency assumptions, liquidity constraints, and market realism. | Block 06. |
 | 08 | Risk & Exposure Simulation | Define simulated sizing, exposure, and risk controls while preserving 05 risk template boundaries. | Block 07. |
 | 09 | Backtest Simulation Engine | Execute reproducible historical simulation and produce simulated trades, positions, events, equity curve, and audit logs. | Blocks 02-08. |
-| 10 | Performance Metrics & Diagnostics Engine | Calculate PnL, returns, Sharpe, Sortino, drawdown, hit rate, turnover, exposure, and diagnostic summaries. | Block 09. |
-| 11 | Robustness, Falsification & Anti-Overfitting | Evaluate sensitivity, costs, stability, out-of-sample, walk-forward, regimes, falsification, and overfitting risk. | Block 10. |
+| 10 | Performance Metrics & Diagnostics Engine | Define governed performance measurement and diagnostics from Block 09 simulation artifacts, without interpretation, robustness conclusions, edge claims, or deployment scoring. | Block 09. |
+| 11 | Robustness, Falsification & Anti-Overfitting | Define governed challenge, falsification, anti-overfitting, experiment lineage, and fragility review before results can be registered. | Block 10. |
 | 12 | Results Registry, Closure & Feedback Handoff | Register results, close the evaluation, and produce governed feedback to 04 and 05 without upstream mutation or trading authorization. | Block 11. |
 
 ## Critical Blocks

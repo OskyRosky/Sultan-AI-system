@@ -152,3 +152,31 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-100 | Simulation outputs are simulated artifacts and not real trades, recommendations, or execution instructions. | Accepted |
 | D-101 | Block 10 cannot modify simulation events, trades, or positions. | Accepted |
 | D-102 | Simulation convenience never overrides governed input integrity. | Accepted |
+
+## Block 10 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-103 | Metrics describe outcomes and do not establish edge. | Accepted |
+| D-104 | Block 10 only consumes governed simulation outputs. | Accepted |
+| D-105 | Missing simulation outputs invalidate performance measurement. | Accepted |
+| D-106 | Metric creation after result inspection is prohibited. | Accepted |
+| D-107 | Benchmark comparison does not establish superiority. | Accepted |
+| D-108 | Performance diagnostics do not imply future profitability. | Accepted |
+| D-109 | Block 11 may challenge metrics but cannot rewrite them. | Accepted |
+| D-110 | Measurement integrity takes precedence over attractive narratives. | Accepted |
+
+## Block 11 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-111 | A profitable backtest is not evidence of edge. | Accepted |
+| D-112 | Block 11 attempts to refute evidence rather than confirm edge. | Accepted |
+| D-113 | Failure to falsify is not proof and survival of challenge is not validation. | Accepted |
+| D-114 | Robustness testing cannot create alpha or repair strategy, protocol, execution, risk, data, simulation, or metric defects. | Accepted |
+| D-115 | Falsification criteria must trace to StrategyDossier, Research Layer, or Assumptions Registry and cannot be invented by Block 11. | Accepted |
+| D-116 | Passing many tests does not prove edge. | Accepted |
+| D-117 | Experiment families, superseded experiments, abandoned experiments, and robustness variants must remain visible. | Accepted |
+| D-118 | Selective presentation of favorable robustness outcomes is prohibited. | Accepted |
+| D-119 | Block 11 consumes Block 10 metrics but cannot modify, recalculate, or reinterpret them to hide results. | Accepted |
+| D-120 | Block 12 receives Block 11 outcomes but cannot rewrite robustness, falsification, fragility, or anti-overfitting findings. | Accepted |

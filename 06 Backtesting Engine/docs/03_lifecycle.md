@@ -43,6 +43,12 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `simulation_blocked` | Simulation cannot execute because required governed inputs, validation records, versions, or audit metadata are missing or inconsistent. |
 | `simulation_failed` | Simulation execution started but failed due to deterministic execution, event trace, input consistency, or assumption consistency failure. |
 | `simulation_executed` | A historical simulation has run under approved contracts. No favorable result is implied. |
+| `performance_measured` | Metrics and diagnostics have been generated from governed Block 09 simulation artifacts. No interpretation, edge claim, robustness conclusion, or deployment readiness is implied. |
+| `performance_measurement_invalid` | Performance measurement cannot proceed or cannot be accepted because required simulation outputs, metric lineage, benchmark references, reproducibility metadata, or version consistency are missing or invalid. |
+| `robustness_review_in_progress` | Robustness, falsification, and anti-overfitting review has begun using governed Block 10 artifacts. No conclusion is implied. |
+| `robustness_findings_recorded` | Robustness, falsification, fragility, overfitting, or inconclusive findings have been documented with lineage and audit evidence. No validation is implied. |
+| `robustness_review_completed` | Required Block 11 challenge categories and falsification review have been completed and recorded. No proof of edge, deployment readiness, or trading authorization is implied. |
+| `robustness_review_failed` | Block 11 cannot close because challenge scope, lineage, criteria, artifacts, or audit evidence are missing, inconsistent, selective, or invalid. |
 | `falsified` | The evaluation met predefined falsification criteria. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
 | `not_robust` | Results were materially unstable, fragile, cost-sensitive, regime-dependent, or otherwise failed robustness checks. |
@@ -52,6 +58,10 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 ## Lifecycle Notes
 
 `simulation_executed` does not imply a favorable result, valid edge, robustness, approval, paper trading authorization, live trading authorization, deployment readiness, or capital allocation.
+
+`performance_measured` means governed simulation outputs have been described by versioned metrics and diagnostics. It does not imply edge, robustness, superiority, future profitability, strategy approval, paper trading authorization, live trading authorization, deployment readiness, or capital allocation.
+
+`robustness_review_completed` means governed challenge review has been documented. It does not imply validation, confirmation of edge, future profitability, deployment readiness, paper trading authorization, live trading authorization, or capital allocation.
 
 `operationalized` means the dossier has a historically evaluable specification. It does not mean the strategy is approved, profitable, validated, or eligible for trading.
 
@@ -90,5 +100,13 @@ Any material risk change creates a new experiment and must not overwrite prior e
 Before Block 09 may execute simulation, the integrated assumption set from Blocks 05-08 must be validated for contradictions, duplicate or conflicting assumptions, timing consistency, ownership clarity, version completeness, traceability completeness, and interaction risks.
 
 If pre-simulation gates are incomplete, if integrated assumption validation fails, if governed inputs are unversioned or inconsistent, or if mutable external dependencies are required, the lifecycle must stop at `simulation_blocked` or `simulation_failed`.
+
+If required Block 09 simulation outputs are missing, inconsistent, corrupted, unversioned, or unverifiable, or if metric lineage, benchmark references, reproducibility metadata, or metric definitions cannot be verified, the lifecycle must stop at `performance_measurement_invalid`.
+
+If metrics are created after result inspection, if metric cherry-picking occurs, if missing simulation data is reconstructed, or if Block 10 attempts to repair simulation defects, the lifecycle must stop at `performance_measurement_invalid`.
+
+If falsification criteria are absent, experiment lineage is unavailable, the assumptions registry is incomplete, robustness scope is undefined, upstream defects remain unresolved, evidence is contradictory and unresolved, or Block 11 attempts to optimize, repair, rerun, recalculate, or redesign, the lifecycle must stop at `robustness_review_failed`.
+
+If Block 11 detects falsification, fragility, overfitting, or inconclusive evidence, the lifecycle must record the finding rather than repair the strategy, protocol, execution assumptions, risk assumptions, simulation outputs, or metrics.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.
