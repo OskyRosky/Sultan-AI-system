@@ -83,3 +83,30 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-051 | Material assumptions classified as preserving intent must be reviewed against rationale, hypothesis, conceptual rules, falsification criteria, and relevant risk references. | Accepted |
 | D-052 | Block 06 cannot use protocol design to repair or hide unresolved operationalization limitations. | Accepted |
 | D-053 | Pending assumptions or interpretation records cannot be passed downstream. | Accepted |
+
+## Block 06 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-054 | Backtesting is an experiment and not evidence by itself. | Accepted |
+| D-055 | Protocol validity precedes interpretation of results. | Accepted |
+| D-056 | Changes to protocol create new experiments and never overwrite prior experiments. | Accepted |
+| D-057 | Partition boundaries are governance artifacts and not optimization tools. | Accepted |
+| D-058 | Benchmark selection must be documented before evaluation and cannot be justified using observed results. | Accepted |
+| D-059 | Undocumented assumptions invalidate experimental reproducibility. | Accepted |
+| D-060 | Experiment outputs cannot compensate for protocol defects. | Accepted |
+| D-061 | Protocol integrity takes precedence over result attractiveness. | Accepted |
+
+## Block 07 Decisions
+
+| ID | Decision | Status |
+| --- | --- | --- |
+| D-062 | Execution realism exists to reduce optimism bias, not improve results. | Accepted |
+| D-063 | Execution assumptions are protocol assumptions and must be explicitly documented. | Accepted |
+| D-064 | Absence of slippage is an assumption and not a neutral baseline. | Accepted |
+| D-065 | Ignoring transaction costs is an assumption and not a neutral baseline. | Accepted |
+| D-066 | Infinite liquidity assumptions are not admissible. | Accepted |
+| D-067 | Execution timing must remain consistent with temporal certification. | Accepted |
+| D-068 | Execution assumptions cannot be tuned using observed results. | Accepted |
+| D-069 | Material friction changes create new experiments and never overwrite prior evidence. | Accepted |
+| D-070 | Execution realism takes precedence over result attractiveness. | Accepted |

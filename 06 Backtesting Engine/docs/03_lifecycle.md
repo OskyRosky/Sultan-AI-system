@@ -28,7 +28,13 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `insufficient_information` | Required operational information is absent and cannot be filled without unjustified assumptions. |
 | `strategic_ambiguity_detected` | Multiple materially different strategy interpretations exist and cannot be resolved without changing or inventing strategy logic. |
 | `conflicting_rules_detected` | Dossier rules conflict in a way that blocks deterministic operationalization. |
+| `protocol_defined_pending_freeze` | The experiment protocol has been defined but has not yet been frozen for downstream execution assumptions. |
 | `protocol_frozen` | The experiment and evaluation protocol has been defined before result inspection. |
+| `protocol_invalid` | The experiment protocol contains missing, ambiguous, unversioned, leaking, or non-reproducible elements and cannot proceed. |
+| `protocol_superseded_by_new_experiment` | A protocol change created a new experiment rather than overwriting the prior one. |
+| `execution_friction_configured` | Execution and market-friction assumptions have been documented, versioned, and linked to the frozen protocol. |
+| `execution_friction_invalid` | Execution or friction assumptions are missing, unrealistic, temporally inconsistent, untraceable, or selected after observing results. |
+| `execution_friction_superseded_by_new_experiment` | A material friction change created a new experiment rather than overwriting prior evidence. |
 | `simulation_executed` | A historical simulation has run under approved contracts. No favorable result is implied. |
 | `falsified` | The evaluation met predefined falsification criteria. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
@@ -57,5 +63,13 @@ Only `temporally_certified` or `temporally_certified_with_declared_limitations` 
 If operationalization requires unjustified assumptions, the lifecycle must stop at `not_operationalizable`.
 
 If operationalization encounters insufficient information, material strategic ambiguity, conflicting rules, non-traceable operational rules, or assumption explosion, the lifecycle must stop before Block 06.
+
+If the experiment protocol is missing traceability, contains undocumented assumptions, has partition leakage, has unversioned inputs, lacks benchmark rationale, attempts to overwrite a prior experiment, or is otherwise non-reproducible, the lifecycle must stop at `protocol_invalid`.
+
+Any protocol change creates a new experiment and must not overwrite the prior protocol record.
+
+If execution or friction assumptions are undocumented, unrealistic, temporally inconsistent, untraceable, tuned from observed results, or depend on infinite liquidity, the lifecycle must stop at `execution_friction_invalid`.
+
+Any material friction change creates a new experiment and must not overwrite prior evidence.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.

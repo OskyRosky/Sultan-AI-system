@@ -18,6 +18,10 @@ Block 04 adds the Temporal Data Admissibility & Leakage Baseline Controls as doc
 
 Block 05 adds the Strategy Operationalization & Simulation Specification as documentation.
 
+Block 06 adds the Experiment & Evaluation Protocol as documentation.
+
+Block 07 adds the Execution & Market Friction Simulation contract as documentation.
+
 The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine
