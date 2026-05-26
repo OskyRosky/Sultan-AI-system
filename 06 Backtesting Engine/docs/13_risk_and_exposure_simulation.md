@@ -65,6 +65,8 @@ Risk assumptions are protocol assumptions. They are not outcomes. They must be d
 
 Risk assumptions must remain consistent with the Strategy Specification, frozen protocol, execution configuration, and prior assumptions registry. They must not create new strategy logic or repair operationalization, protocol, or execution defects.
 
+Risk governance references must be identified by name, version or date, source, and retrieval or publication timestamp when available. External references must be frozen by citation metadata at the time the assumption is registered.
+
 ## Position Sizing Governance
 
 Position sizing governs how a signal or strategy state is translated into simulated exposure size.
@@ -99,6 +101,10 @@ Conceptual examples include:
 Block 08 does not define numbers or concrete portfolio configurations.
 
 Portfolio constraints must be explicit and traceable. They must not be hidden inside simulation defaults, execution mechanics, or later risk interpretation.
+
+Asset eligibility constraints must not silently reduce the effective trading universe below the Block 03 snapshot universe certified by Block 04.
+
+Any more restrictive eligibility constraint requires justification independent of observed results. If eligibility constraints change the effective universe, they must be recorded as material risk or protocol assumptions. If they create selection leakage risk, the process must fail or return upstream.
 
 ## Exposure Limit Governance
 
@@ -150,6 +156,10 @@ Rules:
 
 Capital allocation choices are protocol assumptions, not outcomes.
 
+The capital base assumption must explain its relationship to intended strategy scale. If capital scale is arbitrary for backtesting, it must be explicitly declared.
+
+Leverage interpretation must be consistent with the capital base definition. Changing capital base creates a new experiment if it affects exposure interpretation.
+
 ## Leverage Governance
 
 Leverage is the assumption that simulated exposure may exceed the relevant capital base or otherwise use borrowed, synthetic, derivative, or margin-enabled exposure.
@@ -167,6 +177,14 @@ Rules:
 - Absence of leverage constraints is itself a leverage assumption.
 
 If leverage is unconstrained, unavailable, capped, disallowed, or simplified, the audit trail must explicitly record the assumption and rationale.
+
+## Risk Mark-To-Market Timing Governance
+
+Risk mark-to-market timing must be consistent with execution fill timing assumptions.
+
+For example, if fills occur at next bar open, risk exposure calculations during the prior bar must reflect the pending nature of the order rather than assume the fill already occurred.
+
+Any mismatch between fill timing and risk exposure timing must be documented or treated as a failure condition.
 
 ## Conservative Risk Principle
 
@@ -209,6 +227,10 @@ Block 08 must stop the process before simulation when any of the following are c
 - Unconstrained concentration without explicit declaration.
 - Protocol ambiguity.
 - Versioning failures.
+- Risk mark-to-market timing inconsistent with execution fill timing.
+- Undocumented mismatch between fill timing and risk exposure timing.
+- Asset eligibility constraints silently reduce the certified snapshot universe.
+- Eligibility constraints create selection leakage risk.
 - Risk assumptions contradict the Strategy Specification.
 - Risk assumptions contradict the frozen protocol.
 - Risk assumptions contradict the execution configuration.
@@ -242,9 +264,14 @@ The audit trail must include:
 - Deviations.
 - Rationale.
 - Source references.
+- External reference citation metadata, including name, version or date, source, and retrieval or publication timestamp when available.
 - Expected effect.
 - Version history.
 - Failure findings, if any.
+- Risks found.
+- Risks reviewed and cleared.
+- Categories reviewed and marked not applicable.
+- Unresolved categories.
 - Confirmation that no formulas, mathematical models, VaR, CVaR, Kelly, risk parity, optimizer, portfolio optimizer, sizing engine, robustness framework, drawdown analysis, performance interpretation, metrics, PnL, or result inspection occurred in Block 08.
 
 The audit trail must be sufficient for quant research governance, model risk management, internal audit, trading systems engineering, reproducibility review, and external technical due diligence.
@@ -262,6 +289,15 @@ Block 09 receives:
 - Assumptions context.
 
 Block 09 may execute a reproducible historical simulation only within the boundaries of the frozen protocol, governed execution configuration, and governed risk configuration.
+
+Before Block 09 may execute simulation, it must validate the integrated assumption set from:
+
+- Block 05 strategy and operationalization assumptions.
+- Block 06 protocol assumptions.
+- Block 07 execution assumptions.
+- Block 08 risk assumptions.
+
+This validation must verify no contradictions, no duplicate or conflicting assumptions, timing consistency, ownership clarity, version completeness, traceability completeness, and interaction risks.
 
 Block 09 must not:
 

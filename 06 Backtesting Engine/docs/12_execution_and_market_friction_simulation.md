@@ -60,6 +60,8 @@ Each execution assumption must record:
 
 Execution assumptions are protocol assumptions. They are not outcomes. They must be defined before execution simulation and before result inspection.
 
+External market-structure references must be identified by name, version or date, source, and retrieval or publication timestamp when available. External references must be frozen by citation metadata at the time the assumption is registered.
+
 If an execution assumption systematically improves expected performance, it is suspicious and requires explicit justification. If the justification is unavailable or weak, the assumption must be rejected or replaced with a more conservative alternative.
 
 ## Fill Model Governance
@@ -73,6 +75,8 @@ Conceptual fill assumptions may include:
 - Delayed fills.
 - Partial fills.
 - No-fill conditions.
+
+Immediate fills must be treated as optimistic and suspicious by default. They require explicit justification, cannot be treated as a neutral baseline, and must be flagged for downstream review if used.
 
 Rules:
 
@@ -233,9 +237,14 @@ The audit trail must include:
 - Deviations.
 - Rationale.
 - Source references.
+- External reference citation metadata, including name, version or date, source, and retrieval or publication timestamp when available.
 - Expected effect.
 - Version history.
 - Failure findings, if any.
+- Risks found.
+- Risks reviewed and cleared.
+- Categories reviewed and marked not applicable.
+- Unresolved categories.
 - Confirmation that no formulas, execution engine, order book simulator, broker integration, optimization, calibration, parameter search, robustness testing, performance interpretation, metrics, PnL, or result inspection occurred in Block 07.
 
 The audit trail must be sufficient for quant research governance, model risk management, internal audit, trading systems engineering, reproducibility review, and external technical due diligence.

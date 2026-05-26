@@ -43,6 +43,29 @@ The protocol must be complete before results are inspected. It must be reproduci
 
 The protocol must not add strategy logic, repair operationalization gaps, change temporal assumptions, create frictions, calculate metrics, optimize parameters, or choose robustness tests. Those responsibilities belong to other blocks or are explicitly prohibited here.
 
+Protocol Governance may cover only structural experiment design decisions, such as:
+
+- Benchmark identity.
+- Partition boundaries.
+- Evaluation window dates.
+- Walk-forward sequence.
+- Experiment configuration metadata.
+- Protocol version metadata.
+- Freeze event metadata.
+
+Protocol Governance must not cover:
+
+- Signal filters.
+- Regime filters that affect when trades occur.
+- Entry logic.
+- Exit logic.
+- Risk controls.
+- Execution assumptions.
+- Portfolio rules.
+- Anything functionally equivalent to strategy logic.
+
+If a protocol assumption affects when, how, or under what market conditions the strategy trades, it must trace to the Strategy Specification or Assumptions Registry, not Protocol Governance.
+
 ## Experimental Unit
 
 An experimental unit is one governed historical evaluation run definition.
@@ -59,6 +82,18 @@ At minimum, an experimental unit is defined by:
 - Experiment configuration version.
 
 Any change to one of these elements creates a new experimental unit. A changed unit must receive a new experiment identifier or version and must not overwrite the prior experiment.
+
+## Protocol Version Proliferation And Selective Reporting Governance
+
+Creating a new experiment is allowed. Cherry-picking among experiments is not.
+
+Multiple protocol versions over the same StrategyDossier and snapshot must remain linked. Every protocol version must be visible to the downstream Results Registry, including versions that are later superseded, rejected, inconclusive, unfavorable, or abandoned.
+
+Selecting a primary experiment for reporting requires a predefined, non-result-based rationale. No experiment version may be hidden because of unfavorable results.
+
+Protocol version proliferation without pre-hoc rationale is evidence of protocol laundering.
+
+If multiple experiments exist for the same strategy and snapshot, Block 12 must register all of them. Block 09 cannot choose which experiment is primary based on observed results.
 
 ## Dataset Partitioning Governance
 
@@ -123,6 +158,10 @@ A benchmark is a predeclared comparator used to contextualize later historical r
 
 A benchmark is not proof of edge. It is not a target to optimize against after results are observed. It is not a justification for changing the strategy, protocol, windows, or partitions.
 
+Benchmark rationale must explain why the benchmark is appropriate for the strategy type. Weak or non-comparable benchmarks must be flagged and carried downstream.
+
+Cash or flat exposure may be a valid benchmark only when justified by strategy context. A benchmark cannot be chosen to make relative performance look better.
+
 Benchmark selection must be documented before evaluation. Benchmark rationale must be documented before evaluation. Benchmark changes create a new experiment. A benchmark cannot be selected, replaced, or justified after observing results.
 
 Conceptual benchmark examples include:
@@ -153,6 +192,12 @@ Window governance must document:
 Windows must be selected before evaluation. Windows must not be modified after observing results. Changing windows creates a new experiment.
 
 Window selection must not be used to hide known limitations, omit unfavorable regimes, or select favorable periods after inspection.
+
+Exclusion of known adverse regimes must be explicitly documented. Exclusions require positive rationale independent of expected results.
+
+Known crises, volatility regimes, market dislocations, liquidity stress periods, and structural market shifts cannot be silently omitted.
+
+Window limitations must be passed downstream for robustness and falsification review. Excluding difficult regimes does not automatically invalidate an experiment, but the limitation must be visible and justified.
 
 ## Experiment Assumption Controls
 
@@ -194,6 +239,25 @@ Prior experiment records must remain intact, even when a later protocol is impro
 
 If a change is required because a defect is discovered, the original protocol must be marked according to future governance rather than silently edited.
 
+Superseded experiments remain reportable. They must remain linked to successor experiments, and the active experiment audit trail must reference superseded predecessors when applicable.
+
+Superseded status does not erase prior evidence. The Results Registry must preserve full protocol lineage.
+
+## Protocol Freeze Governance
+
+`protocol_frozen` occurs only after an explicit freeze event recorded in the audit trail.
+
+The freeze event must include:
+
+- Reviewer or process identity.
+- Timestamp.
+- Protocol version.
+- Confirmation that all protocol components are defined.
+- Confirmation that no results have been inspected.
+- Confirmation that partitions, windows, benchmarks, and assumptions are locked.
+
+Without a freeze event, Blocks 07, 08, and 09 cannot use the protocol as frozen.
+
 ## Failure Conditions
 
 Block 06 must stop the experiment before execution when any of the following are confirmed or cannot be resolved:
@@ -215,9 +279,13 @@ Block 06 must stop the experiment before execution when any of the following are
 - Partition boundary changed after observing results.
 - Evaluation window changed after observing results.
 - Protocol change attempts to overwrite a prior experiment.
+- Protocol version proliferation without pre-hoc rationale.
+- Primary experiment selected using observed results.
 - Protocol attempts to repair operationalization defects.
 - Protocol attempts to create strategy assumptions not closed in Block 05.
+- Protocol Governance used to introduce strategy logic or trading-condition filters.
 - Protocol relies on future Block 07 frictions or execution assumptions before they are governed.
+- Missing protocol freeze event before downstream use.
 
 If a failure condition occurs, the experiment must not execute.
 
@@ -262,7 +330,13 @@ The audit trail must include:
 - Assumptions used.
 - Protocol deviations.
 - Failure findings.
+- Risks found.
+- Risks reviewed and cleared.
+- Categories reviewed and marked not applicable.
+- Unresolved categories.
 - Change history.
+- Superseded predecessor references, when applicable.
+- Protocol freeze event.
 - Reviewer or process identity, when formalized.
 - Confirmation that no simulation, metrics, PnL, optimization, parameter tuning, robustness testing, falsification testing, frictions, execution logic, or result interpretation occurred in Block 06.
 

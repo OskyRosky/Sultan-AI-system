@@ -125,3 +125,17 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-078 | Portfolio constraints must be explicit and traceable. | Accepted |
 | D-079 | Unconstrained concentration assumptions are not admissible unless explicitly declared. | Accepted |
 | D-080 | Exposure realism takes precedence over result attractiveness. | Accepted |
+| D-081 | Multiple protocol versions over the same StrategyDossier and snapshot must remain linked and visible to Results Registry. | Accepted |
+| D-082 | Primary experiment selection cannot be based on observed results. | Accepted |
+| D-083 | Protocol Governance assumptions are limited to structural experiment design only. | Accepted |
+| D-084 | Window exclusions of known adverse regimes require explicit non-result-based rationale. | Accepted |
+| D-085 | Benchmark rationale must justify appropriateness for the strategy type. | Accepted |
+| D-086 | Superseded experiments remain reportable and linked to successors. | Accepted |
+| D-087 | External references must be frozen by citation metadata. | Accepted |
+| D-088 | Immediate fills are optimistic assumptions requiring explicit justification. | Accepted |
+| D-089 | Risk mark-to-market timing must be consistent with execution fill timing. | Accepted |
+| D-090 | Asset eligibility constraints cannot silently reduce the certified snapshot universe. | Accepted |
+| D-091 | Negative evidence principle applies to Blocks 06-08 audit trails. | Accepted |
+| D-092 | Block 09 must validate the integrated assumption set before simulation. | Accepted |
+| D-093 | Protocol freeze requires an explicit audit-trail event before downstream use. | Accepted |
+| D-094 | Returned-to-prior-block correction states must preserve traceability. | Accepted |

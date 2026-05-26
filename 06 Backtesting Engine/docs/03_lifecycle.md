@@ -38,6 +38,7 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 | `risk_exposure_configured` | Risk, sizing, exposure, leverage, allocation, concentration, and portfolio assumptions have been documented, versioned, and linked to the frozen protocol and execution configuration. |
 | `risk_exposure_invalid` | Risk or exposure assumptions are missing, unrealistic, untraceable, inconsistent, selected after observing results, or used to repair prior defects. |
 | `risk_exposure_superseded_by_new_experiment` | A material risk change created a new experiment rather than overwriting prior evidence. |
+| `returned_to_prior_block_pending_correction` | A downstream block detected an issue requiring correction by a prior owning block before evaluation can continue. |
 | `simulation_executed` | A historical simulation has run under approved contracts. No favorable result is implied. |
 | `falsified` | The evaluation met predefined falsification criteria. |
 | `inconclusive` | The evaluation did not support a clear falsification or robustness judgment. |
@@ -51,7 +52,7 @@ This lifecycle is conceptual for Block 01. Later blocks may formalize these stat
 
 `operationalized` means the dossier has a historically evaluable specification. It does not mean the strategy is approved, profitable, validated, or eligible for trading.
 
-`protocol_frozen` means the evaluation plan was fixed before observing results. This status exists to reduce outcome-driven changes, comparison switching, and parameter mining.
+`protocol_frozen` means the evaluation plan was fixed by an explicit freeze event before observing results. The freeze event must record reviewer or process identity, timestamp, protocol version, complete component definition, no result inspection, and locked partitions, windows, benchmarks, and assumptions.
 
 `robust_pending_review` means the historical result passed the defined robustness checks for that protocol. It does not authorize trading, paper trading, deployment, leverage, or capital allocation.
 
@@ -71,6 +72,10 @@ If the experiment protocol is missing traceability, contains undocumented assump
 
 Any protocol change creates a new experiment and must not overwrite the prior protocol record.
 
+Superseded experiments remain reportable, linked to successors, and visible to the Results Registry.
+
+If a downstream block returns work to a prior block for correction, the lifecycle must record the source block, target block, reason for return, and successor experiment reference if a new experiment is created. This is metadata and governance, not authorization to modify upstream artifacts outside their owning process.
+
 If execution or friction assumptions are undocumented, unrealistic, temporally inconsistent, untraceable, tuned from observed results, or depend on infinite liquidity, the lifecycle must stop at `execution_friction_invalid`.
 
 Any material friction change creates a new experiment and must not overwrite prior evidence.
@@ -78,5 +83,7 @@ Any material friction change creates a new experiment and must not overwrite pri
 If risk or exposure assumptions are undocumented, unrealistic, untraceable, inconsistent with prior governed artifacts, tuned from observed results, or used to repair operationalization, protocol, or execution defects, the lifecycle must stop at `risk_exposure_invalid`.
 
 Any material risk change creates a new experiment and must not overwrite prior evidence.
+
+Before Block 09 may execute simulation, the integrated assumption set from Blocks 05-08 must be validated for contradictions, duplicate or conflicting assumptions, timing consistency, ownership clarity, version completeness, traceability completeness, and interaction risks.
 
 If the protocol is changed after result inspection, the evaluation must be treated as compromised unless a future governance process explicitly restarts and re-freezes the protocol.
