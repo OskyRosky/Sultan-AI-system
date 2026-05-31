@@ -32,6 +32,8 @@ Block 11 adds the Robustness, Falsification & Anti-Overfitting Framework as docu
 
 Block 12 adds the Results Registry, Closure & Feedback Handoff contract as documentation.
 
+Block 13 adds the Motor B Output Contract as the formal handoff from 06 Backtesting Engine to 07 Signal Fusion + LLM Motors and 08 Risk Engine.
+
 The current scope is documentation only. It does not implement a backtesting engine, trade simulator, PnL calculation, metrics engine, robustness framework, results database, data loader, risk model, exchange integration, paper trading, live trading, deployment path, or notebook workflow.
 
 ## Relationship With 05 Strategy Engine
@@ -48,6 +50,22 @@ If 06 requires operational details that 05 deliberately does not calibrate, such
 
 It does not authorize trading, paper trading, deployment, capital allocation, or live execution. Positive historical results do not confirm edge by themselves and do not guarantee future performance.
 
+## Motor B Output Contract
+
+The formal 06 handoff to downstream stages is:
+
+```text
+docs/18_motor_b_output_contract.md
+```
+
+The Motor B Output Contract summarizes the evidence state across 04 Research Layer, 05 Strategy Engine, and 06 Backtesting Engine. It is the contract that 07 Signal Fusion + LLM Motors must consume when using Motor B context.
+
+07 consumes this contract. It must not invent missing evidence, confidence, OOS validation, robustness, or historical approval.
+
+08 Risk Engine may use the contract as a veto and review surface. If evidence is incomplete, if OOS is unavailable, if robustness is unavailable, or if the contract is framework-only, operational promotion must remain blocked.
+
+06 remains documentation/contract only at this stage. The Motor B Output Contract does not implement backtesting and does not authorize paper trading, live trading, capital allocation, production signal routing, or deployment.
+
 ## 12-Block Map
 
 1. Backtesting Architecture.
@@ -62,6 +80,7 @@ It does not authorize trading, paper trading, deployment, capital allocation, or
 10. Performance Metrics & Diagnostics Engine.
 11. Robustness, Falsification & Anti-Overfitting.
 12. Results Registry, Closure & Feedback Handoff.
+13. Motor B Output Contract.
 
 ## Core Warning
 
