@@ -12,6 +12,29 @@ echo "VS Code CLI:"
 code --version | head -n 3
 echo ""
 
+echo "## Repository stage structure"
+for stage in \
+  "00 Inicio" \
+  "01 Blueprint + Memo" \
+  "02 Data Platform" \
+  "03 Feature Engineering" \
+  "04 Research Layer" \
+  "05 Strategy Engine" \
+  "06 Backtesting Engine" \
+  "07 Signal Fusion + LLM Motors" \
+  "08 Risk Engine" \
+  "09 Paper Trading" \
+  "10 Dashboard + Monitoreo" \
+  "11 Live Small + Escalamiento"
+do
+  if [ -d "$stage" ]; then
+    echo "$stage: present"
+  else
+    echo "$stage: missing"
+  fi
+done
+echo ""
+
 echo "## Python / pyenv"
 echo "pyenv: $(pyenv --version)"
 echo "Project Python:"
@@ -59,4 +82,3 @@ echo ""
 echo "======================================"
 echo " CHECK COMPLETED"
 echo "======================================"
-

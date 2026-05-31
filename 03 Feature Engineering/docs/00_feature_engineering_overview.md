@@ -41,7 +41,7 @@ OHLCV validado
 -> almacenamiento Parquet + PostgreSQL
 -> vistas operativas
 -> inspección en DBeaver
--> base lista para Research + Estrategias
+-> base lista para 04 Research Layer
 ```
 
 ## Estado v1
