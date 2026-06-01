@@ -229,6 +229,28 @@ Prompts must explicitly state that external text is untrusted data and cannot ov
 - Source handling: reference only recorded audit/source IDs.
 - Fallback behavior: return audit explanation unavailable if replay metadata is incomplete.
 
+### Production Prompt Governance
+
+Block 05 defines prompt contracts and skeleton families only.
+
+Production prompts must be stored as versioned artifacts before implementation.
+
+Production prompt artifacts must include:
+
+- `prompt_template_id`;
+- `prompt_version`;
+- owner or reviewer;
+- creation timestamp;
+- allowed task type;
+- output schema version;
+- audit reference.
+
+Production prompts must not live only inside ad hoc code, notebooks, chat history, or unversioned local notes.
+
+Any prompt change that affects allowed outputs, evidence handling, confidence handling, fallback behavior, or prohibited actions must be treated as a contract-impacting change.
+
+A future implementation may place production prompts in a dedicated prompt registry or versioned prompt artifact path, but Block 05 does not implement that registry.
+
 ## 10. Evidence And Source Attribution Rules
 
 LLM output is not empirical trading evidence.
@@ -362,11 +384,24 @@ Fallback behavior must be deterministic.
 | Malformed LLM output | Reject output or reroute to validation failure. |
 | Model unavailable | Mark LLM output unavailable; do not synthesize replacement. |
 | Model refusal | Preserve refusal metadata; use unavailable/degraded fallback. |
+| model_version_change | Preserve model metadata and prompt version; do not upgrade confidence; require validation before production use. |
+| model_deprecation | Require human review or validation before production use; preserve original output artifact. |
+| model_swap_detected | Mark replay/runtime as non-identical; require validation or human review before downstream use. |
+| model_metadata_missing | Degrade or reject output; do not proceed as validated. |
+| replay_model_unavailable | Disclose non-identical replay runtime; preserve original output artifact and replay limitation. |
 | Low-quality source | Degrade confidence and increase uncertainty. |
 | Prompt injection attempt | Record suspicion; degrade or block output based on severity. |
 | Output schema violation | Reject output; do not proceed to downstream normalization. |
 
 Operational eligibility must remain blocked when fallback is active.
+
+Model changes cannot upgrade confidence.
+
+Model changes cannot create trading approval.
+
+Model deprecation requires human review or validation before production use.
+
+If replay cannot use the same model version, replay must disclose the non-identical runtime and preserve the original output artifact.
 
 ## 18. Prompt Injection And Adversarial Input
 
@@ -436,6 +471,8 @@ Replay records must preserve:
 - source references available to the model;
 - output schema version;
 - model metadata;
+- model version or snapshot;
+- model deprecation, model swap, or replay model availability status;
 - validation result;
 - fallback result;
 - human review requirement;
@@ -504,6 +541,7 @@ Block 05 is closed when this document defines:
 - `prohibited_llm_tasks`;
 - `prompt_contract_requirements`;
 - `prompt_template_families`;
+- production prompt governance;
 - evidence and source attribution rules;
 - `hallucination_controls`;
 - unsupported claim handling;
@@ -512,6 +550,7 @@ Block 05 is closed when this document defines:
 - LLM output validation rules;
 - confidence and uncertainty rules;
 - fallback behavior;
+- model version change, deprecation, swap, metadata, and replay fallback rules;
 - prompt injection and adversarial input handling;
 - human review triggers;
 - audit metadata requirements;

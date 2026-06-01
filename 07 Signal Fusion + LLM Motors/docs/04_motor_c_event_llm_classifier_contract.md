@@ -229,6 +229,68 @@ Missing required source references, timestamps, or source reliability metadata m
 
 Inputs that claim trading authority, Paper Trading eligibility, strategy approval, empirical validation, or Risk Engine override must be rejected.
 
+### source_reliability_label Enum
+
+Allowed `source_reliability_label` values are:
+
+```text
+primary_verified_source
+official_source
+high_reliability_source
+medium_reliability_source
+low_reliability_source
+unverified_source
+anonymous_or_social_source
+conflicting_source
+unknown_reliability
+```
+
+Assignment criteria:
+
+| Value | Criteria |
+| --- | --- |
+| `primary_verified_source` | Direct primary artifact with verifiable origin, such as a signed or canonical issuer, exchange, protocol, regulator, or central bank record. |
+| `official_source` | Official source without full primary verification metadata, such as an official status page, announcement channel, filing, or policy notice. |
+| `high_reliability_source` | Reputable source with strong historical reliability, transparent provenance, and source references. |
+| `medium_reliability_source` | Secondary source with plausible provenance but incomplete primary confirmation. |
+| `low_reliability_source` | Weak source, partial report, unclear provenance, or limited corroboration. |
+| `unverified_source` | Source has not been independently verified. |
+| `anonymous_or_social_source` | Anonymous, social, influencer, forum, or unattributed claim. |
+| `conflicting_source` | Source materially conflicts with another credible source. |
+| `unknown_reliability` | Reliability is missing, unknown, or cannot be evaluated. |
+
+`source_reliability_limitations` must preserve limitations for every label.
+
+Weak, anonymous, contradictory, unverified, or unknown sources must not be treated as validated evidence.
+
+High or critical severity events sourced only from `low_reliability_source`, `unverified_source`, `anonymous_or_social_source`, `conflicting_source`, or `unknown_reliability` must require human review or degraded classification confidence.
+
+### Deterministic Source Hierarchy
+
+The deterministic source hierarchy for Motor C conflict and deduplication handling is:
+
+```text
+1. official_exchange_or_protocol_notice
+2. official_regulator_or_central_bank_notice
+3. issuer_or_project_primary_source
+4. reputable_market_data_or_security_provider
+5. reputable_news_source
+6. cross_verified_independent_sources
+7. single_secondary_source
+8. social_media_or_anonymous_claim
+9. unknown_or_unverified_source
+```
+
+The hierarchy supports event classification and conflict handling only.
+
+The hierarchy does not create trading evidence, approve trades, or override Motor B `framework_only`.
+
+Weak or unverified sources must degrade classification confidence or require human review.
+
+Conflicting credible sources must preserve `conflicting_sources` and require review or degraded status unless a documented source hierarchy resolves the conflict.
+
+A high or critical severity event from weak sources must not be treated as confirmed without stronger references.
+
 ## 9. Motor C Output Contract
 
 The conceptual Motor C output schema is:
@@ -295,6 +357,58 @@ MotorCEventOutput
 - `audit_references`: replay and audit references.
 - `limitations`: known limitations.
 - `schema_version`: Motor C output schema version.
+
+### classification_confidence_status Enum
+
+Allowed `classification_confidence_status` values are:
+
+```text
+classification_confidence_unavailable
+classification_confidence_degraded
+classification_confidence_computed_from_sources
+classification_confidence_rejected_insufficient_sources
+classification_confidence_rejected_conflicting_sources
+classification_confidence_rejected_stale_event
+classification_confidence_requires_human_review
+```
+
+Assignment criteria:
+
+| Value | Normalization class | Criteria |
+| --- | --- | --- |
+| `classification_confidence_unavailable` | unavailable | Classification confidence cannot be determined, model output is unavailable, or required confidence inputs are absent. |
+| `classification_confidence_degraded` | degraded | Classification is usable only with limitations because sources are partial, weak, stale, ambiguous, or low quality. |
+| `classification_confidence_computed_from_sources` | usable | Classification confidence is source-derived, source-referenced, schema-valid, and limited to event classification quality. |
+| `classification_confidence_rejected_insufficient_sources` | rejected | Required sources are missing or insufficient for a valid classification. |
+| `classification_confidence_rejected_conflicting_sources` | rejected | Source conflicts are material and cannot be resolved deterministically. |
+| `classification_confidence_rejected_stale_event` | rejected | Event is stale, superseded, or temporally inadmissible for current classification. |
+| `classification_confidence_requires_human_review` | requires_human_review | Event classification may be material, high uncertainty, high/critical severity, weakly sourced, or otherwise review-gated. |
+
+classification_confidence_status is not trading confidence.
+
+classification_confidence_status cannot replace Motor B `confidence_status`.
+
+classification_confidence_status cannot fill Motor B `confidence_score`.
+
+final signal confidence belongs to Block 09.
+
+Block 06 may normalize these values, but must not convert them into trade approval, Paper Trading eligibility, or final signal confidence.
+
+### classification_confidence_score Scale
+
+`classification_confidence_score` is optional.
+
+If used, it must be numeric in range `[0.0, 1.0]`.
+
+It applies only to event classification quality.
+
+It is not trading confidence.
+
+It must be `null` when `classification_confidence_status` is unavailable, rejected, or `classification_confidence_requires_human_review`.
+
+It must not be mapped to Motor B `confidence_score`.
+
+It must not be used as final signal confidence.
 
 ## 10. Event Taxonomy
 
@@ -510,7 +624,7 @@ Motor C output must not hide missing primary references, missing timestamps, mis
 When sources are missing:
 
 ```text
-classification_confidence_status = degraded_or_unavailable
+classification_confidence_status = classification_confidence_rejected_insufficient_sources
 severity = unknown
 event_type = unknown_or_unclassified_event
 ```
@@ -558,7 +672,7 @@ Conflicting sources must be explicit in `conflicting_sources`.
 When sources conflict materially:
 
 - `uncertainty_level` must be `high_uncertainty` or `unknown_uncertainty`;
-- `classification_confidence_status` must be degraded or unavailable;
+- `classification_confidence_status` must be `classification_confidence_rejected_conflicting_sources` or `classification_confidence_requires_human_review`;
 - `requires_human_review` should be true unless deterministic source hierarchy resolves the conflict;
 - event severity must not be upgraded without source-backed rationale.
 
@@ -641,7 +755,7 @@ Classification confidence cannot replace Motor B confidence.
 
 Final signal confidence belongs to Block 09, not Block 04.
 
-If sources are missing or conflicting, `classification_confidence_status` must be degraded or unavailable.
+If sources are missing or conflicting, `classification_confidence_status` must use the explicit enum defined in this document and resolve to degraded, rejected, unavailable, or human-review-required as appropriate.
 
 If event classification is LLM-assisted, model metadata and prompt/instruction version must be retained.
 
@@ -850,6 +964,10 @@ Block 04 is closed when this document defines:
 - Motor C input contract;
 - Motor C output contract;
 - `event_taxonomy`;
+- `source_reliability_label` enum;
+- deterministic source hierarchy;
+- `classification_confidence_status` enum;
+- `classification_confidence_score` scale;
 - severity schema;
 - uncertainty rules;
 - affected assets schema;
