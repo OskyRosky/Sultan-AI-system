@@ -4,7 +4,7 @@
 
 Block 02 defines how `07 Signal Fusion + LLM Motors` conceptually adapts the Motor B Output Contract produced by `06 Backtesting Engine` into a normalized Motor B input shape for later 07 blocks.
 
-The adapter exists to preserve Motor B evidence state, missing evidence, blocking gaps, confidence limitations, paper trading restrictions, and `forbidden_downstream_usage` before any Signal Candidate Normalization or Signal Fusion work begins.
+The adapter exists to preserve Motor B input state, missing evidence, blocking gaps, confidence limitations, paper trading restrictions, non-approval status, non-approval statements, and `forbidden_downstream_usage` before any Signal Candidate Normalization or Signal Fusion work begins.
 
 This block is documentary and contractual only. It does not implement Python code, parsing, validation, signal normalization, fusion, confidence aggregation, trading logic, or risk handoff.
 
@@ -64,6 +64,8 @@ Input adaptation means no Paper Trading approval.
 
 Input adaptation means no confidence generation.
 
+Accepted input means only contract-consumable input. It does not mean an approved signal.
+
 ## 4. Source Contract Reference
 
 The source contract is:
@@ -121,6 +123,8 @@ NormalizedMotorBInput
   paper_trading_eligibility
   confidence_status
   confidence_score
+  approval_status
+  non_approval_statement
   missing_evidence
   blocking_gaps
   forbidden_downstream_usage
@@ -153,6 +157,8 @@ NormalizedMotorBInput
 - `paper_trading_eligibility`: preserved from source contract.
 - `confidence_status`: preserved from source contract.
 - `confidence_score`: preserved from source contract, including null.
+- `approval_status`: preserved from the Motor B Output Contract of 06; it must retain the source non-approval state and must not be converted into trading approval, promotion, authorization, or downstream eligibility by 07.
+- `non_approval_statement`: preserved from the Motor B Output Contract of 06; it must retain the explicit statement that Motor B output does not constitute trading approval and must not be weakened or reworded to enable trading.
 - `missing_evidence`: preserved from source contract.
 - `blocking_gaps`: preserved from source contract.
 - `forbidden_downstream_usage`: preserved from source contract.
@@ -180,11 +186,15 @@ unavailable
 
 The input is usable as design reference, documentation review, contract validation, or interface planning.
 
+For `framework_only` input, use this status when the input is consumed exclusively for documentation, schema design, or contract review.
+
 This status does not permit signal promotion, confidence scoring, Paper Trading, Live Trading, execution, or capital allocation.
 
 ### accepted_for_dry_run_only
 
 The input is usable for dry-run execution of later interfaces, mock validation, or downstream contract testing.
+
+For `framework_only` input, use this status when the input is consumed in dry-run, mock validation, or interface validation.
 
 This status does not permit empirical claims or operational usage.
 
@@ -198,13 +208,26 @@ evidence_completeness_level = framework_only
 
 This is the expected current state.
 
+Use this status as the canonical downstream readiness classification when `framework_only` input enters any pathway that evaluates signal state, eligibility, risk handoff readiness, or preparation for later 07 blocks.
+
 The adapter must preserve all blocking gaps and forbidden downstream usage.
+
+Any of `accepted_for_design_only`, `accepted_for_dry_run_only`, or `degraded_framework_only` must preserve:
+
+```text
+paper_trading_eligibility = blocked
+confidence_status = confidence_not_available
+confidence_score = null
+```
+
+Each status means no trade approval, no downstream operational eligibility, no signal approval, and no Paper Trading approval.
 
 ### rejected_missing_required_fields
 
 The input is rejected because minimum required fields are missing without explicit unavailable status.
 
 Examples include missing source path, schema version, audit references, evidence completeness level, confidence status, paper trading eligibility, or forbidden downstream usage.
+Missing `approval_status` or `non_approval_statement` must also be treated as missing required preserved fields unless the entire Motor B input is explicitly unavailable.
 
 ### rejected_contract_violation
 
@@ -247,6 +270,10 @@ Preservation means:
 - keep limitations;
 - keep restrictions;
 - keep audit references.
+
+If `approval_status` or `non_approval_statement` is missing from a real Motor B input, the adapter must classify the input as `rejected_missing_required_fields` or `rejected_contract_violation` according to the failure mode.
+
+07 must not modify `approval_status` or `non_approval_statement` to enable trading, authorize Paper Trading, promote a strategy, create downstream operational eligibility, or turn an accepted input into an approved signal.
 
 ## 9. Derived Fields Allowed
 
@@ -482,9 +509,9 @@ when a Motor B input lacks required auditable fields.
 
 The adapter consumes `06` output. It does not modify `04`, `05`, or `06`.
 
-## 20. Preparing Input For Block 06 Signal Candidate Normalization
+## 20. Preparing Input For 07-Block-06 Signal Candidate Normalization
 
-The adapter prepares a normalized Motor B input for later `06 Signal Candidate Normalization`.
+The adapter prepares a normalized Motor B input for later `07-Block-06 Signal Candidate Normalization`.
 
 Preparation means:
 
@@ -571,7 +598,7 @@ Block 02 is closed when this document defines:
 - mock and synthetic input handling;
 - contract violation handling;
 - relationship with prior stages;
-- relationship with later Signal Candidate Normalization;
+- relationship with later 07-Block-06 Signal Candidate Normalization;
 - relationship with `08 Risk Engine`.
 
 Closing Block 02 does not implement the adapter in code and does not create Signal Candidate Normalization, Signal Fusion, Confidence Aggregation, Risk Handoff, Paper Trading, Live Trading, execution logic, or capital allocation.
