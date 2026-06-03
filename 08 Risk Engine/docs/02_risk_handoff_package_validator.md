@@ -99,6 +99,7 @@ downstream_operational_eligibility = blocked
 confidence_status = confidence_not_available
 confidence_score = null
 final_signal_confidence_score = null
+handoff_to_09 = blocked
 promotion_status = not_promoted
 ```
 
@@ -107,6 +108,10 @@ A `RiskHandoffPackage` that preserves these values may be structurally valid for
 A `RiskHandoffPackage` that attempts to convert `framework_only` into Paper Trading readiness, Live Trading readiness, execution permission, capital allocation, position sizing, operational recommendation, or strategy promotion must be rejected or blocked.
 
 Structural validity under `framework_only` means only that later Stage 08 blocks may review the package while preserving downstream blocking.
+
+`paper_trading_status` and `live_trading_status` refer to upstream or source-declared status, especially Stage 07 closure terminology. `paper_trading_eligibility` and `live_trading_eligibility` refer to Stage 08 gate evaluation terminology.
+
+Under the current state, both status and eligibility fields must remain blocked. A `RiskHandoffPackage` may require both field families to preserve traceability across stages. If status and eligibility conflict, the stricter blocking interpretation wins and the package must be degraded, rejected, or routed to review, never approval.
 
 ## Confidence Field Validation
 
@@ -260,6 +265,8 @@ The minimum validation outcome taxonomy is:
 These outcomes are not the final `RiskDecision` of Block 12.
 
 No validation outcome may be interpreted as operational approval. `validation_passed_structural_only` and `validation_passed_with_downstream_blocking` both preserve non-operational status under the current `framework_only` state.
+
+Under `framework_only`, `validation_passed_structural_only` must not be emitted without an explicit downstream blocking companion field. The preferred current-state outcome is `validation_passed_with_downstream_blocking`.
 
 ## Rejection and Degradation Rules
 

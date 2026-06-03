@@ -40,10 +40,11 @@ The current Motor B evidence state is:
 ```text
 evidence_completeness_level = framework_only
 motor_b_output_state = partial_framework_output
+simulation_status = backtest_not_implemented
 backtesting_result_status = not_available
-oos_validation_status = not_available
+oos_validation_status = oos_not_available
 walk_forward_status = not_available
-robustness_status = not_available
+robustness_status = robustness_not_available
 empirical_historical_results_status = not_available
 productive_backtesting_engine_status = not_implemented
 paper_trading_eligibility = blocked
@@ -51,9 +52,17 @@ downstream_operational_eligibility = blocked
 confidence_status = confidence_not_available
 confidence_score = null
 final_signal_confidence_score = null
+handoff_to_09 = blocked
+promotion_status = not_promoted
 ```
 
 These values are formal eligibility blocks, not descriptive context only. They must block Paper Trading, Live Trading, execution, capital allocation, productive position sizing, strategy promotion, downstream operational eligibility, and confidence assignment while Motor B remains in this state.
+
+Fields inherited from Stage 06 must preserve Stage 06 enum values. For the current Motor B contract, that includes `simulation_status = backtest_not_implemented`, `oos_validation_status = oos_not_available`, and `robustness_status = robustness_not_available`.
+
+`motor_b_output_state` is a Stage 08 internal summary field. It does not directly map to a Stage 06 Motor B Output Contract field and must not override Stage 06 canonical fields such as `simulation_status`, `oos_validation_status`, or `robustness_status`.
+
+`backtesting_result_status = not_available` is a Stage 08 internal summary field and does not directly map to a Stage 06 contract enum. It must not be used as a substitute for the upstream `simulation_status` contract field.
 
 ## Framework-Only Blocking Rule
 
@@ -178,13 +187,15 @@ paper_trading_eligibility = blocked
 Paper Trading cannot be enabled while:
 
 - `evidence_completeness_level = framework_only`;
+- `simulation_status = backtest_not_implemented`;
 - `backtesting_result_status = not_available`;
-- OOS validation is missing;
+- `oos_validation_status = oos_not_available`;
 - walk-forward validation is missing;
-- robustness testing is missing;
+- `robustness_status = robustness_not_available`;
 - `confidence_status = confidence_not_available`;
 - `confidence_score = null`;
 - `final_signal_confidence_score = null`;
+- `handoff_to_09 = blocked`;
 - blocking gaps exist.
 
 Paper Trading eligibility may only be reviewed in the future if versioned, reproducible, and auditable empirical evidence exists and later Stage 08 gates permit review.
@@ -206,6 +217,8 @@ Live Trading requires a higher evidence threshold than Paper Trading and cannot 
 
 Execution, order generation, and exchange connection must remain blocked because Motor B has no real backtesting output, OOS validation, walk-forward validation, robustness evidence, empirical historical results, productive backtesting engine, or confidence support.
 
+`live_trading_status` refers to upstream or source-declared status, especially Stage 07 closure terminology. `live_trading_eligibility` refers to Stage 08 gate evaluation output. Under the current `framework_only` state, both must remain blocked. Any mismatch between status and eligibility must result in degradation, rejection, or review, never approval.
+
 ## Capital Allocation and Position Sizing Blocking Rule
 
 Under `framework_only`:
@@ -225,9 +238,12 @@ No capital, exposure, sizing, or risk budget action may be inferred from a struc
 Under `framework_only`:
 
 ```text
+promotion_status = not_promoted
 strategy_promotion_status = not_promoted
 promotion_eligibility = blocked
 ```
+
+`promotion_status` is the canonical cross-stage field. `strategy_promotion_status` is a Block 03 context field for this gate and must not be used to relax or override the canonical `promotion_status`.
 
 No strategy may be promoted by:
 
@@ -304,6 +320,7 @@ Recommended gate output fields:
 - `motor_b_contract_ref`;
 - `motor_b_output_state`;
 - `evidence_completeness_level`;
+- `simulation_status`;
 - `backtesting_result_status`;
 - `oos_validation_status`;
 - `walk_forward_status`;
@@ -312,6 +329,8 @@ Recommended gate output fields:
 - `confidence_status`;
 - `confidence_score`;
 - `final_signal_confidence_score`;
+- `handoff_to_09`;
+- `promotion_status`;
 - `paper_trading_eligibility`;
 - `live_trading_eligibility`;
 - `execution_eligibility`;

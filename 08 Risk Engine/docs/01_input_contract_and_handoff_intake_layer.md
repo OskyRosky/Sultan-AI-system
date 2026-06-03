@@ -57,6 +57,18 @@ These inputs are review artifacts only. They are not operational signals, trade 
 
 An accepted artifact must preserve upstream restrictions, including `framework_only`, `confidence_not_available`, `confidence_score = null`, `final_signal_confidence_score = null`, `paper_trading_eligibility = blocked`, and `downstream_operational_eligibility = blocked` when those states are present upstream.
 
+## Standalone Artifact Validation Gap
+
+Standalone artifacts accepted by Block 01 may be registered in the intake registry.
+
+These standalone artifacts do not receive deep validation equivalent to the `RiskHandoffPackage` within Blocks 00-03. Their deep validation remains pending for future Stage 08 blocks or specific validators if those validators are defined later.
+
+No standalone artifact may modify eligibility, confidence, promotion, Paper Trading status, Live Trading status, operational status, or downstream blocking states without formal validation.
+
+No standalone artifact may be used as empirical evidence. No standalone artifact may substitute for backtesting, OOS validation, walk-forward, robustness, or Motor B empirical results.
+
+If a standalone artifact contains operational claims, confidence claims, promotion claims, or downstream eligibility claims, it must be rejected, degraded, or escalated to review according to severity. It must never be used for approval.
+
 ## Rejected Input Artifacts
 
 The intake layer must reject the following inputs at the door:
@@ -126,7 +138,7 @@ Unavailable evidence must remain explicit. It must not be resolved through infer
 
 ## Intake State Taxonomy
 
-The minimum intake state taxonomy is:
+Block 01 separates intake routing from downstream blocking. The minimum `intake_routing_decision` taxonomy is:
 
 - `intake_accepted_for_risk_review`;
 - `intake_rejected_contract_violation`;
@@ -135,19 +147,46 @@ The minimum intake state taxonomy is:
 - `intake_rejected_unaudited_payload`;
 - `intake_rejected_raw_signal`;
 - `intake_rejected_raw_llm_output`;
+- `intake_requires_human_review`;
+- `intake_requires_risk_engine_review`.
+
+The minimum `downstream_blocking_status` taxonomy is:
+
+- `downstream_blocked_framework_only`;
+- `downstream_blocked_missing_evidence`;
+- `downstream_blocked_confidence_unavailable`;
+- `downstream_blocked_operational_usage_not_allowed`;
+- `downstream_blocked_handoff_to_09`;
+- `downstream_not_promoted`.
+
+The following degradation and unavailable states may be attached as supporting intake status details:
+
 - `intake_degraded_incomplete_metadata`;
 - `intake_degraded_partial_audit_refs`;
 - `intake_unavailable_missing_artifact`;
 - `intake_unavailable_missing_schema`;
-- `intake_unavailable_missing_audit_trace`;
-- `intake_blocked_framework_only`;
-- `intake_blocked_downstream_not_allowed`;
-- `intake_requires_human_review`;
-- `intake_requires_risk_engine_review`.
+- `intake_unavailable_missing_audit_trace`.
 
 These are intake states only. They are not the final `RiskDecision` of Block 12.
 
 No intake state may be interpreted as operational approval. Even `intake_accepted_for_risk_review` only means the artifact may continue into Stage 08 review under the current downstream restrictions.
+
+## Intake Routing vs Downstream Blocking
+
+Block 01 uses two distinct dimensions:
+
+1. `intake_routing_decision`
+2. `downstream_blocking_status`
+
+A `RiskHandoffPackage` with `evidence_completeness_level = framework_only`, correctly labeled, versioned, auditable, and non-operational, may receive `intake_accepted_for_risk_review` as its routing decision toward Blocks 02-03.
+
+That same package must simultaneously preserve `intake_blocked_framework_only` as a legacy/supporting label or, preferably, `downstream_blocking_status = blocked_framework_only`.
+
+`intake_blocked_framework_only` must not be interpreted as stopping internal review within Stage 08. It must be interpreted as a block on downstream operational usage.
+
+Under `framework_only`, the package may advance to internal validation, but it cannot advance to Paper Trading, Live Trading, execution, capital allocation, promotion, confidence, handoff to Stage 09, or downstream operational eligibility.
+
+Internal Stage 08 validation is not operational approval.
 
 ## Required Intake Metadata
 
@@ -187,6 +226,8 @@ downstream_operational_eligibility = blocked
 confidence_status = confidence_not_available
 confidence_score = null
 final_signal_confidence_score = null
+handoff_to_09 = blocked
+promotion_status = not_promoted
 ```
 
 Any input that attempts to present `framework_only` as sufficient for Paper Trading, Live Trading, execution, capital allocation, or promotion must be rejected or blocked.

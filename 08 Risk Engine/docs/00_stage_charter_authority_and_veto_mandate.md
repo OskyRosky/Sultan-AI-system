@@ -79,6 +79,12 @@ Under the current system state, Stage 08 must preserve the following safety rest
 evidence_completeness_level = framework_only
 paper_trading_eligibility = blocked
 downstream_operational_eligibility = blocked
+execution_eligibility = blocked
+order_generation_eligibility = blocked
+exchange_connection_eligibility = blocked
+capital_allocation_eligibility = blocked
+productive_position_sizing_eligibility = blocked
+risk_budget_activation = blocked
 confidence_status = confidence_not_available
 confidence_score = null
 final_signal_confidence_score = null
@@ -158,7 +164,7 @@ Stage 08:
 - does not convert `review_package_only` into promotion;
 - does not convert `requires_more_evidence` into conditional approval;
 - does not convert a favorable event into approval;
-- does not reduce risk declared by Stage 07 without formal evidence.
+- does not relax blocking conditions or operational restrictions declared by Stage 07 without formal replayable evidence.
 
 Any request, artifact, or downstream consumer that attempts to convert Stage 08 review into execution, order generation, exchange integration, capital allocation, productive position sizing, or operational trading must be treated as a boundary violation and routed to block, veto, or review according to future Risk Engine policy.
 
