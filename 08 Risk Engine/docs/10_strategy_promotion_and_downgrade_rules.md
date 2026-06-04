@@ -97,8 +97,10 @@ Permitted conservative strategy states include:
 - `strategy_status_degraded`;
 - `strategy_status_rejected`;
 - `strategy_status_not_promoted`;
-- `strategy_status_evidence_missing`;
+- `strategy_status_missing_evidence`;
 - `strategy_status_confidence_unavailable`;
+- `strategy_status_risk_engine_review_required`;
+- `strategy_status_human_review_required`;
 - `strategy_status_framework_only_blocked`.
 
 Downgrade, review, rejection, suspension, degradation, or continued not-promoted status does not approve operational use.
@@ -375,6 +377,7 @@ promotion_status = not_promoted
 promotion_eligibility = blocked
 strategy_status = strategy_status_framework_only_blocked
 paper_trading_eligibility = blocked
+downstream_operational_eligibility = blocked
 live_trading_status = blocked
 execution_eligibility = blocked
 order_generation_eligibility = blocked

@@ -405,6 +405,39 @@ Stage 08 may document a constraint record with fields such as:
 
 This block does not create a database, storage layer, portfolio optimizer, allocation engine, productive exposure engine, or executable constraint engine. This structure is documentary only.
 
+## Current Gate Conclusion
+
+Under the current `framework_only` state:
+
+```text
+constraint_framework_status = non_operational
+constraint_activation_status = blocked
+exposure_limits_active = false
+position_limits_active = false
+capital_allocation_active = false
+risk_budgets_active = false
+portfolio_optimizer_active = false
+allocation_engine_active = false
+stop_loss_engine_active = false
+drawdown_engine_active = false
+paper_trading_eligibility = blocked
+live_trading_status = blocked
+execution_eligibility = blocked
+order_generation_eligibility = blocked
+exchange_connection_eligibility = blocked
+capital_allocation_eligibility = blocked
+productive_position_sizing_eligibility = blocked
+risk_budget_activation = blocked
+downstream_operational_eligibility = blocked
+promotion_status = not_promoted
+handoff_to_09 = blocked
+confidence_status = confidence_not_available
+confidence_score = null
+final_signal_confidence_score = null
+```
+
+Documentary constraints are not active constraints. They do not assign capital, calculate position sizing, activate risk budgets, approve Paper Trading, approve Live Trading, enable execution, or create downstream operational eligibility.
+
 ## Relationship With Block 04
 
 Block 04 registers risk policy categories.

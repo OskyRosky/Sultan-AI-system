@@ -189,6 +189,8 @@ Under `framework_only`, the following values are prohibited:
 - `paper_trading_eligibility_provisionally_approved`;
 - `paper_trading_eligibility_human_review_approved`.
 
+`paper_trading_eligibility_requires_more_evidence_future_only` is not approval, is not readiness, is not conditional approval, and does not allow Paper Trading. It only records that more empirical evidence would be required for a future review.
+
 `paper_trading_eligibility_future_review_candidate_only_after_empirical_evidence` is not approval. It means only that a future review could be considered after empirical evidence and governance exist.
 
 ## Paper Trading Request Rejection Rules
