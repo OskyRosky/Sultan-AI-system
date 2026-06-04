@@ -219,6 +219,8 @@ They must not be used to enable trading, Paper Trading, Live Trading, execution,
 
 These policies require future empirical evidence, auditable simulations, and Risk Engine review before any activation can be considered.
 
+`stop_condition_policy` documents future risk conditions only. It does not implement a Kill Switch, does not implement productive stop loss logic, and does not activate any operational interruption mechanism. The Kill Switch as emergency authority and its formal triggers are defined in Block 05 and are distinct from any `stop_condition_policy` registered in Block 04.
+
 ## Liquidity, Asset and Exchange Risk Policy Boundary
 
 Liquidity policies, asset restriction policies, and exchange risk policies may be registered documentarily.

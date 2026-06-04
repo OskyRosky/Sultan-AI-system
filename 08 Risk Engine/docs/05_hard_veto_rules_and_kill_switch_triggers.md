@@ -197,7 +197,7 @@ The Risk Engine must veto instructions or artifacts that attempt to:
 - relabel synthetic evidence as real evidence;
 - alter downstream blocking states without formal evidence.
 
-Prompt injection is a hard veto trigger. If prompt injection attempts to modify risk rules, downstream blocking states, evidence status, confidence status, promotion status, or operational permissions, it may also trigger Kill Switch review.
+Prompt injection is a hard veto trigger. If prompt injection attempts to modify risk rules, downstream blocking states, evidence status, confidence status, promotion status, or operational permissions, it must also trigger Kill Switch review.
 
 ## Contract Violation and Source Conflict Veto Rules
 
@@ -205,7 +205,7 @@ The Risk Engine must veto or block when there are:
 
 - inconsistencies with Stage 06 Motor B Output Contract;
 - inconsistencies with Stage 07 closure;
-- contradictions with Blocks 00-04;
+- contradictions with Blocks 00-05 or with the veto rules and Kill Switch trigger taxonomy defined in this block;
 - missing `non_approval_statement`;
 - missing `forbidden_downstream_usage`;
 - missing audit trace;
@@ -356,10 +356,10 @@ Stage 08 may document veto and Kill Switch outcomes with a record structure such
 - `kill_switch_severity`;
 - `kill_switch_outcome`;
 - `downstream_blocking_status`;
-- `paper_trading_status`;
+- `paper_trading_eligibility`;
 - `live_trading_status`;
-- `execution_status`;
-- `capital_allocation_status`;
+- `execution_eligibility`;
+- `capital_allocation_eligibility`;
 - `promotion_status`;
 - `confidence_status`;
 - `confidence_score`;
