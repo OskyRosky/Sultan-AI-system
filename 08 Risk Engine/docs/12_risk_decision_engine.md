@@ -148,7 +148,7 @@ Some evidence exists, but it is insufficient in quality, coverage, robustness, O
 
 `requires_more_evidence` cannot be used as approval language.
 
-Under the current Sultan state, because Motor B is `framework_only`, missing backtesting, missing OOS validation, missing walk-forward validation, missing robustness, and missing empirical historical results should generally map to `blocked_missing_evidence`, not merely `requires_more_evidence`.
+Under the current Sultan state, because Motor B is `framework_only`, missing backtesting, missing OOS validation, missing walk-forward validation, missing robustness, and missing empirical historical results must map to `blocked_missing_evidence`, not merely `requires_more_evidence`.
 
 ## RiskDecision State Taxonomy
 
@@ -404,6 +404,10 @@ risk_decision_engine_status = non_operational_documentary
 risk_decision_status = blocked_framework_only
 secondary_risk_decision_status = blocked_missing_evidence
 evidence_completeness_level = framework_only
+simulation_status = backtest_not_implemented
+oos_validation_status = oos_not_available
+walk_forward_status = walk_forward_not_available
+robustness_status = robustness_not_available
 paper_trading_eligibility = blocked
 paper_trading_ready = false
 live_trading_status = blocked

@@ -32,7 +32,7 @@ Stage 08 / Block 14 may:
 
 Audit and replay can verify or reconstruct, but cannot approve operational activity under `framework_only`.
 
-Replay can preserve blocking but cannot approve under framework_only.
+Replay can preserve blocking but cannot approve under `framework_only`.
 
 ## Current Framework-Only Audit Baseline
 
@@ -70,13 +70,9 @@ If replay finds a contradiction, missing reference, unversioned artifact, source
 
 ## Audit Is Not Approval Rule
 
-audit_complete is not approval.
-
 `audit_complete` is not approval.
 
 `traceability_complete` is not approval.
-
-replay_successful is not approval.
 
 `replay_successful` is not approval.
 
@@ -287,9 +283,7 @@ Replay precedence is conservative:
 
 Replay precedence can preserve, harden, or escalate. It cannot approve under `framework_only`.
 
-replay can preserve blocking but cannot approve under framework_only.
-
-Replay can preserve blocking but cannot approve under framework_only.
+Replay can preserve blocking but cannot approve under `framework_only`.
 
 ## Audit Replay Record
 

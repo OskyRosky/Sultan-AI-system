@@ -67,25 +67,25 @@ Any review note, override request, escalation statement, or manual instruction t
 
 ## Human Review Non-Approval Rule
 
-Human review is not approval under framework_only.
+Human review is not approval under `framework_only`.
 
-Human review cannot approve Paper Trading under framework_only.
+Human review cannot approve Paper Trading under `framework_only`.
 
-Human review cannot approve Live Trading under framework_only.
+Human review cannot approve Live Trading under `framework_only`.
 
-Human review cannot approve execution under framework_only.
+Human review cannot approve execution under `framework_only`.
 
-Human review cannot approve order generation under framework_only.
+Human review cannot approve order generation under `framework_only`.
 
-Human review cannot approve exchange connection under framework_only.
+Human review cannot approve exchange connection under `framework_only`.
 
-Human review cannot approve capital allocation under framework_only.
+Human review cannot approve capital allocation under `framework_only`.
 
-Human review cannot approve productive position sizing under framework_only.
+Human review cannot approve productive position sizing under `framework_only`.
 
-Human review cannot activate risk budgets under framework_only.
+Human review cannot activate risk budgets under `framework_only`.
 
-Human review cannot promote strategies under framework_only.
+Human review cannot promote strategies under `framework_only`.
 
 Human review cannot create confidence_score.
 
@@ -93,7 +93,7 @@ Human review cannot create final_signal_confidence_score.
 
 Human review cannot override missing empirical evidence.
 
-Human review cannot override Motor B framework_only.
+Human review cannot override Motor B `framework_only`.
 
 Human review cannot override hard veto or Kill Switch review without future formal governance.
 
@@ -165,7 +165,7 @@ Overrides cannot bypass Kill Switch review.
 
 Overrides cannot bypass Paper Trading blocked.
 
-Overrides cannot bypass `promotion_not_promoted`.
+Overrides cannot bypass `promotion_status = not_promoted`.
 
 Overrides cannot bypass `handoff_to_09` blocked.
 
