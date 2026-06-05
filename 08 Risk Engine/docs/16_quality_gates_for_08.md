@@ -69,8 +69,6 @@ No quality gate outcome may contradict this baseline under `framework_only`.
 
 ## Quality Gate Pass Is Not Approval Rule
 
-quality_gate_passed is not approval.
-
 `quality_gate_passed` is not approval.
 
 `quality_gate_passed` is not Paper Trading readiness.

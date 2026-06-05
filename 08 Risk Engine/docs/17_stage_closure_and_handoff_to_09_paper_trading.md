@@ -228,6 +228,7 @@ productive_position_sizing_eligibility = blocked
 risk_budget_activation = blocked
 promotion_status = not_promoted
 promotion_eligibility = blocked
+downstream_operational_eligibility = blocked
 confidence_status = confidence_not_available
 confidence_score = null
 final_signal_confidence_score = null
