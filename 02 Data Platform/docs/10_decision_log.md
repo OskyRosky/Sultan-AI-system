@@ -109,3 +109,35 @@ Resultado: `ingest_ohlcv_flow` protege `ingestion_runs` contra runs huerfanos en
 Resultado: la instancia `ccxt.binance` mantiene `enableRateLimit = True` y ahora usa `timeout = 30000` ms.
 
 Confirmacion: no se cambio la arquitectura, no se agregaron fuentes, no se agrego logica de trading y el deployment diario sigue en `0 10 * * *` con timezone `America/Costa_Rica`.
+
+## 2026-06-06 - Repair Block 1: Pipeline hardening before catch-up
+
+Decision: endurecer `ingest_ohlcv_flow` antes de ejecutar cualquier catch-up real del gap OHLCV.
+
+Cambios:
+
+- El modo incremental usa overlap window configurable con `SULTAN_OHLCV_INCREMENTAL_OVERLAP_CANDLES=1`.
+- El inicio incremental se calcula como `max(latest_stored_before_run - overlap * timeframe_interval, symbol_start_date)`.
+- Raw Parquet conserva la respuesta original de Binance/CCXT para auditoria.
+- Curated Parquet y `public.ohlcv_curated` solo aceptan velas cerradas, calculadas con `close_time = timestamp + timeframe_interval`.
+- El flow registra metadata adicional: `latest_stored_before_run`, `incremental_start_timestamp`, `latest_fetched_timestamp`, `latest_closed_eligible_timestamp`, `rows_fetched_raw`, `rows_closed_eligible`, `rows_open_excluded`, `closed_candles_only`, `rows_inserted_or_updated`, `rows_new` y `rows_existing`.
+
+Resultado esperado: el proximo catch-up incremental podra re-descargar la ultima zona persistida, actualizar filas existentes por upsert y excluir velas abiertas antes de curated/PostgreSQL.
+
+Confirmacion: este bloque no ejecuto catch-up, no ejecuto `full_history`, no modifico datos existentes, no cambio schedules, no modifico `03 Feature Engineering` y no produjo readiness para backtesting.
+
+## 2026-06-06 - Repair Block 1B: Reconciliation logic
+
+Decision: convertir la corrida incremental OHLCV en un proceso reconciliador antes de ejecutar cualquier reparacion real del gap.
+
+Cambios:
+
+- El flow calcula `latest_closed_expected_timestamp` por timeframe usando convencion Binance de apertura de vela.
+- Antes de descargar, registra `latest_stored_before_run`, rango faltante esperado, velas cerradas faltantes e `incremental_start_timestamp` con overlap.
+- La descarga incremental usa el plan de reconciliacion para cubrir el rango necesario hasta la ultima vela cerrada esperada.
+- Despues del upsert, registra `latest_stored_after_run`, faltantes remanentes y `health_status` por `symbol/timeframe`.
+- Se agrego la definicion versionada de `v_ohlcv_reconciliation_health` para inspeccion posterior en PostgreSQL/DBeaver.
+
+Estados de salud: `caught_up`, `caught_up_with_historical_warnings`, `gap_remaining`, `no_new_closed_candles` y `failed_validation`.
+
+Confirmacion: este bloque no ejecuto catch-up, no ejecuto `full_history`, no reparo datos, no modifico schedules, no modifico `03 Feature Engineering` y no declara readiness para backtesting.

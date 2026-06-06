@@ -17,8 +17,72 @@ La versión mínima ejecutada aplica:
 - `low <= close`.
 - `volume >= 0`.
 - No duplicados por `exchange + symbol + timeframe + timestamp`.
+- Rechazo de velas abiertas antes de curated/PostgreSQL.
 - Detección formal de gaps por `exchange + symbol + timeframe`.
 - Cálculo de freshness por `exchange + symbol + timeframe`.
+
+## Closed-candle eligibility
+
+Raw Parquet puede guardar la respuesta original de Binance/CCXT para auditoria. La capa curated y `public.ohlcv_curated` solo pueden recibir velas cerradas.
+
+La elegibilidad se calcula en memoria:
+
+```text
+1d close_time = timestamp + 1 day
+4h close_time = timestamp + 4 hours
+closed if close_time <= now_utc
+```
+
+Si una vela abierta llega al candidato curated, la validacion falla con `open_candles_in_curated_candidate`. Si una vela abierta llega al upsert PostgreSQL, el upsert falla con `postgres_upsert_rejected_open_candles`.
+
+El flow registra metadata de auditoria:
+
+- `rows_fetched_raw`.
+- `rows_closed_eligible`.
+- `rows_open_excluded`.
+- `closed_candles_only = true`.
+- `latest_closed_eligible_timestamp`.
+
+## Reconciliation checks
+
+El pipeline incremental ahora registra un plan de reconciliacion antes de descargar y una lectura de salud despues del upsert.
+
+Plan previo por `symbol/timeframe`:
+
+- `latest_stored_before_run`.
+- `latest_closed_expected_timestamp`.
+- `missing_from_timestamp`.
+- `missing_to_timestamp`.
+- `expected_missing_closed_candles_before_run`.
+- `is_already_caught_up_before_run`.
+- `incremental_start_timestamp`.
+
+Health posterior por `symbol/timeframe`:
+
+- `latest_fetched_timestamp`.
+- `latest_closed_eligible_timestamp`.
+- `latest_stored_after_run`.
+- `rows_fetched_raw`.
+- `rows_closed_eligible`.
+- `rows_open_excluded`.
+- `rows_inserted_or_updated`.
+- `rows_new`.
+- `rows_existing`.
+- `is_caught_up_after_run`.
+- `missing_closed_candles_after_run`.
+- `remaining_gap_start`.
+- `remaining_gap_end`.
+- `health_status`.
+
+`health_status` puede ser:
+
+- `caught_up`: la serie quedo al dia y no hubo warnings historicos.
+- `caught_up_with_historical_warnings`: la serie quedo al dia, pero la validacion detecto gaps historicos auditables.
+- `gap_remaining`: despues del run sigue faltando al menos una vela cerrada esperada.
+- `no_new_closed_candles`: no habia velas cerradas nuevas que promover.
+- `failed_validation`: la validacion bloqueante impidio curated/PostgreSQL.
+
+Estos checks no declaran readiness para Feature Engineering ni Backtesting. Solo hacen observable la completitud OHLCV del run.
 
 ## Gap detection
 
@@ -75,6 +139,7 @@ Errores bloqueantes:
 - Reglas OHLC inválidas.
 - `volume < 0`.
 - Duplicados por `exchange + symbol + timeframe + timestamp` dentro del lote.
+- Velas abiertas en el candidato curated.
 
 Warnings auditables:
 

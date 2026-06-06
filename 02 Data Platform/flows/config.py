@@ -39,6 +39,7 @@ class DataPlatformSettings:
     ohlcv_mode: str
     ohlcv_fetch_limit: int
     ohlcv_page_limit: int
+    ohlcv_incremental_overlap_candles: int
     symbol_start_dates: dict[str, str]
     postgres: PostgresSettings
 
@@ -85,6 +86,9 @@ def load_settings(env_file: Path | None = None) -> DataPlatformSettings:
         ohlcv_mode=os.getenv("SULTAN_OHLCV_MODE", "incremental"),
         ohlcv_fetch_limit=int(os.getenv("SULTAN_OHLCV_FETCH_LIMIT", "500")),
         ohlcv_page_limit=int(os.getenv("SULTAN_OHLCV_PAGE_LIMIT", "1000")),
+        ohlcv_incremental_overlap_candles=int(
+            os.getenv("SULTAN_OHLCV_INCREMENTAL_OVERLAP_CANDLES", "1")
+        ),
         symbol_start_dates={
             "BTCUSDT": os.getenv("SULTAN_BTCUSDT_START_DATE", "2017-01-01T00:00:00Z"),
             "ETHUSDT": os.getenv("SULTAN_ETHUSDT_START_DATE", "2017-01-01T00:00:00Z"),
