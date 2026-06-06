@@ -162,3 +162,94 @@ El run historico completo `2a979115-402f-4243-aef1-8c5aead2cc89` dejo estos rang
 - `BTCUSDT 4h`: `19117` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-05-10 20:00:00 UTC`.
 - `ETHUSDT 1d`: `3189` filas, desde `2017-08-17 00:00:00 UTC` hasta `2026-05-10 00:00:00 UTC`.
 - `ETHUSDT 4h`: `19117` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-05-10 20:00:00 UTC`.
+
+## Rango despues de Repair Block 2
+
+El run incremental controlado `2db92aa1-1351-46a2-a99e-b6ec9835ae1c` dejo estos rangos en PostgreSQL:
+
+- `BTCUSDT 1d`: `3215` filas, desde `2017-08-17 00:00:00 UTC` hasta `2026-06-05 00:00:00 UTC`.
+- `BTCUSDT 4h`: `19278` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-06-06 16:00:00 UTC`.
+- `ETHUSDT 1d`: `3215` filas, desde `2017-08-17 00:00:00 UTC` hasta `2026-06-05 00:00:00 UTC`.
+- `ETHUSDT 4h`: `19278` filas, desde `2017-08-17 04:00:00 UTC` hasta `2026-06-06 16:00:00 UTC`.
+
+La vista `v_ohlcv_reconciliation_health` reporto `health_status = caught_up` y `missing_closed_candles_after_run = 0` para las cuatro series. Las validaciones posteriores no detectaron duplicados ni velas abiertas en PostgreSQL.
+
+## Inspeccionar scheduler launchd OHLCV
+
+Scheduler operativo actual:
+
+```text
+launchd
+```
+
+Labels:
+
+```text
+com.sultan.ohlcv.reconciliation.morning
+com.sultan.ohlcv.reconciliation.evening
+```
+
+Horarios:
+
+```text
+10:05 America/Costa_Rica
+18:05 America/Costa_Rica
+```
+
+Ver estado:
+
+```bash
+launchctl print gui/501/com.sultan.ohlcv.reconciliation.morning
+launchctl print gui/501/com.sultan.ohlcv.reconciliation.evening
+```
+
+Ver logs:
+
+```bash
+ls -la "02 Data Platform/logs/ohlcv_reconciliation"
+```
+
+Ejecutar prueba manual del mismo script:
+
+```bash
+bash "02 Data Platform/scripts/run_ohlcv_reconciliation.sh"
+```
+
+Validar despues en PostgreSQL:
+
+```sql
+SELECT *
+FROM public.v_ohlcv_reconciliation_health
+ORDER BY symbol, timeframe;
+```
+
+Duplicados:
+
+```sql
+SELECT exchange, symbol, timeframe, timestamp, COUNT(*) AS n
+FROM public.ohlcv_curated
+WHERE symbol IN ('BTCUSDT', 'ETHUSDT')
+  AND timeframe IN ('1d', '4h')
+GROUP BY exchange, symbol, timeframe, timestamp
+HAVING COUNT(*) > 1
+ORDER BY n DESC, symbol, timeframe, timestamp
+LIMIT 20;
+```
+
+Velas abiertas:
+
+```sql
+SELECT symbol, timeframe, COUNT(*) AS open_candles_in_postgres
+FROM public.ohlcv_curated
+WHERE symbol IN ('BTCUSDT', 'ETHUSDT')
+  AND timeframe IN ('1d', '4h')
+  AND (
+      (timeframe = '1d' AND timestamp + INTERVAL '1 day' > NOW())
+      OR
+      (timeframe = '4h' AND timestamp + INTERVAL '4 hours' > NOW())
+  )
+GROUP BY symbol, timeframe
+ORDER BY symbol, timeframe;
+```
+
+El cron externo hacia `/Users/sultan/Trading/algo-trading/tools/run_daily_job.sh` no pertenece a este repo y no debe usarse para validar Sultan-AI-system.

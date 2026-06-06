@@ -198,3 +198,44 @@ En el run histórico completo:
 - `freshness_lag_seconds`: `85642`.
 - `BTCUSDT 4h`: `8` gaps.
 - `ETHUSDT 4h`: `8` gaps.
+
+En el Repair Block 2 de reconciliacion controlada:
+
+- `run_id`: `2db92aa1-1351-46a2-a99e-b6ec9835ae1c`.
+- Modo: `incremental`.
+- `rows_checked`: `370`.
+- `rows_failed`: `0`.
+- `gaps_found`: `0`.
+- `data_quality_score`: `1.00000`.
+- `check_status`: `passed`.
+- `rows_fetched_raw`: `374`.
+- `rows_closed_eligible`: `370`.
+- `rows_open_excluded`: `4`.
+- `BTCUSDT 1d`: `health_status = caught_up`, ultimo timestamp `2026-06-05T00:00:00+00:00`.
+- `BTCUSDT 4h`: `health_status = caught_up`, ultimo timestamp `2026-06-06T16:00:00+00:00`.
+- `ETHUSDT 1d`: `health_status = caught_up`, ultimo timestamp `2026-06-05T00:00:00+00:00`.
+- `ETHUSDT 4h`: `health_status = caught_up`, ultimo timestamp `2026-06-06T16:00:00+00:00`.
+- Duplicados posteriores en PostgreSQL: `0`.
+- Velas abiertas posteriores en PostgreSQL: `0`.
+
+Este resultado cierra el gap final operativo observado en 02 Data Platform, pero no declara readiness para Feature Engineering, Backtesting, Stage 09 ni Paper Trading.
+
+En la prueba manual de Repair Block 3B usando el script launchd:
+
+- `run_id`: `0e0a1b7c-e538-4f96-afa4-99465741b521`.
+- Modo: `incremental`.
+- `rows_checked`: `8`.
+- `rows_failed`: `0`.
+- `gaps_found`: `0`.
+- `data_quality_score`: `1.00000`.
+- `check_status`: `passed`.
+- `rows_fetched_raw`: `12`.
+- `rows_closed_eligible`: `8`.
+- `rows_open_excluded`: `4`.
+- `rows_new`: `0`.
+- `rows_existing`: `8`.
+- `health_status`: `caught_up` para las cuatro series.
+- Duplicados posteriores en PostgreSQL: `0`.
+- Velas abiertas posteriores en PostgreSQL: `0`.
+
+La prueba confirma que una segunda ejecucion incremental sobre base al dia re-descarga solo la ventana de overlap, actualiza filas existentes por upsert y no duplica datos.

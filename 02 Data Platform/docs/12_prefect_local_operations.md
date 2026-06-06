@@ -201,3 +201,105 @@ Para detener un worker, usar `Ctrl+C` en la terminal del worker.
 - Confirmar que el work pool existe: `poetry run prefect work-pool ls`.
 - Confirmar que el deployment existe: `poetry run prefect deployment ls`.
 - Si el deployment aparece como `NOT_READY`, iniciar el worker: `poetry run prefect worker start --pool sultan-local-pool`.
+
+## Scheduler operativo actual con launchd
+
+Repair Block 3B dejo Prefect Server/deployments fuera del camino operativo diario mientras exista el bloqueo SQLite:
+
+```text
+sqlite3.OperationalError: database is locked
+```
+
+El scheduler operativo actual es `launchd`, ejecutando directamente el mismo flow reconciliador incremental.
+
+Script:
+
+```text
+02 Data Platform/scripts/run_ohlcv_reconciliation.sh
+```
+
+LaunchAgents:
+
+```text
+~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.morning.plist
+~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.evening.plist
+```
+
+Labels:
+
+```text
+com.sultan.ohlcv.reconciliation.morning
+com.sultan.ohlcv.reconciliation.evening
+```
+
+Horarios:
+
+```text
+10:05 America/Costa_Rica
+18:05 America/Costa_Rica
+```
+
+Ambos LaunchAgents ejecutan:
+
+```bash
+/bin/bash "/Users/sultan/Trading/Sultan-AI-system/02 Data Platform/scripts/run_ohlcv_reconciliation.sh"
+```
+
+El script fuerza:
+
+```text
+SULTAN_OHLCV_MODE=incremental
+PREFECT_API_URL=
+```
+
+`RunAtLoad` queda en `false` para evitar una ingesta inmediata al cargar los agentes. `KeepAlive` no se usa para evitar loops.
+
+Comandos de carga:
+
+```bash
+launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.morning.plist
+launchctl bootstrap gui/501 ~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.evening.plist
+```
+
+Comandos de descarga:
+
+```bash
+launchctl bootout gui/501 ~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.morning.plist
+launchctl bootout gui/501 ~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.evening.plist
+```
+
+Inspeccion:
+
+```bash
+launchctl print gui/501/com.sultan.ohlcv.reconciliation.morning
+launchctl print gui/501/com.sultan.ohlcv.reconciliation.evening
+```
+
+Logs:
+
+```text
+02 Data Platform/logs/ohlcv_reconciliation/
+```
+
+Cada ejecucion crea un log `run_<timestamp>.log`. launchd tambien escribe:
+
+```text
+launchd_morning.out.log
+launchd_morning.err.log
+launchd_evening.out.log
+launchd_evening.err.log
+```
+
+Prueba manual validada:
+
+- `run_id`: `0e0a1b7c-e538-4f96-afa4-99465741b521`.
+- `status`: `success`.
+- `rows_fetched`: `12`.
+- `rows_validated`: `8`.
+- `rows_inserted`: `8`.
+- `rows_new`: `0`.
+- `rows_existing`: `8`.
+- `rows_open_excluded`: `4`.
+- Duplicados posteriores: `0`.
+- Velas abiertas posteriores en PostgreSQL: `0`.
+- `health_status`: `caught_up` para las cuatro series.

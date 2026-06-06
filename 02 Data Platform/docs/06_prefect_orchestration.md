@@ -98,3 +98,48 @@ Cada ejecución debe registrar:
 ## Alertas
 
 Telegram queda fuera del primer bloque. Se agregará después de tener validaciones y registros confiables.
+
+## Estado operativo despues de Repair Block 3B
+
+Prefect sigue existiendo como framework de flow local y el codigo mantiene `@flow` y `@task`. Sin embargo, Prefect deployments no son el scheduler operativo actual porque el intento de usar Prefect Server local encontro:
+
+```text
+sqlite3.OperationalError: database is locked
+```
+
+No se migro Prefect a PostgreSQL en este bloque. La migracion de Prefect a PostgreSQL queda como mejora futura opcional, no como bloqueo para la operacion diaria OHLCV.
+
+Scheduler operativo actual:
+
+```text
+launchd
+```
+
+Script ejecutado por launchd:
+
+```text
+02 Data Platform/scripts/run_ohlcv_reconciliation.sh
+```
+
+Comando efectivo del script:
+
+```bash
+PREFECT_API_URL= SULTAN_OHLCV_MODE=incremental poetry run python "02 Data Platform/flows/ingest_ohlcv_flow.py"
+```
+
+`PREFECT_API_URL` se deja vacio en el proceso para evitar depender del Prefect Server local bloqueado. Prefect usa servidor efimero para ejecutar el flow local.
+
+LaunchAgents oficiales de Sultan-AI-system:
+
+- `com.sultan.ohlcv.reconciliation.morning`: `10:05` America/Costa_Rica.
+- `com.sultan.ohlcv.reconciliation.evening`: `18:05` America/Costa_Rica.
+
+Ambos LaunchAgents llaman el mismo flow reconciliador. No existe un flow separado para la tarde. Si la ejecucion de la mañana no ocurre, la de la tarde debe detectar lo faltante desde PostgreSQL y completar. Si la ejecucion de la mañana si ocurre, la tarde solo agrega nuevas velas cerradas disponibles o termina sin filas nuevas, sin duplicar datos.
+
+El cron externo:
+
+```text
+5 0 * * * bash /Users/sultan/Trading/algo-trading/tools/run_daily_job.sh
+```
+
+no pertenece a Sultan-AI-system, apunta a otro repo y el script no existe en esa ruta. No debe considerarse scheduler funcional de `02 Data Platform`.

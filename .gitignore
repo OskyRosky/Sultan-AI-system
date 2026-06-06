@@ -29,6 +29,7 @@ data/raw/*
 data/curated/*
 data/features/*
 logs/*
+02 Data Platform/logs/ohlcv_reconciliation/*
 !data/raw/.gitkeep
 !data/curated/.gitkeep
 !data/features/.gitkeep

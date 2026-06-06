@@ -141,3 +141,87 @@ Cambios:
 Estados de salud: `caught_up`, `caught_up_with_historical_warnings`, `gap_remaining`, `no_new_closed_candles` y `failed_validation`.
 
 Confirmacion: este bloque no ejecuto catch-up, no ejecuto `full_history`, no reparo datos, no modifico schedules, no modifico `03 Feature Engineering` y no declara readiness para backtesting.
+
+## 2026-06-06 - Repair Block 2: Controlled reconciliation run
+
+Decision: ejecutar una unica corrida incremental controlada del flow reconciliador para reparar el gap final OHLCV detectado.
+
+Comando usado:
+
+```bash
+PREFECT_API_URL= SULTAN_OHLCV_MODE=incremental poetry run python "02 Data Platform/flows/ingest_ohlcv_flow.py"
+```
+
+Resultado:
+
+- `run_id`: `2db92aa1-1351-46a2-a99e-b6ec9835ae1c`.
+- `status`: `success`.
+- `rows_fetched`: `374`.
+- `rows_validated`: `370`.
+- `rows_inserted`: `370`.
+- `rows_fetched_raw`: `374`.
+- `rows_closed_eligible`: `370`.
+- `rows_open_excluded`: `4`.
+- `rows_new`: `362`.
+- `rows_existing`: `8`.
+- `data_quality_check`: `passed`.
+- `gaps_found`: `0`.
+- `rows_failed`: `0`.
+
+Health por serie:
+
+- `BTCUSDT 1d`: `caught_up`, `missing_closed_candles_after_run = 0`, ultimo timestamp `2026-06-05T00:00:00+00:00`.
+- `BTCUSDT 4h`: `caught_up`, `missing_closed_candles_after_run = 0`, ultimo timestamp `2026-06-06T16:00:00+00:00`.
+- `ETHUSDT 1d`: `caught_up`, `missing_closed_candles_after_run = 0`, ultimo timestamp `2026-06-05T00:00:00+00:00`.
+- `ETHUSDT 4h`: `caught_up`, `missing_closed_candles_after_run = 0`, ultimo timestamp `2026-06-06T16:00:00+00:00`.
+
+Validaciones posteriores:
+
+- Duplicados en `ohlcv_curated`: `0`.
+- Velas abiertas en PostgreSQL: `0`.
+- `v_ohlcv_reconciliation_health` aplicada y validada.
+
+Confirmacion: este bloque no ejecuto `full_history`, no cambio scheduler, no modifico Prefect deployment, no modifico `03 Feature Engineering`, no avanzo a `06 Backtesting` y no declara readiness para backtesting.
+
+## 2026-06-06 - Repair Block 3B: launchd scheduler direct execution
+
+Decision: usar `launchd` como scheduler operativo local para OHLCV mientras Prefect Server local permanezca bloqueado por SQLite.
+
+Razon: Repair Block 3 intento usar Prefect deployments, pero Prefect Server fallo con `sqlite3.OperationalError: database is locked`. No se migro Prefect a PostgreSQL en este bloque.
+
+Artefactos:
+
+- Script: `02 Data Platform/scripts/run_ohlcv_reconciliation.sh`.
+- LaunchAgent morning: `~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.morning.plist`.
+- LaunchAgent evening: `~/Library/LaunchAgents/com.sultan.ohlcv.reconciliation.evening.plist`.
+
+Schedules:
+
+- `com.sultan.ohlcv.reconciliation.morning`: `10:05` America/Costa_Rica.
+- `com.sultan.ohlcv.reconciliation.evening`: `18:05` America/Costa_Rica.
+
+Ambos LaunchAgents ejecutan el mismo flow reconciliador incremental:
+
+```bash
+PREFECT_API_URL= SULTAN_OHLCV_MODE=incremental poetry run python "02 Data Platform/flows/ingest_ohlcv_flow.py"
+```
+
+`RunAtLoad = false` y no se usa `KeepAlive`.
+
+Prueba manual:
+
+- `run_id`: `0e0a1b7c-e538-4f96-afa4-99465741b521`.
+- `status`: `success`.
+- `rows_fetched`: `12`.
+- `rows_validated`: `8`.
+- `rows_inserted`: `8`.
+- `rows_new`: `0`.
+- `rows_existing`: `8`.
+- `rows_open_excluded`: `4`.
+- Duplicados posteriores: `0`.
+- Velas abiertas posteriores en PostgreSQL: `0`.
+- `health_status = caught_up` para `BTCUSDT` y `ETHUSDT` en `1d` y `4h`.
+
+El cron externo `5 0 * * * bash /Users/sultan/Trading/algo-trading/tools/run_daily_job.sh` no pertenece a Sultan-AI-system, apunta a otro repo y el script no existe. No fue modificado.
+
+Confirmacion: este bloque no ejecuto `full_history`, no borro datos, no borro Parquet, no modifico `03 Feature Engineering`, no avanzo a `06 Backtesting` y no declara readiness para Stage 09 ni Paper Trading.
