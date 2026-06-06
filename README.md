@@ -10,6 +10,8 @@ Este repositorio ya contiene las capas iniciales de datos, features, research, s
 
 `06 Backtesting Engine` queda cerrado como framework/director/documentación. No es todavía un motor productivo completo de backtesting, no ejecuta simulaciones reales, no calcula PnL y no autoriza paper trading, live trading ni despliegue.
 
+`08 Risk Engine` queda cerrado como framework documental no operativo. `09 Paper Trading` permanece bloqueado; el orden oficial previo a cualquier discusion de Stage 09 es `General -> 02 -> 06 -> General`, segun [00 Inicio/05_pre_stage_09_readiness_plan.md](<00 Inicio/05_pre_stage_09_readiness_plan.md>).
+
 Antes de diseñar o construir `07 Signal Fusion + LLM Motors`, se debe hacer una micro-validación del pipeline `04 Research Layer -> 05 Strategy Engine -> 06 Backtesting Engine` para identificar qué outputs reales entrega Motor B y qué contratos deben consumir las capas de fusión.
 
 ## Reglas iniciales
