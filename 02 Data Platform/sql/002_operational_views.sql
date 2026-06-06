@@ -203,9 +203,117 @@ LEFT JOIN fetch_detail fd
   ON fd.symbol = s.symbol
  AND fd.timeframe = s.timeframe;
 
+CREATE OR REPLACE VIEW v_ohlcv_reconciliation_health AS
+WITH latest_quality AS (
+    SELECT
+        run_id,
+        check_status,
+        data_quality_score,
+        checked_at,
+        metadata
+    FROM data_quality_checks
+    WHERE dataset_name = 'ohlcv'
+    ORDER BY checked_at DESC
+    LIMIT 1
+),
+expected AS (
+    SELECT
+        s.exchange,
+        s.symbol,
+        s.timeframe,
+        s.rows_count,
+        s.min_timestamp,
+        s.max_timestamp AS last_available_timestamp,
+        CASE
+            WHEN s.timeframe = '1d' THEN 86400
+            WHEN s.timeframe = '4h' THEN 14400
+            ELSE NULL
+        END AS interval_seconds,
+        CASE
+            WHEN s.timeframe = '1d' THEN to_timestamp(
+                floor(extract(epoch FROM now() - interval '1 day') / 86400) * 86400
+            )
+            WHEN s.timeframe = '4h' THEN to_timestamp(
+                floor(extract(epoch FROM now() - interval '4 hours') / 14400) * 14400
+            )
+            ELSE NULL
+        END AS latest_closed_expected_timestamp
+    FROM v_ohlcv_summary s
+),
+reconciliation_detail AS (
+    SELECT
+        detail.key AS dataset_key,
+        split_part(detail.key, ':', 1) AS symbol,
+        split_part(detail.key, ':', 2) AS timeframe,
+        detail.value ->> 'latest_stored_before_run' AS latest_stored_before_run,
+        detail.value ->> 'latest_closed_expected_timestamp' AS latest_closed_expected_timestamp,
+        detail.value ->> 'incremental_start_timestamp' AS incremental_start_timestamp,
+        detail.value ->> 'latest_fetched_timestamp' AS latest_fetched_timestamp,
+        detail.value ->> 'latest_closed_eligible_timestamp' AS latest_closed_eligible_timestamp,
+        detail.value ->> 'latest_stored_after_run' AS latest_stored_after_run,
+        (detail.value ->> 'expected_missing_closed_candles_before_run')::integer AS expected_missing_closed_candles_before_run,
+        (detail.value ->> 'rows_fetched_raw')::integer AS rows_fetched_raw,
+        (detail.value ->> 'rows_closed_eligible')::integer AS rows_closed_eligible,
+        (detail.value ->> 'rows_open_excluded')::integer AS rows_open_excluded,
+        (detail.value ->> 'rows_inserted_or_updated')::integer AS rows_inserted_or_updated,
+        (detail.value ->> 'rows_new')::integer AS rows_new,
+        (detail.value ->> 'rows_existing')::integer AS rows_existing,
+        (detail.value ->> 'is_caught_up_after_run')::boolean AS is_caught_up_after_run,
+        (detail.value ->> 'missing_closed_candles_after_run')::integer AS missing_closed_candles_after_run,
+        detail.value ->> 'remaining_gap_start' AS remaining_gap_start,
+        detail.value ->> 'remaining_gap_end' AS remaining_gap_end,
+        detail.value ->> 'health_status' AS health_status
+    FROM latest_quality q
+    CROSS JOIN LATERAL jsonb_each(COALESCE(q.metadata #> '{fetch,datasets}', '{}'::jsonb)) AS detail(key, value)
+)
+SELECT
+    e.exchange,
+    e.symbol,
+    e.timeframe,
+    e.rows_count,
+    e.min_timestamp,
+    e.last_available_timestamp,
+    e.latest_closed_expected_timestamp,
+    CASE
+        WHEN e.interval_seconds IS NULL THEN NULL
+        WHEN e.last_available_timestamp >= e.latest_closed_expected_timestamp THEN 0
+        ELSE floor(
+            extract(epoch FROM e.latest_closed_expected_timestamp - e.last_available_timestamp)
+            / e.interval_seconds
+        )::integer
+    END AS estimated_missing_closed_candles,
+    q.run_id AS latest_quality_run_id,
+    q.check_status AS latest_quality_check_status,
+    q.data_quality_score AS latest_quality_score,
+    q.checked_at AS latest_quality_checked_at,
+    r.latest_stored_before_run,
+    r.incremental_start_timestamp,
+    r.latest_fetched_timestamp,
+    r.latest_closed_eligible_timestamp,
+    r.latest_stored_after_run,
+    r.expected_missing_closed_candles_before_run,
+    r.rows_fetched_raw,
+    r.rows_closed_eligible,
+    r.rows_open_excluded,
+    r.rows_inserted_or_updated,
+    r.rows_new,
+    r.rows_existing,
+    r.is_caught_up_after_run,
+    r.missing_closed_candles_after_run,
+    r.remaining_gap_start,
+    r.remaining_gap_end,
+    r.health_status
+FROM expected e
+LEFT JOIN latest_quality q
+  ON TRUE
+LEFT JOIN reconciliation_detail r
+  ON r.symbol = e.symbol
+ AND r.timeframe = e.timeframe;
+
 -- Example queries:
 -- SELECT * FROM v_ohlcv_summary;
 -- SELECT * FROM v_ohlcv_latest_bars WHERE symbol = 'BTCUSDT' AND timeframe = '1d' ORDER BY timestamp DESC LIMIT 20;
 -- SELECT * FROM v_pipeline_runs_latest;
 -- SELECT * FROM v_data_quality_latest;
 -- SELECT * FROM v_ohlcv_operational_health;
+-- SELECT * FROM v_ohlcv_reconciliation_health;

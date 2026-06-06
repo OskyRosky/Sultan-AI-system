@@ -62,6 +62,20 @@ La detección de gaps y freshness queda disponible como base para monitoreo oper
 - No se cambio la arquitectura general, no se agregaron fuentes ni dashboards.
 - El deployment diario `ingest_ohlcv_flow/sultan-ohlcv-daily` mantiene el schedule `0 10 * * *` en `America/Costa_Rica`.
 
+## Reconciliation health
+
+Repair Block 1B agrega tracking por `symbol/timeframe` para que cada corrida incremental muestre:
+
+- Que tenia `ohlcv_curated` antes del run.
+- Que vela cerrada deberia existir segun `now_utc`.
+- Cuantas velas cerradas faltaban antes del run.
+- Que rango se descargo con overlap.
+- Cuantas filas fueron raw, cerradas elegibles, abiertas excluidas, nuevas y existentes.
+- Que tenia `ohlcv_curated` despues del upsert.
+- Si la serie quedo al dia o si permanece un gap.
+
+La vista versionada `v_ohlcv_reconciliation_health` permite inspeccionar esa metadata desde PostgreSQL/DBeaver despues de aplicar `002_operational_views.sql`. Este bloque solo actualiza la definicion SQL; no ejecuta SQL contra la base, no repara datos y no cambia schedules.
+
 ## Mockup
 
 El mockup inicial se encuentra en:

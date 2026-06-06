@@ -13,6 +13,7 @@ Las vistas creadas en `02 Data Platform/sql/002_operational_views.sql` son:
 - `v_pipeline_runs_latest`: ultimos runs del pipeline.
 - `v_data_quality_latest`: ultimos checks de calidad.
 - `v_ohlcv_operational_health`: vista compacta de salud operativa por `symbol` y `timeframe`.
+- `v_ohlcv_reconciliation_health`: vista de completitud esperada, gaps remanentes y metadata de reconciliacion por `symbol/timeframe`.
 
 ## Crear o actualizar las vistas
 
@@ -107,6 +108,34 @@ ORDER BY symbol, timeframe;
 Esta vista combina conteos y timestamps de OHLCV con el ultimo estado global de calidad registrado para el dataset `ohlcv`.
 
 La vista no copia metricas globales sobre todos los pares/timeframes. Las columnas `latest_global_*` muestran el ultimo quality check global. Las columnas `latest_data_quality_score`, `latest_gaps_found`, `latest_freshness_lag_seconds` y `latest_check_status` se llenan solo cuando `data_quality_checks.metadata` contiene detalle para ese `symbol/timeframe`; si no existe detalle en el ultimo run, quedan en `NULL` y `latest_symbol_timeframe_summary` lo indica.
+
+## Ver reconciliacion y completitud OHLCV
+
+```sql
+SELECT *
+FROM v_ohlcv_reconciliation_health
+ORDER BY symbol, timeframe;
+```
+
+Campos clave:
+
+- `last_available_timestamp`: ultima vela disponible en `ohlcv_curated`.
+- `latest_closed_expected_timestamp`: ultima apertura de vela cerrada esperada segun `now()`.
+- `estimated_missing_closed_candles`: estimacion SQL de velas cerradas faltantes.
+- `latest_stored_before_run`: ultimo timestamp visto por el flow antes de descargar.
+- `incremental_start_timestamp`: inicio real de descarga con overlap.
+- `latest_closed_eligible_timestamp`: ultima vela cerrada elegible dentro del lote descargado.
+- `latest_stored_after_run`: ultimo timestamp disponible despues del upsert.
+- `missing_closed_candles_after_run`: velas cerradas faltantes despues del run.
+- `remaining_gap_start` y `remaining_gap_end`: rango remanente si queda gap.
+- `health_status`: estado reconciliado reportado por el flow.
+
+Lectura recomendada:
+
+- `health_status = caught_up`: la serie quedo al dia.
+- `health_status = no_new_closed_candles`: no habia velas cerradas nuevas que promover.
+- `health_status = gap_remaining`: falta al menos una vela cerrada esperada.
+- `health_status = failed_validation`: el lote no paso a curated/PostgreSQL.
 
 ## Uso en DBeaver
 
