@@ -239,3 +239,16 @@ En la prueba manual de Repair Block 3B usando el script launchd:
 - Velas abiertas posteriores en PostgreSQL: `0`.
 
 La prueba confirma que una segunda ejecucion incremental sobre base al dia re-descarga solo la ventana de overlap, actualiza filas existentes por upsert y no duplica datos.
+
+## Network Failure Auditability
+
+Repair Block 3C fortalece la auditabilidad de fallos tempranos de red:
+
+- CCXT/Binance usa `SULTAN_CCXT_TIMEOUT_MS = 60000` ms por defecto.
+- `fetch_ohlcv` reintenta errores transitorios de red/API con `SULTAN_CCXT_MAX_RETRIES = 3` y `SULTAN_CCXT_RETRY_BACKOFF_SECONDS = 10`.
+- El `ingestion_run` se registra como `running` antes de la primera llamada a Binance.
+- Si Binance/CCXT falla antes de descargar datos, el mismo `run_id` queda actualizado como `status = failed`.
+- La metadata de `ingestion_runs` incluye `failed_stage`, `error_type`, `retry_attempts`, `max_retries`, `retry_backoff_seconds`, `last_error` y `ccxt_timeout_ms`.
+- La excepcion se relanza para que `launchd`/script conserve exit code distinto de cero.
+
+Esto no imputa datos, no declara readiness y no convierte un fallo de red en exito operativo. Solo garantiza que el intento quede auditado y que el siguiente run reconciliador pueda completar lo pendiente si Binance responde.

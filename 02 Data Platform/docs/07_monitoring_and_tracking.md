@@ -58,7 +58,7 @@ La detección de gaps y freshness queda disponible como base para monitoreo oper
 
 - `v_ohlcv_operational_health` fue corregida para separar el ultimo quality check global del detalle por `symbol/timeframe` disponible en `data_quality_checks.metadata`.
 - `ingestion_runs` ahora actualiza a `status = failed` con `finished_at` y `error_message` si ocurre una excepcion inesperada despues de registrar el run como `running`.
-- CCXT Binance usa `timeout = 30000` ms junto con `enableRateLimit = True`.
+- CCXT Binance usa `SULTAN_CCXT_TIMEOUT_MS = 60000` ms por defecto junto con `enableRateLimit = True`; Repair Block 3C agrega retry/backoff controlado para errores transitorios de red/API.
 - No se cambio la arquitectura general, no se agregaron fuentes ni dashboards.
 - El deployment diario `ingest_ohlcv_flow/sultan-ohlcv-daily` mantiene el schedule `0 10 * * *` en `America/Costa_Rica`.
 

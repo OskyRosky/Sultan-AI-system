@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -37,6 +38,21 @@ TIMEFRAME_INTERVALS = {
     "4h": pd.Timedelta(hours=4),
 }
 
+TRANSIENT_CCXT_ERRORS = (
+    ccxt.RequestTimeout,
+    ccxt.NetworkError,
+    ccxt.ExchangeNotAvailable,
+    ccxt.DDoSProtection,
+)
+
+
+class OhlcvFetchError(RuntimeError):
+    """Fetch failure carrying audit metadata for early-run failure records."""
+
+    def __init__(self, message: str, metadata: dict[str, object]) -> None:
+        super().__init__(message)
+        self.metadata = metadata
+
 
 def _ccxt_symbol(symbol: str) -> str:
     if "/" in symbol:
@@ -70,6 +86,96 @@ def _timeframe_interval(timeframe: str) -> pd.Timedelta:
     if expected_interval is None:
         raise ValueError(f"Unsupported timeframe={timeframe}")
     return expected_interval
+
+
+def _new_fetch_failure_metadata(
+    settings: DataPlatformSettings,
+    exc: Exception,
+    failed_stage: str,
+) -> dict[str, object]:
+    error_metadata = getattr(exc, "metadata", None)
+    if isinstance(error_metadata, dict):
+        metadata = json.loads(json.dumps(error_metadata))
+    else:
+        metadata = {
+            "mode": settings.ohlcv_mode,
+            "symbols": list(settings.default_symbols),
+            "timeframes": list(settings.default_timeframes),
+            "datasets": {},
+        }
+
+    metadata["failed_stage"] = failed_stage
+    metadata.setdefault("error_type", type(exc).__name__)
+    metadata.setdefault("error_message", str(exc))
+    metadata.setdefault("last_error", str(exc))
+    metadata.setdefault("retry_attempts", 0)
+    metadata.setdefault("max_retries", settings.ccxt_max_retries)
+    metadata.setdefault("retry_backoff_seconds", settings.ccxt_retry_backoff_seconds)
+    metadata.setdefault("ccxt_timeout_ms", settings.ccxt_timeout_ms)
+    return metadata
+
+
+def _fetch_ohlcv_with_retries(
+    exchange: ccxt.Exchange,
+    settings: DataPlatformSettings,
+    ccxt_pair: str,
+    timeframe: str,
+    logger,
+    since: int | None = None,
+    limit: int | None = None,
+) -> tuple[list[list[float]], dict[str, object]]:
+    max_retries = max(0, int(settings.ccxt_max_retries))
+    backoff_seconds = max(0.0, float(settings.ccxt_retry_backoff_seconds))
+    retry_attempts = 0
+    last_error: Exception | None = None
+
+    for attempt in range(max_retries + 1):
+        try:
+            rows = exchange.fetch_ohlcv(
+                ccxt_pair,
+                timeframe=timeframe,
+                since=since,
+                limit=limit,
+            )
+            return rows, {
+                "retry_attempts": retry_attempts,
+                "max_retries": max_retries,
+                "retry_backoff_seconds": backoff_seconds,
+                "last_error": str(last_error) if last_error is not None else None,
+            }
+        except TRANSIENT_CCXT_ERRORS as exc:
+            last_error = exc
+            if attempt >= max_retries:
+                metadata = {
+                    "failed_stage": "fetch_ohlcv",
+                    "symbol": ccxt_pair,
+                    "timeframe": timeframe,
+                    "since": since,
+                    "limit": limit,
+                    "retry_attempts": retry_attempts,
+                    "max_retries": max_retries,
+                    "retry_backoff_seconds": backoff_seconds,
+                    "ccxt_timeout_ms": settings.ccxt_timeout_ms,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                    "last_error": str(exc),
+                }
+                raise OhlcvFetchError(str(exc), metadata) from exc
+
+            retry_attempts += 1
+            sleep_seconds = backoff_seconds * retry_attempts
+            logger.warning(
+                "Transient CCXT fetch failure. symbol=%s timeframe=%s attempt=%s max_retries=%s sleep_seconds=%s error_type=%s error=%s",
+                ccxt_pair,
+                timeframe,
+                retry_attempts,
+                max_retries,
+                sleep_seconds,
+                type(exc).__name__,
+                exc,
+            )
+            if sleep_seconds:
+                time.sleep(sleep_seconds)
 
 
 def _close_times(timestamps: pd.Series, timeframe: str) -> pd.Series:
@@ -342,7 +448,7 @@ def finalize_reconciliation_health(
 def load_config() -> DataPlatformSettings:
     settings = load_settings()
     get_run_logger().info(
-        "Config loaded. exchange=%s symbols=%s timeframes=%s mode=%s limit=%s page_limit=%s overlap_candles=%s",
+        "Config loaded. exchange=%s symbols=%s timeframes=%s mode=%s limit=%s page_limit=%s overlap_candles=%s ccxt_timeout_ms=%s ccxt_max_retries=%s ccxt_retry_backoff_seconds=%s",
         settings.default_exchange,
         settings.default_symbols,
         settings.default_timeframes,
@@ -350,6 +456,9 @@ def load_config() -> DataPlatformSettings:
         settings.ohlcv_fetch_limit,
         settings.ohlcv_page_limit,
         settings.ohlcv_incremental_overlap_candles,
+        settings.ccxt_timeout_ms,
+        settings.ccxt_max_retries,
+        settings.ccxt_retry_backoff_seconds,
     )
     return settings
 
@@ -357,13 +466,19 @@ def load_config() -> DataPlatformSettings:
 @task
 def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object]:
     logger = get_run_logger()
-    exchange = ccxt.binance({"enableRateLimit": True, "timeout": 30000})
+    exchange = ccxt.binance(
+        {"enableRateLimit": True, "timeout": settings.ccxt_timeout_ms}
+    )
     ingested_at = datetime.now(UTC)
     frames: list[pd.DataFrame] = []
     fetch_metadata: dict[str, object] = {
         "mode": settings.ohlcv_mode,
         "page_limit": settings.ohlcv_page_limit,
         "fetch_limit": settings.ohlcv_fetch_limit,
+        "ccxt_timeout_ms": settings.ccxt_timeout_ms,
+        "max_retries": settings.ccxt_max_retries,
+        "retry_backoff_seconds": settings.ccxt_retry_backoff_seconds,
+        "retry_attempts": 0,
         "symbols": list(settings.default_symbols),
         "timeframes": list(settings.default_timeframes),
         "datasets": {},
@@ -386,17 +501,24 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                     timeframe,
                     settings.ohlcv_fetch_limit,
                 )
-                rows = exchange.fetch_ohlcv(
+                rows, retry_metadata = _fetch_ohlcv_with_retries(
+                    exchange,
+                    settings,
                     ccxt_pair,
                     timeframe=timeframe,
                     limit=settings.ohlcv_fetch_limit,
+                    logger=logger,
                 )
                 pages_downloaded = 1 if rows else 0
+                fetch_metadata["retry_attempts"] = int(
+                    fetch_metadata["retry_attempts"]
+                ) + int(retry_metadata["retry_attempts"])
                 fetch_metadata["datasets"][dataset_key] = {
                     "mode": settings.ohlcv_mode,
                     "last_existing_timestamp": None,
                     "fetch_since_timestamp": None,
                     "pages_downloaded": pages_downloaded,
+                    **retry_metadata,
                     "rows_fetched": 0,
                     "min_timestamp": None,
                     "max_timestamp": None,
@@ -416,12 +538,18 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                 )
 
                 while since_ms <= now_ms:
-                    page = exchange.fetch_ohlcv(
+                    page, retry_metadata = _fetch_ohlcv_with_retries(
+                        exchange,
+                        settings,
                         ccxt_pair,
                         timeframe=timeframe,
                         since=since_ms,
                         limit=settings.ohlcv_page_limit,
+                        logger=logger,
                     )
+                    fetch_metadata["retry_attempts"] = int(
+                        fetch_metadata["retry_attempts"]
+                    ) + int(retry_metadata["retry_attempts"])
                     if not page:
                         logger.info(
                             "No more OHLCV rows. symbol=%s timeframe=%s pages=%s rows=%s",
@@ -472,6 +600,9 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                         utc=True,
                     ).isoformat(),
                     "pages_downloaded": pages_downloaded,
+                    "retry_attempts": int(fetch_metadata["retry_attempts"]),
+                    "max_retries": settings.ccxt_max_retries,
+                    "retry_backoff_seconds": settings.ccxt_retry_backoff_seconds,
                     "rows_fetched": 0,
                     "min_timestamp": None,
                     "max_timestamp": None,
@@ -539,12 +670,18 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                 )
 
                 while since_ms <= target_until_ms:
-                    page = exchange.fetch_ohlcv(
+                    page, retry_metadata = _fetch_ohlcv_with_retries(
+                        exchange,
+                        settings,
                         ccxt_pair,
                         timeframe=timeframe,
                         since=since_ms,
                         limit=settings.ohlcv_page_limit,
+                        logger=logger,
                     )
+                    fetch_metadata["retry_attempts"] = int(
+                        fetch_metadata["retry_attempts"]
+                    ) + int(retry_metadata["retry_attempts"])
                     if not page:
                         logger.info(
                             "No new OHLCV rows. symbol=%s timeframe=%s latest_existing=%s fetch_since=%s",
@@ -623,6 +760,9 @@ def fetch_ohlcv(settings: DataPlatformSettings, run_id: str) -> dict[str, object
                         else "start_at_symbol_start_date"
                     ),
                     "pages_downloaded": pages_downloaded,
+                    "retry_attempts": int(fetch_metadata["retry_attempts"]),
+                    "max_retries": settings.ccxt_max_retries,
+                    "retry_backoff_seconds": settings.ccxt_retry_backoff_seconds,
                     "rows_fetched": 0,
                     "rows_fetched_raw": 0,
                     "rows_closed_eligible": 0,
@@ -996,6 +1136,7 @@ def write_ingestion_run(
 ) -> None:
     symbols = list(settings.default_symbols)
     timeframes = list(settings.default_timeframes)
+    finished_at = None if status == "running" else datetime.now(UTC)
     merged_fetch_metadata = _merge_upsert_metadata(fetch_metadata, upsert_result)
     metadata = json.dumps(
         {
@@ -1016,7 +1157,7 @@ def write_ingestion_run(
                     raw_path, curated_path, error_message, metadata
                 )
                 VALUES (
-                    %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb
                 )
                 ON CONFLICT (run_id) DO UPDATE SET
                     status = EXCLUDED.status,
@@ -1035,6 +1176,7 @@ def write_ingestion_run(
                     "binance",
                     status,
                     started_at,
+                    finished_at,
                     symbols,
                     timeframes,
                     rows_fetched,
@@ -1235,54 +1377,81 @@ def ingest_ohlcv_flow() -> dict[str, object]:
     run_id = str(uuid4())
     started_at = datetime.now(UTC)
     settings = load_config()
-    fetch_result = fetch_ohlcv(settings, run_id)
-    raw_df = fetch_result["dataframe"]
-    fetch_metadata = fetch_result["metadata"]
-    raw_paths = save_raw_parquet(settings, raw_df, run_id)
-    closed_result = filter_closed_candles(raw_df, fetch_metadata)
-    df = closed_result["dataframe"]
-    fetch_metadata = closed_result["metadata"]
-    validation_result = validate_ohlcv(df, settings)
-
-    if not validation_result["is_valid"]:
-        fetch_metadata = _mark_reconciliation_failed_validation(fetch_metadata)
-        write_ingestion_run(
-            settings=settings,
-            run_id=run_id,
-            started_at=started_at,
-            status="failed_validation",
-            rows_fetched=len(raw_df),
-            rows_validated=0,
-            rows_inserted=0,
-            raw_paths=raw_paths,
-            curated_paths=[],
-            error_message="; ".join(validation_result["errors"]),
-            fetch_metadata=fetch_metadata,
-        )
-        write_quality_report(settings, run_id, validation_result, fetch_metadata)
-        raise ValueError(f"OHLCV validation failed: {validation_result['errors']}")
-
-    curated_df = transform_to_curated(df, validation_result)
-    curated_paths = save_curated_parquet(settings, curated_df, run_id)
     write_ingestion_run(
         settings=settings,
         run_id=run_id,
         started_at=started_at,
         status="running",
-        rows_fetched=len(raw_df),
-        rows_validated=len(curated_df),
+        rows_fetched=0,
+        rows_validated=0,
         rows_inserted=0,
-        raw_paths=raw_paths,
-        curated_paths=curated_paths,
+        raw_paths=[],
+        curated_paths=[],
         error_message=None,
-        fetch_metadata=fetch_metadata,
+        fetch_metadata={
+            "mode": settings.ohlcv_mode,
+            "symbols": list(settings.default_symbols),
+            "timeframes": list(settings.default_timeframes),
+            "ccxt_timeout_ms": settings.ccxt_timeout_ms,
+            "max_retries": settings.ccxt_max_retries,
+            "retry_backoff_seconds": settings.ccxt_retry_backoff_seconds,
+            "audit_stage": "run_registered_before_fetch",
+        },
     )
+
+    raw_df = pd.DataFrame(columns=REQUIRED_COLUMNS)
+    curated_df = pd.DataFrame(columns=REQUIRED_COLUMNS)
+    raw_paths: list[str] = []
+    curated_paths: list[str] = []
+    fetch_metadata: dict[str, object] = {}
     rows_inserted = {
         "rows_inserted_or_updated": 0,
         "rows_new": 0,
         "rows_existing": 0,
     }
     try:
+        fetch_result = fetch_ohlcv(settings, run_id)
+        raw_df = fetch_result["dataframe"]
+        fetch_metadata = fetch_result["metadata"]
+        raw_paths = save_raw_parquet(settings, raw_df, run_id)
+        closed_result = filter_closed_candles(raw_df, fetch_metadata)
+        df = closed_result["dataframe"]
+        fetch_metadata = closed_result["metadata"]
+        validation_result = validate_ohlcv(df, settings)
+
+        if not validation_result["is_valid"]:
+            fetch_metadata = _mark_reconciliation_failed_validation(fetch_metadata)
+            write_ingestion_run(
+                settings=settings,
+                run_id=run_id,
+                started_at=started_at,
+                status="failed_validation",
+                rows_fetched=len(raw_df),
+                rows_validated=0,
+                rows_inserted=0,
+                raw_paths=raw_paths,
+                curated_paths=[],
+                error_message="; ".join(validation_result["errors"]),
+                fetch_metadata=fetch_metadata,
+            )
+            write_quality_report(settings, run_id, validation_result, fetch_metadata)
+            raise ValueError(f"OHLCV validation failed: {validation_result['errors']}")
+
+        curated_df = transform_to_curated(df, validation_result)
+        curated_paths = save_curated_parquet(settings, curated_df, run_id)
+        write_ingestion_run(
+            settings=settings,
+            run_id=run_id,
+            started_at=started_at,
+            status="running",
+            rows_fetched=len(raw_df),
+            rows_validated=len(curated_df),
+            rows_inserted=0,
+            raw_paths=raw_paths,
+            curated_paths=curated_paths,
+            error_message=None,
+            fetch_metadata=fetch_metadata,
+        )
         rows_inserted = upsert_postgres(settings, curated_df)
         fetch_metadata = finalize_reconciliation_health(
             settings,
@@ -1311,6 +1480,15 @@ def ingest_ohlcv_flow() -> dict[str, object]:
         )
         write_quality_report(settings, run_id, validation_result, fetch_metadata)
     except Exception as exc:
+        failed_stage = (
+            "fetch_ohlcv" if isinstance(exc, OhlcvFetchError) else "flow_execution"
+        )
+        failure_metadata = _new_fetch_failure_metadata(settings, exc, failed_stage)
+        if fetch_metadata:
+            failure_metadata = {
+                **json.loads(json.dumps(fetch_metadata)),
+                **failure_metadata,
+            }
         write_ingestion_run(
             settings=settings,
             run_id=run_id,
@@ -1322,7 +1500,7 @@ def ingest_ohlcv_flow() -> dict[str, object]:
             raw_paths=raw_paths,
             curated_paths=curated_paths,
             error_message=str(exc),
-            fetch_metadata=fetch_metadata,
+            fetch_metadata=failure_metadata,
             upsert_result=rows_inserted,
         )
         raise

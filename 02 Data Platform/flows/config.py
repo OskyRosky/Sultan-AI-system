@@ -40,6 +40,9 @@ class DataPlatformSettings:
     ohlcv_fetch_limit: int
     ohlcv_page_limit: int
     ohlcv_incremental_overlap_candles: int
+    ccxt_timeout_ms: int
+    ccxt_max_retries: int
+    ccxt_retry_backoff_seconds: float
     symbol_start_dates: dict[str, str]
     postgres: PostgresSettings
 
@@ -88,6 +91,11 @@ def load_settings(env_file: Path | None = None) -> DataPlatformSettings:
         ohlcv_page_limit=int(os.getenv("SULTAN_OHLCV_PAGE_LIMIT", "1000")),
         ohlcv_incremental_overlap_candles=int(
             os.getenv("SULTAN_OHLCV_INCREMENTAL_OVERLAP_CANDLES", "1")
+        ),
+        ccxt_timeout_ms=int(os.getenv("SULTAN_CCXT_TIMEOUT_MS", "60000")),
+        ccxt_max_retries=int(os.getenv("SULTAN_CCXT_MAX_RETRIES", "3")),
+        ccxt_retry_backoff_seconds=float(
+            os.getenv("SULTAN_CCXT_RETRY_BACKOFF_SECONDS", "10")
         ),
         symbol_start_dates={
             "BTCUSDT": os.getenv("SULTAN_BTCUSDT_START_DATE", "2017-01-01T00:00:00Z"),

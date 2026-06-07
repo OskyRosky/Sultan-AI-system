@@ -295,34 +295,52 @@ health_status = caught_up for all 4 series
 Status:
 
 ```text
-pending observation
+observed but failed due Binance timeout
 ```
 
-Next expected trigger:
+Observed trigger:
 
 ```text
 2026-06-06 18:05 America/Costa_Rica
 ```
 
-Instructions:
+Evidence:
 
-After the trigger, update this section with:
+```text
+launchd label = com.sultan.ohlcv.reconciliation.evening
+launchd runs = 1
+launchd last exit code = 1
+log = 02 Data Platform/logs/ohlcv_reconciliation/run_20260607T000501Z.log
+error_type = ccxt.base.errors.RequestTimeout
+error = binance GET https://api.binance.com/api/v3/exchangeInfo timed out
+```
 
-- launchd log evidence.
-- Script log evidence.
-- Generated `run_id`.
-- `ingestion_runs.status`.
-- `rows_fetched`.
-- `rows_validated`.
-- `rows_inserted`.
-- `rows_new`.
-- `rows_existing`.
-- `rows_open_excluded`.
-- PostgreSQL duplicate check.
-- PostgreSQL open-candle check.
-- `v_ohlcv_reconciliation_health` status per symbol/timeframe.
+PostgreSQL impact:
 
-This report must not be treated as final closure until this section is updated with evidence from an automatic calendar-triggered launchd run.
+```text
+new ingestion_run = not recorded before Repair Block 3C
+duplicates = 0
+open_candles_in_postgres = 0
+latest successful run = 0e0a1b7c-e538-4f96-afa4-99465741b521
+```
+
+Interpretation:
+
+- The first automatic calendar-triggered `launchd` run was observed.
+- The scheduler executed the correct script.
+- The run failed because Binance/CCXT timed out before OHLCV fetch completed.
+- Data integrity was preserved: no duplicate rows and no open candles were inserted.
+- Because the failure happened before the pre-3C audit registration point, no new `ingestion_run` was created for that failed attempt.
+
+Repair Block 3C response:
+
+- CCXT timeout increased from `30000` ms to configurable `SULTAN_CCXT_TIMEOUT_MS = 60000`.
+- Transient CCXT network/API errors now use controlled retry/backoff.
+- `ingestion_runs.status = running` is now recorded before Binance fetch.
+- Early Binance/CCXT failures now update the same `run_id` to `status = failed` with failure metadata.
+- The exception is still re-raised so `launchd`/script retains exit code `!= 0`.
+
+This section documents observation of the first automatic run, but it does not declare final operational closure because the observed run failed due to a transient Binance timeout. The next successful morning/evening reconciliator run must update the pending candles and leave an audited `ingestion_run`.
 
 ## 9. Data Health After Repair
 

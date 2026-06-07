@@ -225,3 +225,21 @@ Prueba manual:
 El cron externo `5 0 * * * bash /Users/sultan/Trading/algo-trading/tools/run_daily_job.sh` no pertenece a Sultan-AI-system, apunta a otro repo y el script no existe. No fue modificado.
 
 Confirmacion: este bloque no ejecuto `full_history`, no borro datos, no borro Parquet, no modifico `03 Feature Engineering`, no avanzo a `06 Backtesting` y no declara readiness para Stage 09 ni Paper Trading.
+
+## 2026-06-06 - Repair Block 3C: network failure auditability and retry handling
+
+Decision: fortalecer el flow OHLCV para que fallos tempranos de Binance/CCXT queden auditados en PostgreSQL y sean reintentados de forma controlada.
+
+Contexto: el primer trigger automatico real de `launchd` evening (`18:05` America/Costa_Rica) se ejecuto, pero fallo con `ccxt.base.errors.RequestTimeout` contra `https://api.binance.com/api/v3/exchangeInfo`. El proceso salio con exit code `1` y PostgreSQL quedo sano, pero no se creo `ingestion_run` porque el fallo ocurrio antes del registro auditado.
+
+Cambios:
+
+- `SULTAN_CCXT_TIMEOUT_MS` queda configurable con default `60000` ms.
+- `SULTAN_CCXT_MAX_RETRIES` queda configurable con default `3`.
+- `SULTAN_CCXT_RETRY_BACKOFF_SECONDS` queda configurable con default `10`.
+- El flow registra `ingestion_runs.status = running` antes de la primera llamada a Binance.
+- Los fallos transitorios de red/API en `fetch_ohlcv` se reintentan y, si agotan retries, actualizan el mismo `run_id` con `status = failed`.
+- La metadata de fallo incluye `failed_stage = fetch_ohlcv`, `error_type`, `error_message`, `retry_attempts`, `max_retries`, `retry_backoff_seconds`, `last_error` y `ccxt_timeout_ms`.
+- La excepcion final se relanza para preservar exit code distinto de cero en `launchd`/script.
+
+Confirmacion: este bloque no cambia schedules, no modifica plist, no ejecuta `full_history`, no borra datos, no borra Parquet, no modifica `03 Feature Engineering`, no avanza a `06 Backtesting` y no declara readiness para Stage 09 ni Paper Trading.

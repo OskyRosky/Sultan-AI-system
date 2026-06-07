@@ -114,8 +114,9 @@ Si la computadora estuvo apagada o Prefect no estuvo activo durante varios dias,
 
 ## Hardening del flow
 
-- La conexion CCXT a Binance usa `enableRateLimit = True` y `timeout = 30000` ms.
-- Si el flow ya registro `ingestion_runs.status = running` y ocurre una excepcion inesperada antes del cierre normal, el mismo `run_id` se actualiza a `status = failed`, `finished_at` y `error_message`.
+- La conexion CCXT a Binance usa `enableRateLimit = True` y `SULTAN_CCXT_TIMEOUT_MS = 60000` ms por defecto.
+- Las llamadas `fetch_ohlcv` reintentan errores transitorios de red/API (`RequestTimeout`, `NetworkError`, `ExchangeNotAvailable`, `DDoSProtection`) con `SULTAN_CCXT_MAX_RETRIES = 3` y `SULTAN_CCXT_RETRY_BACKOFF_SECONDS = 10` por defecto.
+- El flow registra `ingestion_runs.status = running` antes de llamar a Binance. Si ocurre una excepcion inesperada, incluido un fallo temprano de red, el mismo `run_id` se actualiza a `status = failed`, `finished_at`, `error_message` y metadata con `failed_stage`, `error_type`, `retry_attempts`, `max_retries`, `retry_backoff_seconds` y `last_error`.
 - La excepcion se relanza para que Prefect marque el flow run como failed.
 - El deployment diario no cambio: sigue usando `ingest_ohlcv_flow/sultan-ohlcv-daily`, work pool `sultan-local-pool`, cron `0 10 * * *` y timezone `America/Costa_Rica`.
 
