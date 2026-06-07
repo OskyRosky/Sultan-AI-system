@@ -8,6 +8,8 @@ The final OHLCV gap affecting `BTCUSDT` and `ETHUSDT` in `1d` and `4h` was repai
 
 The operational scheduler is now `launchd`, with two daily opportunities to run the same reconciliator flow at `10:05` and `18:05` America/Costa_Rica. Prefect remains in the code as flow/task framework, but Prefect Server is not the operational scheduler while the local SQLite backend is blocked.
 
+The first automatic `launchd` evening trigger was observed. It executed the configured job and failed due to an external Binance/CCXT timeout, with no bad partial insert, no duplicates, and no open candles in PostgreSQL. Repair Block 3C then hardened network failure handling by increasing CCXT timeout, adding retry/backoff, and registering `ingestion_runs` before Binance fetch so early failures are auditable.
+
 This is a readiness report for data platform repair and downstream planning. It does not declare Feature Engineering ready, Backtesting ready, Stage 09 ready, Paper Trading ready, or any strategy confidence.
 
 ## 2. Scope
@@ -335,12 +337,48 @@ Interpretation:
 Repair Block 3C response:
 
 - CCXT timeout increased from `30000` ms to configurable `SULTAN_CCXT_TIMEOUT_MS = 60000`.
-- Transient CCXT network/API errors now use controlled retry/backoff.
+- Retry/backoff configuration:
+
+```text
+SULTAN_CCXT_TIMEOUT_MS = 60000
+SULTAN_CCXT_MAX_RETRIES = 3
+SULTAN_CCXT_RETRY_BACKOFF_SECONDS = 10
+```
+
+- Transient CCXT network/API errors now use controlled retry/backoff:
+
+```text
+RequestTimeout
+NetworkError
+ExchangeNotAvailable
+DDoSProtection
+```
+
 - `ingestion_runs.status = running` is now recorded before Binance fetch.
 - Early Binance/CCXT failures now update the same `run_id` to `status = failed` with failure metadata.
+- Failure metadata includes `failed_stage`, `error_type`, `retry_attempts`, `max_retries`, `retry_backoff_seconds`, `last_error`, and `ccxt_timeout_ms`.
 - The exception is still re-raised so `launchd`/script retains exit code `!= 0`.
 
-This section documents observation of the first automatic run, but it does not declare final operational closure because the observed run failed due to a transient Binance timeout. The next successful morning/evening reconciliator run must update the pending candles and leave an audited `ingestion_run`.
+Post-3C validation run:
+
+```text
+run_id = 6646170f-0b23-424c-9fb9-eee2193c5772
+status = success
+rows_fetched = 16
+rows_validated = 12
+rows_inserted = 12
+rows_new = 4
+rows_existing = 8
+rows_open_excluded = 4
+retry_attempts = 0
+ccxt_timeout_ms = 60000
+max_retries = 3
+duplicates = 0
+open_candles = 0
+health_status = caught_up for all 4 series
+```
+
+This section documents observation of the first automatic run and the follow-up hardening. The automatic trigger itself did not succeed because Binance timed out, but the scheduler was observed, data integrity was preserved, and subsequent incremental reconciliation completed the pending closed candles safely.
 
 ## 9. Data Health After Repair
 
@@ -353,7 +391,7 @@ ETHUSDT 1d
 ETHUSDT 4h
 ```
 
-Confirmed health after controlled repair and manual launchd-script validation:
+Confirmed health after controlled repair, manual launchd-script validation, and post-3C incremental validation:
 
 ```text
 health_status = caught_up for all 4 series
@@ -367,10 +405,10 @@ latest_quality_check_status = passed
 Latest known post-repair ranges:
 
 ```text
-BTCUSDT 1d: 2017-08-17 00:00:00 UTC to 2026-06-05 00:00:00 UTC
-BTCUSDT 4h: 2017-08-17 04:00:00 UTC to 2026-06-06 16:00:00 UTC
-ETHUSDT 1d: 2017-08-17 00:00:00 UTC to 2026-06-05 00:00:00 UTC
-ETHUSDT 4h: 2017-08-17 04:00:00 UTC to 2026-06-06 16:00:00 UTC
+BTCUSDT 1d: 2017-08-17 00:00:00 UTC to 2026-06-06 00:00:00 UTC
+BTCUSDT 4h: 2017-08-17 04:00:00 UTC to 2026-06-06 20:00:00 UTC
+ETHUSDT 1d: 2017-08-17 00:00:00 UTC to 2026-06-06 00:00:00 UTC
+ETHUSDT 4h: 2017-08-17 04:00:00 UTC to 2026-06-06 20:00:00 UTC
 ```
 
 ## 10. Dependency on 03 Feature Engineering
@@ -405,14 +443,14 @@ Backtesting remains blocked until:
 - Temporal admissibility and leakage controls are enforced.
 - Empirical confidence is supported by evidence.
 
-Do not declare:
+Prohibited downstream interpretations:
 
 ```text
-backtesting_data_readiness = ready
-confidence_status = available
-strategy_promoted = true
-stage_09_readiness = ready
-paper_trading_ready = true
+backtesting data is ready
+confidence is available
+strategy is promoted
+Stage 09 is ready
+Paper Trading is ready
 ```
 
 ## 12. Current Status Flags
@@ -420,9 +458,12 @@ paper_trading_ready = true
 ```text
 data_gap_status = repaired
 ohlcv_pipeline_status = operational
-scheduler_status = configured_pending_first_automatic_observation
+scheduler_status = configured_and_observed
+launchd_first_run_status = observed_but_failed_due_external_timeout
+network_failure_auditability = implemented
+ohlcv_data_integrity = valid
 feature_engineering_dependency = pending_regeneration_or_verification
-backtesting_data_readiness = partial / blocked
+backtesting_data_readiness = blocked_until_03_feature_verification_and_snapshot
 stage_09_readiness = blocked
 paper_trading_ready = false
 ```
@@ -431,23 +472,24 @@ paper_trading_ready = false
 
 Remaining risks and pending items:
 
-- The first automatic launchd run is still pending observation.
+- Observe the next normal automatic `launchd` runs after Repair Block 3C to confirm recurring scheduled success under normal network conditions.
 - Prefect Server local remains blocked by SQLite lock if future UI/deployment orchestration is desired.
 - The external cron pointing to `/Users/sultan/Trading/algo-trading/tools/run_daily_job.sh` is broken and unrelated to Sultan-AI-system.
 - `03 Feature Engineering` still needs regeneration or verification after the OHLCV repair.
 - `06 Backtesting Engine` still needs a versioned data/features snapshot before real backtesting.
 - The latest manual launchd-script run showed non-blocking Prefect ephemeral event emission errors, while the flow and PostgreSQL records still completed successfully.
+- A future structured `pipeline_events` or `pipeline_execution_logs` table could improve scheduler/script observability, but it is not required to complete this repair block.
+- Future alerting remains pending.
 
 ## 14. Recommended Next Steps
 
 Recommended order:
 
-1. Observe the automatic launchd run at `2026-06-06 18:05 America/Costa_Rica`.
-2. Update Section 8 of this report with logs, `run_id`, PostgreSQL validation, duplicate check, open-candle check, and health status.
-3. Commit the 02 Data Platform repair documentation and scheduler artifacts.
-4. Regenerate or verify `03 Feature Engineering` outputs.
-5. Produce a feature/data snapshot for `06 Backtesting Engine`.
-6. Prepare `06 Backtesting Engine` readiness only after the 03 dependency is verified.
+1. Commit the 02 Data Platform repair, hardening, scheduler documentation, and readiness report.
+2. Continue observing the next normal automatic `launchd` runs.
+3. Regenerate or verify `03 Feature Engineering` outputs.
+4. Produce a feature/data snapshot for `06 Backtesting Engine`.
+5. Prepare `06 Backtesting Engine` readiness only after the 03 dependency is verified.
 
 ## 15. Evidence Appendix
 
