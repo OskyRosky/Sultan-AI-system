@@ -269,6 +269,26 @@
   - `stage_09_readiness = blocked`
   - `paper_trading_ready = false`
 
+## Bloque B3 - Post-Regeneracion / Pre-Cierre
+
+- B3 ocurre despues del run productivo B2 y antes del cierre formal C.
+- Se crea el gap report formal: `03 Feature Engineering/docs/gap_report_4h_historical.md`.
+- El gap report documenta:
+  - `BTCUSDT 4h = 8 historical gaps`.
+  - `ETHUSDT 4h = 8 historical gaps`.
+  - `1d = 0 gaps`.
+  - No se imputa data.
+  - `06 Backtesting Engine` debe ser gap-aware.
+- Se crea y trackea el manifest inicial: `03 Feature Engineering/manifests/feature_snapshot_technical_v1_1_0_0_20260608_163510.json`.
+- En B3 el manifest todavia tenia `ready_for_backtesting = false`.
+- Se documenta la convivencia de smoke Parquets en `data/features/technical_v1/1.0.0/BTCUSDT/1d/`:
+  - `features_9438175f-2c9c-4e1c-b05c-5f02abc26d3e.parquet`.
+  - `features_aa3a9f39-1206-457b-b13e-4d7f704cd432.parquet`.
+- Esos Parquets quedan `superseded/smoke_test_only`.
+- Downstream debe leer unicamente desde el manifest, no desde glob libre `*.parquet`.
+- Se actualiza el decision log con entradas post-facto de B1 y B2.
+- B3 no modifica datos productivos, no regenera features, no inserta en PostgreSQL y no declara readiness para Stage 09 ni Paper Trading.
+
 ## Bloque C - Formal Closure of 03 Feature Engineering
 
 - Se cierra formalmente `03 Feature Engineering` para `technical_v1 / 1.0.0`.
