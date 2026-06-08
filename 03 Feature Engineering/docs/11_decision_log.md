@@ -269,6 +269,26 @@
   - `stage_09_readiness = blocked`
   - `paper_trading_ready = false`
 
+## Bloque C - Formal Closure of 03 Feature Engineering
+
+- Se cierra formalmente `03 Feature Engineering` para `technical_v1 / 1.0.0`.
+- Manifest final: `03 Feature Engineering/manifests/feature_snapshot_technical_v1_1_0_0_20260608_163510.json`.
+- `ready_for_backtesting` se cambia a `true` en el manifest porque el snapshot completo esta disponible como input para `06 Backtesting Engine`.
+- Significado exacto: `backtesting_feature_readiness = ready` indica readiness del snapshot de features como entrada de `06`; no indica que `06` este implementado, que backtesting se haya ejecutado, ni que Stage 09/Paper Trading esten listos.
+- Run productivo: `5faf4e40-0087-4a63-95fe-03e9d11a3271`.
+- Coverage: `BTCUSDT 1d = 3217`, `BTCUSDT 4h = 19289`, `ETHUSDT 1d = 3217`, `ETHUSDT 4h = 19289`.
+- Quality: `data_quality_score = 1.0`, 8 quality checks passed y duplicados en `ohlcv_features = 0`.
+- Gap report formal: `03 Feature Engineering/docs/gap_report_4h_historical.md`.
+- Limites de 03: no senales, no estrategia, no backtesting, no Paper Trading, no live trading y no ordenes.
+- Stage 09 sigue bloqueado.
+- Proximos pasos: auditoria final de Claude Code, commit/push del cierre, y luego entrada controlada a `06 Backtesting Engine` consumiendo el manifest.
+- Estados finales:
+  - `feature_engineering_status = closed`
+  - `feature_snapshot_status = available`
+  - `backtesting_feature_readiness = ready`
+  - `stage_09_readiness = blocked`
+  - `paper_trading_ready = false`
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

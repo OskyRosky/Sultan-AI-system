@@ -46,7 +46,35 @@ OHLCV validado
 
 ## Estado v1
 
-`03 Feature Engineering` queda cerrada para `technical_v1 / 1.0.0`.
+`03 Feature Engineering` queda cerrada formalmente para `technical_v1 / 1.0.0`.
+
+Snapshot productivo disponible:
+
+```text
+manifest_path = 03 Feature Engineering/manifests/feature_snapshot_technical_v1_1_0_0_20260608_163510.json
+run_id = 5faf4e40-0087-4a63-95fe-03e9d11a3271
+feature_set = technical_v1
+feature_version = 1.0.0
+```
+
+Estados finales:
+
+```text
+feature_engineering_status = closed
+feature_snapshot_status = available
+backtesting_feature_readiness = ready
+stage_09_readiness = blocked
+paper_trading_ready = false
+```
+
+`backtesting_feature_readiness = ready` significa que `03` entrega un snapshot apto como entrada para `06 Backtesting Engine`. No significa que `06` este implementado, que backtesting ya haya sido ejecutado, ni que Stage 09/Paper Trading esten listos.
+
+Uso downstream obligatorio:
+
+- `06` debe consumir el snapshot desde el manifest.
+- `06` debe respetar la politica de warm-up del manifest.
+- `06` debe ser gap-aware y leer `docs/gap_report_4h_historical.md`.
+- Los consumidores no deben usar glob libre sobre `data/features/**/*.parquet`.
 
 El cierre formal se documenta en:
 
@@ -54,7 +82,7 @@ El cierre formal se documenta en:
 docs/99_feature_engineering_v1_closure.md
 ```
 
-Siguiente etapa recomendada: `04 Research Layer`, una vez que esta etapa este commiteada y limpia.
+Siguiente etapa recomendada: auditoria final de `03` y luego entrada controlada a `06 Backtesting Engine` usando el manifest como input.
 
 ## Principios
 

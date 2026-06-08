@@ -4,9 +4,9 @@
   "feature_version": "1.0.0",
   "gap_report_reference": "03 Feature Engineering/docs/gap_report_4h_historical.md",
   "generated_at": "2026-06-08T16:35:10.602449+00:00",
-  "notes": "Production feature dataset generated from public.ohlcv_curated. ready_for_backtesting remains false pending audit and formal 03 closure.",
+  "notes": "Production feature dataset generated from public.ohlcv_curated. ready_for_backtesting=true means this feature snapshot is available as input for 06 Backtesting Engine. It does not mean 06 is implemented, backtesting has been executed, Stage 09 is ready, or Paper Trading is ready. 06 must consume this manifest, respect warmups, and be gap-aware.",
   "quality_report_reference": "public.feature_quality_checks run_id=5faf4e40-0087-4a63-95fe-03e9d11a3271",
-  "ready_for_backtesting": false,
+  "ready_for_backtesting": true,
   "series": [
     {
       "data_quality_score": 1.0,

@@ -1,6 +1,61 @@
 # Feature Engineering v1 Closure
 
-## STATUS UPDATE (post-audit)
+## FINAL STATUS UPDATE (formal closure)
+
+`03 Feature Engineering v1` is formally closed for `technical_v1 / 1.0.0`.
+
+The earlier smoke-only closure was reclassified during post-audit stabilization. A production feature dataset now exists for the full target universe, with a validated snapshot manifest and formal historical gap report.
+
+Final closure status:
+
+```text
+feature_engineering_status = closed
+feature_snapshot_status = available
+backtesting_feature_readiness = ready
+stage_09_readiness = blocked
+paper_trading_ready = false
+```
+
+Important scope note: `backtesting_feature_readiness = ready` means `03 Feature Engineering` provides a complete feature snapshot that can be used as input for `06 Backtesting Engine`. It does not mean `06 Backtesting Engine` is implemented, backtesting has been executed, Stage 09 is ready, or Paper Trading is ready.
+
+Production snapshot:
+
+```text
+manifest_path = 03 Feature Engineering/manifests/feature_snapshot_technical_v1_1_0_0_20260608_163510.json
+run_id = 5faf4e40-0087-4a63-95fe-03e9d11a3271
+code_commit = 0b70959f21934e9bd2c4e86e09cf19cf8286ab28
+feature_set = technical_v1
+feature_version = 1.0.0
+data_quality_score = 1.0
+quality_checks = 8 passed
+duplicates_in_ohlcv_features = 0
+```
+
+Production coverage:
+
+```text
+BTCUSDT 1d = 3217 rows
+BTCUSDT 4h = 19289 rows
+ETHUSDT 1d = 3217 rows
+ETHUSDT 4h = 19289 rows
+total_rows = 45012
+```
+
+The production dataset was persisted to both Parquet and PostgreSQL. Downstream consumers must read from the manifest paths only, not from unrestricted `*.parquet` globs. Smoke-test Parquets from earlier storage validation are superseded and are not part of the production manifest.
+
+Formal gap report:
+
+```text
+03 Feature Engineering/docs/gap_report_4h_historical.md
+```
+
+The gap report documents 8 historical 4h gaps for `BTCUSDT 4h` and `ETHUSDT 4h`, 0 gaps for the 1d series, no data imputation, and a requirement that `06 Backtesting Engine` be gap-aware.
+
+Advanced support/resistance and richer market-structure features are not part of `technical_v1 / 1.0.0`. A future `market_structure_v1` feature set should cover that scope separately.
+
+`03 Feature Engineering` does not create signals, strategy logic, backtesting, paper trading, live trading, or order execution.
+
+## HISTORICAL STATUS UPDATE (post-audit)
 
 This document is historical closure documentation for the initial `technical_v1 / 1.0.0` implementation. A later audit found that implementation exists, but the persisted dataset currently available is not production-ready.
 

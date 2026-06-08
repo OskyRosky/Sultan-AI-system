@@ -30,6 +30,15 @@
 - Implementar no-lookahead checks. Completado en v1 mediante diseño de cálculo y validaciones de quality.
 - Integrar guardado Parquet al pipeline controlado. Completado en Bloque 12 con `enable_storage`.
 - Ver features en DBeaver. Completado en Bloque 13 con vistas `vw_feature_*`.
+- Estabilizacion pre-regeneracion. Completado en Bloque A.
+- MACD warm-up explicito. Completado en Bloque A.
+- Documentacion de RSI EWM/Wilder-style. Completado en Bloque A.
+- Tests no-lookahead por construccion. Completado en Bloque A.
+- Gap validation/report. Completado en Bloques A y B3.
+- Snapshot manifest schema y manifest productivo. Completado en Bloques A y B2.
+- Regeneracion completa `technical_v1 / 1.0.0`. Completado en Bloque B2.
+- Documentacion post-regeneracion. Completado en Bloque B3.
+- Cierre formal de `03 Feature Engineering`. Completado en Bloque C.
 
 ## Media prioridad
 
@@ -37,16 +46,20 @@
 - Incremental feature generation.
 - Umbrales de freshness.
 - Feature quality granular por symbol/timeframe.
-- Tests unitarios de indicadores.
+- Tests no-lookahead mas fuertes para todas las familias.
 - Particionado temporal de features Parquet.
+- `first_valid_timestamp` machine-readable por feature/familia.
+- Prefect runtime issue para ejecucion con UI/server local.
 
 ## Futuro
 
 - Más pares USDT.
+- `market_structure_v1` / soporte-resistencia avanzado como feature set separado.
 - Features macro.
 - Features on-chain.
 - Features sentiment.
 - Feature store.
+- External object storage / versioned artifact store.
 - Feast.
 - MLflow.
 - Grafana.
