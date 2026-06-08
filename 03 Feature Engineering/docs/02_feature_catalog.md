@@ -97,6 +97,13 @@ Definiciones v1:
 - `macd`: `ema_12(close) - ema_26(close)`.
 - `macd_signal`: EMA 9 de `macd`.
 
+`rsi_14` usa una aproximación EWM/Wilder-style con `adjust=False`. Puede diferir durante los primeros períodos frente a implementaciones SMA-seeded Wilder RSI, TA-Lib o TradingView.
+
+`macd` y `macd_signal` usan la fórmula base indicada, pero tienen warm-up explícito para evitar valores iniciales débiles de EWM en producción:
+
+- `macd`: `NaN` durante las primeras 26 filas por grupo.
+- `macd_signal`: `NaN` durante las primeras 34 filas por grupo.
+
 RSI y MACD son indicadores técnicos descriptivos en esta etapa. No se interpretan como señales, no se crean columnas `rsi_signal`, `macd_cross`, `macd_signal_cross` ni `macd_crossover`.
 
 Limitaciones: pueden generar lecturas extremas durante tendencias prolongadas y requieren interpretación posterior en research. No representan orden, entrada ni salida.

@@ -40,6 +40,8 @@ ema_9(macd)
 
 Todas las EMAs usan `adjust=False`.
 
+Nota de inicialización: `rsi_14` usa una aproximación EWM/Wilder-style con `ewm(alpha=1/14, adjust=False)`. Puede diferir en los primeros períodos de implementaciones SMA-seeded Wilder RSI, TA-Lib o TradingView. Esto no convierte RSI en señal; sigue siendo una feature técnica descriptiva.
+
 ## No-lookahead
 
 El cálculo se ordena por `exchange + symbol + timeframe + timestamp` y se ejecuta por grupo.
@@ -53,8 +55,8 @@ Ninguna feature usa datos futuros.
 ## Warm-up periods
 
 - `rsi_14`: `NaN` durante los primeros 14 registros por grupo.
-- `macd`: existe desde el primer punto por la definición ewm, pero los primeros valores son menos estables.
-- `macd_signal`: existe desde el primer `macd` por la definición ewm, pero los primeros valores son menos estables.
+- `macd`: `NaN` durante las primeras 26 filas por grupo para evitar valores iniciales débiles de EWM.
+- `macd_signal`: `NaN` durante las primeras 34 filas por grupo porque depende de EMA26 + EMA9.
 
 El warm-up no se convierte en señal ni regla operativa.
 
@@ -79,8 +81,8 @@ Las EMAs auxiliares `ema_12` y `ema_26` no quedan en el output final.
 - Columnas momentum requeridas.
 - Ausencia de infinitos.
 - `rsi_14` entre 0 y 100 cuando no es `NaN`.
-- Warm-up esperado en `rsi_14`.
-- `macd` y `macd_signal` no nulos para precios válidos.
+- Warm-up esperado en `rsi_14`, `macd` y `macd_signal`.
+- `macd` y `macd_signal` no nulos para precios válidos después de su warm-up explícito.
 - Duplicados por clave lógica de features.
 - `feature_set`, `feature_version` y `timestamp` válidos.
 - Ausencia de columnas prohibidas de señales, estrategia, backtesting o cruces.

@@ -76,7 +76,8 @@ def test_macd_signal_is_created() -> None:
     result = calculate_momentum_features(_ohlcv_dataframe())
     btc = result[result["symbol"] == "BTCUSDT"].reset_index(drop=True)
 
-    assert pd.notna(btc.loc[0, "macd_signal"])
+    assert btc.loc[:33, "macd_signal"].isna().all()
+    assert pd.notna(btc.loc[34, "macd_signal"])
 
 
 def test_momentum_is_grouped_by_symbol_and_timeframe() -> None:
@@ -108,6 +109,14 @@ def test_rsi_warmup_is_nan() -> None:
     btc = result[result["symbol"] == "BTCUSDT"].reset_index(drop=True)
 
     assert btc.loc[:13, "rsi_14"].isna().all()
+
+
+def test_macd_warmup_is_nan() -> None:
+    result = calculate_momentum_features(_ohlcv_dataframe())
+    btc = result[result["symbol"] == "BTCUSDT"].reset_index(drop=True)
+
+    assert btc.loc[:25, "macd"].isna().all()
+    assert pd.notna(btc.loc[26, "macd"])
 
 
 def test_auxiliary_ema12_ema26_columns_not_in_output() -> None:

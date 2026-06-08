@@ -22,6 +22,10 @@ REQUIRED_OHLCV_COLUMNS = [
 
 NUMERIC_COLUMNS = ["open", "high", "low", "close", "volume"]
 KEY_COLUMNS = ["exchange", "symbol", "timeframe", "timestamp"]
+EXPECTED_TIMEFRAME_DELTAS = {
+    "1d": pd.Timedelta(days=1),
+    "4h": pd.Timedelta(hours=4),
+}
 
 
 @dataclass(frozen=True)
@@ -86,6 +90,8 @@ def validate_ohlcv_dataframe(df: pd.DataFrame) -> OhlcvValidationResult:
 
     if not _is_timestamp_ordered_by_group(working):
         errors.append("timestamp_not_ordered_by_symbol_timeframe")
+    else:
+        warnings.extend(detect_temporal_gaps(working))
 
     if (working["high"] < working["low"]).any():
         errors.append("high_lt_low")
@@ -115,3 +121,49 @@ def _is_timestamp_ordered_by_group(df: pd.DataFrame) -> bool:
         if not group["timestamp"].is_monotonic_increasing:
             return False
     return True
+
+
+def detect_temporal_gaps(df: pd.DataFrame) -> list[str]:
+    """Report expected timeframe gaps without modifying or imputing OHLCV rows."""
+
+    if df.empty:
+        return []
+
+    missing_columns = [column for column in KEY_COLUMNS if column not in df.columns]
+    if missing_columns:
+        return [f"gap_check_missing_key_columns={missing_columns}"]
+
+    working = df.loc[:, KEY_COLUMNS].copy()
+    working["timestamp"] = pd.to_datetime(working["timestamp"], utc=True, errors="coerce")
+    if working["timestamp"].isna().any():
+        return ["gap_check_timestamp_invalid"]
+
+    warnings: list[str] = []
+    group_columns = ["exchange", "symbol", "timeframe"]
+    for (exchange, symbol, timeframe), group in working.groupby(group_columns, sort=False):
+        expected_delta = EXPECTED_TIMEFRAME_DELTAS.get(str(timeframe))
+        if expected_delta is None:
+            warnings.append(
+                "gap_check_unsupported_timeframe="
+                f"{exchange}/{symbol}/{timeframe}"
+            )
+            continue
+
+        ordered = group.sort_values("timestamp")
+        observed_delta = ordered["timestamp"].diff()
+        gap_mask = observed_delta.gt(expected_delta)
+        if gap_mask.any():
+            first_gap_index = gap_mask[gap_mask].index[0]
+            previous_timestamp = ordered.loc[first_gap_index, "timestamp"] - observed_delta.loc[
+                first_gap_index
+            ]
+            current_timestamp = ordered.loc[first_gap_index, "timestamp"]
+            warnings.append(
+                "temporal_gaps_detected="
+                f"{exchange}/{symbol}/{timeframe}:"
+                f"count={int(gap_mask.sum())}:"
+                f"first_gap_after={previous_timestamp.isoformat()}:"
+                f"first_gap_before={current_timestamp.isoformat()}"
+            )
+
+    return warnings

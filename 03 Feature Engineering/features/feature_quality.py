@@ -22,6 +22,8 @@ TREND_NUMERIC_COLUMNS = ["sma_20", "sma_50", "ema_20", "ema_50", "sma20_slope"]
 TREND_STATE_COLUMNS = ["price_above_sma20", "ema20_above_ema50"]
 VOLATILITY_FEATURE_COLUMNS = ["rolling_std_20", "volatility_20", "atr_14"]
 MOMENTUM_FEATURE_COLUMNS = ["rsi_14", "macd", "macd_signal"]
+MACD_WARMUP_ROWS = 26
+MACD_SIGNAL_WARMUP_ROWS = 34
 BREAKOUT_CONTEXT_FEATURE_COLUMNS = [
     "close_vs_high_52w",
     "rolling_max_20",
@@ -608,8 +610,14 @@ def _validate_momentum_nans(
     close_available = sorted_df["close"].notna()
 
     unexpected_rsi_nan = sorted_df["rsi_14"].isna() & group_index.ge(14)
-    unexpected_macd_nan = sorted_df["macd"].isna() & close_available
-    unexpected_macd_signal_nan = sorted_df["macd_signal"].isna() & close_available
+    unexpected_macd_nan = (
+        sorted_df["macd"].isna() & close_available & group_index.ge(MACD_WARMUP_ROWS)
+    )
+    unexpected_macd_signal_nan = (
+        sorted_df["macd_signal"].isna()
+        & close_available
+        & group_index.ge(MACD_SIGNAL_WARMUP_ROWS)
+    )
 
     if unexpected_rsi_nan.any():
         errors.append(f"rsi_14_unexpected_nan={int(unexpected_rsi_nan.sum())}")
@@ -620,7 +628,7 @@ def _validate_momentum_nans(
             f"macd_signal_unexpected_nan={int(unexpected_macd_signal_nan.sum())}"
         )
 
-    warmup_rows = int(group_index.lt(14).sum())
+    warmup_rows = int(group_index.lt(MACD_SIGNAL_WARMUP_ROWS).sum())
     if warmup_rows:
         warnings.append(f"momentum_warmup_rows={warmup_rows}")
 

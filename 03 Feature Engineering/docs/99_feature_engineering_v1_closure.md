@@ -1,5 +1,23 @@
 # Feature Engineering v1 Closure
 
+## STATUS UPDATE (post-audit)
+
+This document is historical closure documentation for the initial `technical_v1 / 1.0.0` implementation. A later audit found that implementation exists, but the persisted dataset currently available is not production-ready.
+
+Current audited status:
+
+```text
+feature_implementation = complete
+dataset_status = smoke_test_only_not_production_ready
+persisted_coverage = BTCUSDT 1d / 200 rows only
+missing_persisted_coverage = BTCUSDT 4h, ETHUSDT 1d, ETHUSDT 4h, full historical range
+snapshot_status = not_available
+backtesting_feature_readiness = blocked
+required_next_action = stabilize_then_regenerate_full_technical_v1_1_0_0_before_04_or_06_usage
+```
+
+The historical sections below describe what was implemented and smoke-tested. They must not be read as evidence that a complete feature dataset or backtesting-ready snapshot exists.
+
 ## 1. Resumen Ejecutivo
 
 La etapa `03 Feature Engineering` queda cerrada para `technical_v1` version `1.0.0`.

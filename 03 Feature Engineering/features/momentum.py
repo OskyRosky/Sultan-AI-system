@@ -21,6 +21,8 @@ BASE_COLUMNS = [
 ]
 GROUP_COLUMNS = ["exchange", "symbol", "timeframe"]
 MOMENTUM_COLUMNS = ["rsi_14", "macd", "macd_signal"]
+MACD_WARMUP_ROWS = 26
+MACD_SIGNAL_WARMUP_ROWS = 34
 
 
 def calculate_momentum_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -46,6 +48,9 @@ def calculate_momentum_features(df: pd.DataFrame) -> pd.DataFrame:
     result["macd_signal"] = result.groupby(GROUP_COLUMNS, sort=False)["macd"].transform(
         lambda values: values.ewm(span=9, adjust=False).mean()
     )
+    group_index = result.groupby(GROUP_COLUMNS, sort=False).cumcount()
+    result.loc[group_index.lt(MACD_WARMUP_ROWS), "macd"] = np.nan
+    result.loc[group_index.lt(MACD_SIGNAL_WARMUP_ROWS), "macd_signal"] = np.nan
 
     result[MOMENTUM_COLUMNS] = result[MOMENTUM_COLUMNS].replace(
         [np.inf, -np.inf], np.nan

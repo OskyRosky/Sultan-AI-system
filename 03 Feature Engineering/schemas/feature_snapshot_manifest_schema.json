@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sultan AI Feature Snapshot Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "generated_at",
+    "feature_set",
+    "feature_version",
+    "source_table",
+    "symbols",
+    "timeframes",
+    "series",
+    "status",
+    "ready_for_backtesting",
+    "warmup_policy",
+    "gap_report_reference",
+    "quality_report_reference",
+    "code_commit",
+    "notes"
+  ],
+  "properties": {
+    "snapshot_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "feature_set": { "type": "string" },
+    "feature_version": { "type": "string" },
+    "source_table": { "type": "string" },
+    "symbols": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "timeframes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "series": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "exchange",
+          "symbol",
+          "timeframe",
+          "run_id",
+          "min_timestamp",
+          "max_timestamp",
+          "row_count",
+          "data_quality_score",
+          "parquet_paths"
+        ],
+        "properties": {
+          "exchange": { "type": "string" },
+          "symbol": { "type": "string" },
+          "timeframe": { "type": "string" },
+          "run_id": { "type": "string" },
+          "min_timestamp": { "type": "string", "format": "date-time" },
+          "max_timestamp": { "type": "string", "format": "date-time" },
+          "row_count": { "type": "integer", "minimum": 0 },
+          "data_quality_score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "parquet_paths": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "status": { "enum": ["complete", "partial"] },
+    "ready_for_backtesting": { "type": "boolean" },
+    "warmup_policy": { "type": "string" },
+    "gap_report_reference": { "type": "string" },
+    "quality_report_reference": { "type": "string" },
+    "code_commit": { "type": "string" },
+    "notes": { "type": "string" }
+  }
+}
