@@ -10,7 +10,7 @@ The operational scheduler is now `launchd`, with two daily opportunities to run 
 
 The first automatic `launchd` evening trigger was observed. It executed the configured job and failed due to an external Binance/CCXT timeout, with no bad partial insert, no duplicates, and no open candles in PostgreSQL. Repair Block 3C then hardened network failure handling by increasing CCXT timeout, adding retry/backoff, and registering `ingestion_runs` before Binance fetch so early failures are auditable.
 
-This is a readiness report for data platform repair and downstream planning. It does not declare Feature Engineering ready, Backtesting ready, Stage 09 ready, Paper Trading ready, or any strategy confidence.
+This is a readiness report for data platform repair and downstream planning. It does not declare readiness for Feature Engineering, Backtesting, Stage 09, Paper Trading, or any strategy confidence.
 
 ## 2. Scope
 
@@ -446,11 +446,11 @@ Backtesting remains blocked until:
 Prohibited downstream interpretations:
 
 ```text
-backtesting data is ready
-confidence is available
-strategy is promoted
-Stage 09 is ready
-Paper Trading is ready
+do not mark backtesting_data_readiness as ready
+do not mark empirical confidence as available
+do not promote any strategy
+do not mark stage_09_readiness as ready
+do not mark Paper Trading readiness as available
 ```
 
 ## 12. Current Status Flags
@@ -480,6 +480,8 @@ Remaining risks and pending items:
 - The latest manual launchd-script run showed non-blocking Prefect ephemeral event emission errors, while the flow and PostgreSQL records still completed successfully.
 - A future structured `pipeline_events` or `pipeline_execution_logs` table could improve scheduler/script observability, but it is not required to complete this repair block.
 - Future alerting remains pending.
+
+These items are tracked as non-blocking platform backlog in `02 Data Platform/docs/09_backlog_data_platform.md`. `02 Data Platform` is approved with observations for moving into `03 Feature Engineering`: OHLCV data status is ready, `backtesting_data_readiness = blocked_until_03_feature_verification_and_snapshot`, `stage_09_readiness = blocked`, and this report does not declare Stage 09 readiness or Paper Trading readiness.
 
 ## 14. Recommended Next Steps
 
