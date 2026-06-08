@@ -1,0 +1,76 @@
+{
+  "code_commit": "0b70959f21934e9bd2c4e86e09cf19cf8286ab28",
+  "feature_set": "technical_v1",
+  "feature_version": "1.0.0",
+  "gap_report_reference": "03 Feature Engineering/docs/gap_report_4h_historical.md",
+  "generated_at": "2026-06-08T16:35:10.602449+00:00",
+  "notes": "Production feature dataset generated from public.ohlcv_curated. ready_for_backtesting remains false pending audit and formal 03 closure.",
+  "quality_report_reference": "public.feature_quality_checks run_id=5faf4e40-0087-4a63-95fe-03e9d11a3271",
+  "ready_for_backtesting": false,
+  "series": [
+    {
+      "data_quality_score": 1.0,
+      "exchange": "binance",
+      "max_timestamp": "2026-06-07T00:00:00+00:00",
+      "min_timestamp": "2017-08-17T00:00:00+00:00",
+      "parquet_paths": [
+        "data/features/technical_v1/1.0.0/BTCUSDT/1d/features_5faf4e40-0087-4a63-95fe-03e9d11a3271.parquet"
+      ],
+      "row_count": 3217,
+      "run_id": "5faf4e40-0087-4a63-95fe-03e9d11a3271",
+      "symbol": "BTCUSDT",
+      "timeframe": "1d"
+    },
+    {
+      "data_quality_score": 1.0,
+      "exchange": "binance",
+      "max_timestamp": "2026-06-08T12:00:00+00:00",
+      "min_timestamp": "2017-08-17T04:00:00+00:00",
+      "parquet_paths": [
+        "data/features/technical_v1/1.0.0/BTCUSDT/4h/features_5faf4e40-0087-4a63-95fe-03e9d11a3271.parquet"
+      ],
+      "row_count": 19289,
+      "run_id": "5faf4e40-0087-4a63-95fe-03e9d11a3271",
+      "symbol": "BTCUSDT",
+      "timeframe": "4h"
+    },
+    {
+      "data_quality_score": 1.0,
+      "exchange": "binance",
+      "max_timestamp": "2026-06-07T00:00:00+00:00",
+      "min_timestamp": "2017-08-17T00:00:00+00:00",
+      "parquet_paths": [
+        "data/features/technical_v1/1.0.0/ETHUSDT/1d/features_5faf4e40-0087-4a63-95fe-03e9d11a3271.parquet"
+      ],
+      "row_count": 3217,
+      "run_id": "5faf4e40-0087-4a63-95fe-03e9d11a3271",
+      "symbol": "ETHUSDT",
+      "timeframe": "1d"
+    },
+    {
+      "data_quality_score": 1.0,
+      "exchange": "binance",
+      "max_timestamp": "2026-06-08T12:00:00+00:00",
+      "min_timestamp": "2017-08-17T04:00:00+00:00",
+      "parquet_paths": [
+        "data/features/technical_v1/1.0.0/ETHUSDT/4h/features_5faf4e40-0087-4a63-95fe-03e9d11a3271.parquet"
+      ],
+      "row_count": 19289,
+      "run_id": "5faf4e40-0087-4a63-95fe-03e9d11a3271",
+      "symbol": "ETHUSDT",
+      "timeframe": "4h"
+    }
+  ],
+  "snapshot_id": "feature_snapshot_technical_v1_1_0_0_20260608_163510",
+  "source_table": "public.ohlcv_curated",
+  "status": "complete",
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "timeframes": [
+    "1d",
+    "4h"
+  ],
+  "warmup_policy": "technical_v1/1.0.0 uses structural warm-up NaN policy: returns first row per group; RSI first 14 rows; MACD first 26 rows; MACD signal first 34 rows; SMA/rolling/ATR/volume/breakout windows as documented."
+}

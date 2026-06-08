@@ -212,6 +212,63 @@
   - `stage_09_readiness = blocked`
   - `paper_trading_ready = false`
 
+## Bloque A.1 - Fixes post Claude Code Audit 2
+
+- Se agregan `macd` y `macd_signal` a `STRUCTURAL_WARMUP_ALL_NULL_COLUMNS` para que el warm-up estructural no penalice indebidamente `data_quality_score`.
+- Se agrega test integrado para dataset corto donde `macd` y `macd_signal` pueden quedar all-null por warm-up esperado.
+- Se documenta la limitacion residual de `macd_signal`: aunque el valor visible inicia despues del warm-up, puede conservar influencia EWM inicial.
+- Validacion final: `poetry run python -m pytest "03 Feature Engineering/tests" -q` termino con `203 passed`.
+- Estados despues del bloque:
+  - `feature_engineering_status = stabilized_pre_regeneration`
+  - `feature_snapshot_status = missing`
+  - `backtesting_feature_readiness = blocked`
+  - `stage_09_readiness = blocked`
+  - `paper_trading_ready = false`
+
+## Bloque B1 - Preflight de Regeneracion
+
+- PostgreSQL local `sultan_ai` estuvo accesible.
+- Tablas requeridas existentes: `public.ohlcv_curated`, `public.feature_runs`, `public.feature_quality_checks` y `public.ohlcv_features`.
+- Las 4 series OHLCV objetivo estuvieron disponibles: `BTCUSDT 1d`, `BTCUSDT 4h`, `ETHUSDT 1d` y `ETHUSDT 4h`.
+- Duplicados OHLCV: `0`.
+- Velas abiertas OHLCV: `0`.
+- Tests de 03: `203 passed`.
+- `B2_preflight_status = passed_with_observations`.
+- No se regenero produccion, no se escribio Parquet y no se inserto en PostgreSQL durante este bloque.
+
+## Bloque B2 - Regeneracion Productiva Controlada
+
+- Run productivo: `5faf4e40-0087-4a63-95fe-03e9d11a3271`.
+- Commit usado: `0b70959f21934e9bd2c4e86e09cf19cf8286ab28`.
+- Parametros:
+  - `symbols = ["BTCUSDT", "ETHUSDT"]`
+  - `timeframes = ["1d", "4h"]`
+  - `limit = None`
+  - `read_from_db = True`
+  - `enable_storage = True`
+  - `enable_parquet = True`
+  - `enable_postgres = True`
+  - `require_freshness = True`
+  - `allow_full_history = True`
+- Resultado: `rows_loaded = 45012`, `rows_generated = 45012`, `rows_validated = 45012`, `rows_inserted = 45012`.
+- `data_quality_score = 1.0`.
+- `ready_for_storage = true`.
+- Se generaron 4 Parquets productivos para `BTCUSDT/1d`, `BTCUSDT/4h`, `ETHUSDT/1d` y `ETHUSDT/4h`.
+- Se creo manifest: `03 Feature Engineering/manifests/feature_snapshot_technical_v1_1_0_0_20260608_163510.json`.
+- Gap warnings:
+  - `BTCUSDT 4h = 8 historical gaps`.
+  - `ETHUSDT 4h = 8 historical gaps`.
+- Nota operativa: el runtime Prefect fallo por server local/API/puertos; la ejecucion exitosa uso funciones subyacentes `.fn()` del mismo flow/tasks. El run queda trazado por PostgreSQL, Parquet y manifest, no por Prefect UI.
+- Los smoke Parquets `features_9438175f-2c9c-4e1c-b05c-5f02abc26d3e.parquet` y `features_aa3a9f39-1206-457b-b13e-4d7f704cd432.parquet` coexisten en `data/features/technical_v1/1.0.0/BTCUSDT/1d/`.
+- Esos smoke Parquets quedan `superseded/smoke_test_only`, no forman parte del manifest y no deben ser consumidos por `04` ni `06`.
+- Los consumidores downstream deben leer exclusivamente los Parquet referenciados en el manifest; nunca deben usar glob libre `*.parquet`.
+- Estados despues del bloque:
+  - `feature_engineering_status = production_dataset_generated`
+  - `feature_snapshot_status = manifest_created`
+  - `backtesting_feature_readiness = pending_audit`
+  - `stage_09_readiness = blocked`
+  - `paper_trading_ready = false`
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.
