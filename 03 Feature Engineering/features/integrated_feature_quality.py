@@ -72,6 +72,8 @@ STRUCTURAL_WARMUP_ALL_NULL_COLUMNS = {
     "volatility_20",
     "atr_14",
     "rsi_14",
+    "macd",
+    "macd_signal",
     "close_vs_high_52w",
     "rolling_max_20",
     "rolling_min_20",

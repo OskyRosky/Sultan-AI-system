@@ -194,6 +194,24 @@
 - Se recomienda avanzar a `04 Research Layer`.
 - No se debe iniciar research/backtesting hasta que `03 Feature Engineering` este commiteado y limpio.
 
+## Bloque A - Estabilizacion Pre-Regeneracion
+
+- Se reclasifica el cierre v1 como historico: la implementacion de `technical_v1 / 1.0.0` existe, pero el dataset persistido actual es `smoke_test_only`, no production-ready.
+- El Parquet huerfano `features_4ea7d818-1357-4e3f-9b3a-d223bf42321b.parquet` se movio a `data/features/_quarantine/...`.
+- Motivo de cuarentena: el `run_id` del archivo no tenia `feature_run` correspondiente en PostgreSQL.
+- Convencion: `_quarantine` no debe ser leido por pipelines, snapshots ni consumidores downstream.
+- Se define warm-up explicito para MACD: `MACD_WARMUP_ROWS = 26` y `MACD_SIGNAL_WARMUP_ROWS = 34`.
+- Se documenta `rsi_14` como aproximacion EWM/Wilder-style con `ewm(alpha=1/14, adjust=False)`.
+- Se agregan tests no-lookahead por construccion para returns, trend, breakout context y aislamiento por grupo.
+- Se agrega deteccion de gaps temporales en OHLCV validation como warning, no error, sin imputar ni modificar datos.
+- Se crea schema inicial de snapshot manifest para el futuro contrato con `06 Backtesting Engine`; no se genera manifest real en este bloque.
+- Estados despues del bloque:
+  - `feature_engineering_status = stabilized_pre_regeneration`
+  - `feature_snapshot_status = missing`
+  - `backtesting_feature_readiness = blocked`
+  - `stage_09_readiness = blocked`
+  - `paper_trading_ready = false`
+
 ## Notas
 
 Estas decisiones aplican al Bloque 1 y deben revisarse formalmente si cambia el alcance de la etapa.

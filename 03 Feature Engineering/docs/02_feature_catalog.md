@@ -104,6 +104,8 @@ Definiciones v1:
 - `macd`: `NaN` durante las primeras 26 filas por grupo.
 - `macd_signal`: `NaN` durante las primeras 34 filas por grupo.
 
+Limitación residual conocida de `technical_v1 / 1.0.0`: `macd_signal` se calcula como EMA9 de `macd`. Aunque el warm-up visible fuerza `macd_signal` a `NaN` durante las primeras 34 filas por grupo, el primer valor visible posterior al warm-up todavía puede conservar influencia residual de los valores iniciales usados por el historial EWM. Esto no convierte `macd_signal` en señal. Para research/backtesting, las etapas posteriores deben respetar la política de warm-up y el snapshot manifest.
+
 RSI y MACD son indicadores técnicos descriptivos en esta etapa. No se interpretan como señales, no se crean columnas `rsi_signal`, `macd_cross`, `macd_signal_cross` ni `macd_crossover`.
 
 Limitaciones: pueden generar lecturas extremas durante tendencias prolongadas y requieren interpretación posterior en research. No representan orden, entrada ni salida.

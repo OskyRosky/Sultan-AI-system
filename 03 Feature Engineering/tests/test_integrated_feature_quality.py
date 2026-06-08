@@ -24,10 +24,10 @@ from volatility import calculate_volatility_features
 from volume import calculate_volume_features
 
 
-def _ohlcv_dataframe() -> pd.DataFrame:
+def _ohlcv_dataframe(periods: int = 80) -> pd.DataFrame:
     rows = []
     for symbol in ["BTCUSDT", "ETHUSDT"]:
-        for index in range(80):
+        for index in range(periods):
             open_price = 100.0 + index
             close = open_price + (0.5 if index % 2 == 0 else -0.25)
             rows.append(
@@ -48,7 +48,11 @@ def _ohlcv_dataframe() -> pd.DataFrame:
 
 
 def _integrated_feature_dataframe() -> pd.DataFrame:
-    features = calculate_return_features(_ohlcv_dataframe())
+    return _calculate_integrated_features(_ohlcv_dataframe())
+
+
+def _calculate_integrated_features(df: pd.DataFrame) -> pd.DataFrame:
+    features = calculate_return_features(df)
     features = calculate_trend_features(features)
     features = calculate_volatility_features(features)
     features = calculate_momentum_features(features)
@@ -166,6 +170,20 @@ def test_data_quality_score_is_1_for_clean_dataset_with_expected_warmup() -> Non
     result = validate_integrated_feature_dataset(_integrated_feature_dataframe())
 
     assert result["warnings"] == ["all_null_feature_columns=['close_vs_high_52w']"]
+    assert result["data_quality_score"] == 1.0
+
+
+def test_data_quality_score_does_not_penalize_macd_structural_warmup() -> None:
+    result = validate_integrated_feature_dataset(
+        _calculate_integrated_features(_ohlcv_dataframe(periods=20))
+    )
+
+    assert result["status"] == "passed"
+    assert (
+        "all_null_feature_columns=['sma_50', 'sma20_slope', "
+        "'rolling_std_20', 'volatility_20', 'macd', 'macd_signal', "
+        "'close_vs_high_52w']"
+    ) in result["warnings"]
     assert result["data_quality_score"] == 1.0
 
 
