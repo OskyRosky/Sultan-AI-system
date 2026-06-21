@@ -92,6 +92,7 @@ def _simulation_result(
 
 def _diagnostics_result(
     *,
+    simulation_id: str = "sim-1",
     diagnostics_scope: str = DIAGNOSTICS_SCOPE,
     package_id: str = "pkg-1",
     strategy_id: str = "strategy-1",
@@ -99,7 +100,7 @@ def _diagnostics_result(
     snapshot_id: str = "snapshot-1",
 ) -> PerformanceDiagnosticsResult:
     return PerformanceDiagnosticsResult(
-        simulation_id="sim-1",
+        simulation_id=simulation_id,
         package_id=package_id,
         strategy_id=strategy_id,
         strategy_version=strategy_version,
@@ -198,6 +199,14 @@ def test_reject_legacy_completed_simulation() -> None:
         create_raw_diagnostics_registry_record(
             _simulation_result(simulation_status=SimulationStatus.COMPLETED),
             _diagnostics_result(),
+        )
+
+
+def test_reject_simulation_id_mismatch() -> None:
+    with pytest.raises(ValueError, match="simulation_id"):
+        create_raw_diagnostics_registry_record(
+            _simulation_result(),
+            _diagnostics_result(simulation_id="other-simulation"),
         )
 
 

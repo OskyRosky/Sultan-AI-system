@@ -124,6 +124,11 @@ def _validate_inputs(
     if simulation_result.simulation_status is not SimulationStatus.COMPLETED_RAW_EXECUTION:
         raise ValueError("simulation_status must be completed_raw_execution")
     _require_matching_identity(
+        "simulation_id",
+        simulation_result.simulation_id,
+        diagnostics_result.simulation_id,
+    )
+    _require_matching_identity(
         "package_id",
         simulation_result.package_id,
         diagnostics_result.package_id,

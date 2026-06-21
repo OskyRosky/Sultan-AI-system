@@ -141,6 +141,15 @@ def test_reject_insufficient_information_simulation() -> None:
         calculate_performance_diagnostics(simulation_result)
 
 
+def test_reject_no_executable_series_insufficient_information_simulation() -> None:
+    simulation_result = _simulation_result(
+        simulation_status=SimulationStatus.INSUFFICIENT_INFORMATION_NO_EXECUTABLE_SERIES
+    )
+
+    with pytest.raises(ValueError, match="insufficient information"):
+        calculate_performance_diagnostics(simulation_result)
+
+
 def test_reject_legacy_completed_status_if_present() -> None:
     simulation_result = _simulation_result(simulation_status=SimulationStatus.COMPLETED)
 
@@ -237,6 +246,19 @@ def test_simple_max_drawdown_calculated_from_equity_curve() -> None:
     assert result.max_equity == 110.0
     assert result.min_equity == 99.0
     assert result.simple_max_drawdown_pct == 10.0
+
+
+def test_malformed_equity_curve_without_valid_equity_values_rejected() -> None:
+    equity_curve = (
+        {"timestamp": BASE_TIME.isoformat()},
+        {"timestamp": (BASE_TIME + timedelta(days=1)).isoformat(), "equity": None},
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="equity_curve must contain at least one valid equity value",
+    ):
+        calculate_performance_diagnostics(_simulation_result(equity_curve=equity_curve))
 
 
 def test_empty_trades_rejected_unless_status_is_insufficient() -> None:

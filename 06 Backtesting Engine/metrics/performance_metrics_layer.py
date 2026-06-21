@@ -95,6 +95,8 @@ def calculate_performance_diagnostics(
         for item in simulation_result.equity_curve
         if "equity" in item and item["equity"] is not None
     ]
+    if not equity_values:
+        raise ValueError("equity_curve must contain at least one valid equity value")
     max_equity = max(equity_values)
     min_equity = min(equity_values)
 
