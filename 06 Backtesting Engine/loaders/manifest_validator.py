@@ -61,6 +61,8 @@ class SnapshotValidationResult:
     passed: bool
     manifest: FeatureSnapshotManifest | None
     errors: tuple[str, ...]
+    manifest_path: Path
+    schema_path: Path
     warnings: tuple[str, ...] = ()
 
 
@@ -77,15 +79,33 @@ def validate_feature_snapshot_manifest(
 
     errors = _schema_errors(payload, schema)
     if errors:
-        return SnapshotValidationResult(passed=False, manifest=None, errors=tuple(errors))
+        return SnapshotValidationResult(
+            passed=False,
+            manifest=None,
+            errors=tuple(errors),
+            manifest_path=path,
+            schema_path=Path(schema_path),
+        )
 
     try:
         manifest = parse_feature_snapshot_manifest(payload)
         _validate_manifest_metadata(manifest)
     except (TypeError, ValueError) as exc:
-        return SnapshotValidationResult(passed=False, manifest=None, errors=(str(exc),))
+        return SnapshotValidationResult(
+            passed=False,
+            manifest=None,
+            errors=(str(exc),),
+            manifest_path=path,
+            schema_path=Path(schema_path),
+        )
 
-    return SnapshotValidationResult(passed=True, manifest=manifest, errors=())
+    return SnapshotValidationResult(
+        passed=True,
+        manifest=manifest,
+        errors=(),
+        manifest_path=path,
+        schema_path=Path(schema_path),
+    )
 
 
 def parse_feature_snapshot_manifest(payload: Mapping[str, Any]) -> FeatureSnapshotManifest:
@@ -154,8 +174,14 @@ def _validate_manifest_metadata(manifest: FeatureSnapshotManifest) -> None:
         for symbol in manifest.symbols
         for timeframe in manifest.timeframes
     }
+    if len(manifest.symbols) != len(set(manifest.symbols)):
+        raise ValueError("symbols must not contain duplicates")
+    if len(manifest.timeframes) != len(set(manifest.timeframes)):
+        raise ValueError("timeframes must not contain duplicates")
     if declared_pairs != expected_pairs:
         raise ValueError("series must cover every declared symbol/timeframe pair exactly")
+    if len(manifest.series) != len(declared_pairs):
+        raise ValueError("series must not contain duplicate symbol/timeframe pairs")
 
     for series in manifest.series:
         _validate_series_metadata(series, lineage)

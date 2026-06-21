@@ -165,6 +165,21 @@ class AvailabilityStatus(str, Enum):
     NOT_APPROVED = "not_approved"
 
 
+class HistoricalSnapshotStatus(str, Enum):
+    HISTORICAL_SNAPSHOT_NOT_BOUND = "historical_snapshot_not_bound"
+    HISTORICAL_SNAPSHOT_BOUND = "historical_snapshot_bound"
+
+
+class ExecutionFrictionStatus(str, Enum):
+    EXECUTION_FRICTION_NOT_AVAILABLE = "execution_friction_not_available"
+    EXECUTION_FRICTION_AVAILABLE = "execution_friction_available"
+
+
+class OverfittingStatus(str, Enum):
+    OVERFITTING_NOT_EVALUATED = "overfitting_not_evaluated"
+    OVERFITTING_EVALUATED = "overfitting_evaluated"
+
+
 @dataclass(frozen=True)
 class MotorBOutputContract:
     """Minimum executable Motor B contract consumed by stages 07 and 08."""
@@ -184,9 +199,9 @@ class MotorBOutputContract:
     research_execution_status: str
     backtest_eligibility_status: BacktestEligibilityStatus
     temporal_admissibility_status: str
-    historical_snapshot_status: str
+    historical_snapshot_status: HistoricalSnapshotStatus
     simulation_status: SimulationStatus
-    execution_friction_status: str
+    execution_friction_status: ExecutionFrictionStatus
     performance_metrics_status: str
     backtest_result_summary: Mapping[str, Any]
     oos_validation_status: OOSValidationStatus
@@ -194,7 +209,7 @@ class MotorBOutputContract:
     walk_forward_status: str
     walk_forward_summary: Mapping[str, Any] | None
     robustness_status: RobustnessStatus
-    overfitting_status: str
+    overfitting_status: OverfittingStatus
     falsification_status: str
     confidence_status: ConfidenceStatus
     confidence_score: float | None
@@ -225,6 +240,17 @@ def validate_motor_b_output_contract(contract: MotorBOutputContract) -> MotorBOu
     _require_non_empty_sequence(contract.source_stage_references, "source_stage_references")
     _require_non_empty_sequence(contract.audit_references, "audit_references")
     _require_text(contract.non_approval_statement, "non_approval_statement")
+    _require_enum(
+        contract.historical_snapshot_status,
+        HistoricalSnapshotStatus,
+        "historical_snapshot_status",
+    )
+    _require_enum(
+        contract.execution_friction_status,
+        ExecutionFrictionStatus,
+        "execution_friction_status",
+    )
+    _require_enum(contract.overfitting_status, OverfittingStatus, "overfitting_status")
 
     if (
         contract.strategy_dossier_id is None
@@ -352,9 +378,13 @@ def create_framework_only_motor_b_output_contract(
         temporal_admissibility_status=(
             AvailabilityStatus.TEMPORAL_ADMISSIBILITY_NOT_CERTIFIED.value
         ),
-        historical_snapshot_status="historical_snapshot_not_bound",
+        historical_snapshot_status=(
+            HistoricalSnapshotStatus.HISTORICAL_SNAPSHOT_NOT_BOUND
+        ),
         simulation_status=SimulationStatus.BACKTEST_NOT_IMPLEMENTED,
-        execution_friction_status="execution_friction_not_available",
+        execution_friction_status=(
+            ExecutionFrictionStatus.EXECUTION_FRICTION_NOT_AVAILABLE
+        ),
         performance_metrics_status=AvailabilityStatus.METRICS_NOT_AVAILABLE.value,
         backtest_result_summary={
             "status": SimulationStatus.BACKTEST_NOT_IMPLEMENTED.value,
@@ -364,7 +394,7 @@ def create_framework_only_motor_b_output_contract(
         walk_forward_status=AvailabilityStatus.WALK_FORWARD_NOT_AVAILABLE.value,
         walk_forward_summary=None,
         robustness_status=RobustnessStatus.ROBUSTNESS_NOT_AVAILABLE,
-        overfitting_status="overfitting_not_evaluated",
+        overfitting_status=OverfittingStatus.OVERFITTING_NOT_EVALUATED,
         falsification_status=AvailabilityStatus.FALSIFICATION_NOT_EXECUTED.value,
         confidence_status=ConfidenceStatus.CONFIDENCE_NOT_AVAILABLE,
         confidence_score=None,
@@ -377,6 +407,8 @@ def create_framework_only_motor_b_output_contract(
         paper_trading_eligibility=PaperTradingEligibility.BLOCKED,
         evidence_completeness_level=EvidenceCompletenessLevel.FRAMEWORK_ONLY,
         missing_evidence=(
+            "research_not_executed",
+            "research_output_not_persisted",
             "dossier_not_available",
             "backtest_not_implemented",
             "oos_not_available",
@@ -393,8 +425,10 @@ def create_framework_only_motor_b_output_contract(
             AllowedDownstreamUsage.DESIGN_REFERENCE_ONLY,
             AllowedDownstreamUsage.DOCUMENTATION_REVIEW,
             AllowedDownstreamUsage.CONTRACT_VALIDATION,
+            AllowedDownstreamUsage.SIMULATION_WITH_MOCK_INPUTS_ONLY,
             AllowedDownstreamUsage.SIGNAL_FUSION_DRY_RUN,
             AllowedDownstreamUsage.OFFLINE_RESEARCH,
+            AllowedDownstreamUsage.HUMAN_REVIEW,
         ),
         forbidden_downstream_usage=(
             ForbiddenDownstreamUsage.PAPER_TRADING,
@@ -444,6 +478,13 @@ def _require_non_empty_sequence(values: Sequence[str], field_name: str) -> tuple
     if not normalized:
         raise ValueError(f"{field_name} must contain at least one item")
     return normalized
+
+
+def _require_enum(value: object, enum_type: type[Enum], field_name: str) -> None:
+    if not isinstance(value, enum_type):
+        raise ValueError(
+            f"{field_name} must be a controlled {enum_type.__name__} value"
+        )
 
 
 def _require_forbidden_usage(
