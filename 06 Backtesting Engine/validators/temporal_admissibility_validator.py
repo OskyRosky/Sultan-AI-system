@@ -1,10 +1,18 @@
 """Temporal admissibility metadata validator for 06B.
 
-This validator certifies only whether an adapted strategy package has enough
-consistent temporal metadata for later empirical execution. It does not load
-Parquet files, discover data, compute returns, create labels, run simulations,
-perform OOS or walk-forward validation, compute robustness, score confidence,
-or generate evidence.
+This validator certifies only whether an adapted strategy package has
+internally consistent package metadata for later empirical execution. It does
+not certify feature formulas, signal timing, execution timing, anti-leakage
+correctness, or StrategyDossier temporal semantics. It does not load Parquet
+files, discover data, compute returns, create labels, run simulations, perform
+OOS or walk-forward validation, compute robustness, score confidence, or
+generate evidence.
+
+The official Stage 05 StrategyDossier currently does not expose explicit
+required_feature_set, required_symbols, required_timeframes, strategy-specific
+temporal windows, strategy-specific feature availability requirements, or
+strategy-level decision/execution timing rules. Block 06 therefore certifies
+only package_metadata_only consistency.
 """
 
 from __future__ import annotations
@@ -12,9 +20,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from adapters.strategy_dossier_adapter import AdaptedBacktestPackage
 
@@ -31,15 +38,20 @@ class TemporalAdmissibilityResult:
     validation_timestamp: datetime
     package_id: str
     strategy_id: str
+    strategy_name: str
     strategy_version: str
+    certification_scope: str
     certification_status: TemporalAdmissibilityStatus
     certification_reason: str
+    handoff_required: bool
+    handoff_target: str
     temporal_risks: tuple[str, ...]
     warnings: tuple[str, ...]
     blocking_failures: tuple[str, ...]
     snapshot_id: str
     feature_version: str
     code_commit: str
+    generated_at: datetime | None
     manifest_path: Path
     schema_path: Path
 
@@ -55,15 +67,22 @@ class TemporalAdmissibilityResult:
             "validation_timestamp": self.validation_timestamp.isoformat(),
             "package_id": self.package_id,
             "strategy_id": self.strategy_id,
+            "strategy_name": self.strategy_name,
             "strategy_version": self.strategy_version,
+            "certification_scope": self.certification_scope,
             "certification_status": self.certification_status.value,
             "certification_reason": self.certification_reason,
+            "handoff_required": self.handoff_required,
+            "handoff_target": self.handoff_target,
             "temporal_risks": list(self.temporal_risks),
             "warnings": list(self.warnings),
             "blocking_failures": list(self.blocking_failures),
             "snapshot_id": self.snapshot_id,
             "feature_version": self.feature_version,
             "code_commit": self.code_commit,
+            "generated_at": (
+                self.generated_at.isoformat() if self.generated_at is not None else None
+            ),
             "manifest_path": str(self.manifest_path),
             "schema_path": str(self.schema_path),
         }
@@ -79,7 +98,12 @@ class TemporalAdmissibilityValidator:
         validation_timestamp: datetime | None = None,
     ) -> None:
         self.adapted_package = adapted_package
-        self.validation_timestamp = validation_timestamp or datetime(1970, 1, 1, tzinfo=timezone.utc)
+        self.validation_timestamp = validation_timestamp or datetime(
+            1970,
+            1,
+            1,
+            tzinfo=timezone.utc,
+        )
 
     def validate(self) -> TemporalAdmissibilityResult:
         package = self.adapted_package
@@ -89,6 +113,7 @@ class TemporalAdmissibilityValidator:
 
         _require_text(package.adapted_package_id, "package_id", missing)
         _require_text(package.strategy_id, "strategy_id", missing)
+        _require_text(package.strategy_name, "strategy_name", missing)
         _require_text(package.strategy_version, "strategy_version", missing)
         _require_text(package.snapshot_id, "snapshot_id", missing)
         _require_text(package.feature_version, "feature_version", missing)
@@ -99,9 +124,24 @@ class TemporalAdmissibilityValidator:
         _require_text(package.warmup_policy, "warmup_policy", missing)
         _require_path(package.manifest_path, "manifest_path", missing)
         _require_path(package.schema_path, "schema_path", missing)
+        generated_at = _normalize_datetime(package.generated_at, "generated_at", missing)
+        validation_timestamp = _normalize_datetime(
+            self.validation_timestamp,
+            "validation_timestamp",
+            missing,
+        )
 
-        manifest_payload = _read_manifest_payload(package.manifest_path, missing)
-        generated_at = _parse_generated_at(manifest_payload, missing)
+        warnings.append(
+            "Stage 05 StrategyDossier does not expose explicit required_feature_set, "
+            "required_symbols, required_timeframes, strategy-specific temporal windows, "
+            "strategy-specific feature availability requirements, or strategy-level "
+            "decision/execution timing rules; Block 06 certifies package metadata only."
+        )
+        if generated_at is not None and validation_timestamp is not None:
+            if generated_at > validation_timestamp:
+                failures.append(
+                    "generated_at must not be in the future relative to validation_timestamp"
+                )
 
         if not package.series:
             missing.append("series must contain at least one item")
@@ -145,8 +185,8 @@ class TemporalAdmissibilityValidator:
             return _result(
                 package,
                 self.validation_timestamp,
-                TemporalAdmissibilityStatus.INSUFFICIENT_INFORMATION,
-                "Temporal admissibility cannot be determined because required metadata is missing.",
+            TemporalAdmissibilityStatus.INSUFFICIENT_INFORMATION,
+            "Temporal admissibility cannot be determined because required metadata is missing.",
                 temporal_risks=(),
                 warnings=tuple(warnings),
                 blocking_failures=tuple(dict.fromkeys(missing)),
@@ -156,8 +196,8 @@ class TemporalAdmissibilityValidator:
             return _result(
                 package,
                 self.validation_timestamp,
-                TemporalAdmissibilityStatus.REJECTED,
-                "Temporal admissibility rejected due to blocking temporal metadata failures.",
+            TemporalAdmissibilityStatus.REJECTED,
+            "Temporal admissibility rejected due to blocking temporal metadata failures.",
                 temporal_risks=tuple(dict.fromkeys(failures)),
                 warnings=tuple(warnings),
                 blocking_failures=tuple(dict.fromkeys(failures)),
@@ -167,7 +207,9 @@ class TemporalAdmissibilityValidator:
             package,
             self.validation_timestamp,
             TemporalAdmissibilityStatus.CERTIFIED,
-            "Temporal admissibility certified from package metadata only.",
+            "Package metadata is internally consistent. This does not certify feature "
+            "formulas, signal timing, execution timing, anti-leakage correctness, or "
+            "StrategyDossier temporal semantics.",
             temporal_risks=(),
             warnings=tuple(warnings),
             blocking_failures=(),
@@ -200,15 +242,20 @@ def _result(
         validation_timestamp=validation_timestamp,
         package_id=package.adapted_package_id,
         strategy_id=package.strategy_id,
+        strategy_name=package.strategy_name,
         strategy_version=package.strategy_version,
+        certification_scope="package_metadata_only",
         certification_status=status,
         certification_reason=reason,
+        handoff_required=True,
+        handoff_target="Block 07",
         temporal_risks=temporal_risks,
         warnings=warnings,
         blocking_failures=blocking_failures,
         snapshot_id=package.snapshot_id,
         feature_version=package.feature_version,
         code_commit=package.code_commit,
+        generated_at=package.generated_at,
         manifest_path=package.manifest_path,
         schema_path=package.schema_path,
     )
@@ -224,35 +271,17 @@ def _require_path(value: object, field_name: str, missing: list[str]) -> None:
         missing.append(f"{field_name} must reference an existing file")
 
 
-def _read_manifest_payload(path: Path, missing: list[str]) -> Mapping[str, Any] | None:
-    if not isinstance(path, Path) or not path.is_file():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        missing.append(f"manifest_path must contain readable JSON: {exc}")
-        return None
-    if not isinstance(payload, dict):
-        missing.append("manifest_path must contain a JSON object")
-        return None
-    return payload
-
-
-def _parse_generated_at(
-    payload: Mapping[str, Any] | None,
+def _normalize_datetime(
+    value: object,
+    field_name: str,
     missing: list[str],
 ) -> datetime | None:
-    if payload is None:
+    if value is None:
+        missing.append(f"{field_name} must be present")
         return None
-    value = payload.get("generated_at")
-    if not isinstance(value, str) or not value.strip():
-        missing.append("generated_at must be present")
+    if not isinstance(value, datetime):
+        missing.append(f"{field_name} must be a datetime")
         return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        missing.append("generated_at must be an ISO datetime")
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value

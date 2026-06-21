@@ -70,6 +70,7 @@ def test_adapted_package_preserves_lineage_metadata() -> None:
     assert adapted.feature_set == input_package.feature_set
     assert adapted.feature_version == input_package.feature_version
     assert adapted.code_commit == input_package.code_commit
+    assert adapted.generated_at == input_package.generated_at
     assert adapted.manifest_path == input_package.manifest_path
     assert adapted.schema_path == input_package.schema_path
     assert adapted.gap_report_reference == input_package.gap_report_reference
@@ -93,6 +94,12 @@ def test_adapted_package_preserves_governance_restrictions() -> None:
     assert governance.paper_trading_eligibility == "blocked"
     assert governance.stage_09_readiness == "blocked"
     assert governance.handoff_to_09 == "blocked"
+
+
+def test_serialized_adapted_package_includes_generated_at() -> None:
+    adapted = _adapted_package()
+
+    assert adapted.to_dict()["generated_at"] == adapted.generated_at.isoformat()
 
 
 def test_deterministic_adapted_package_id_is_stable() -> None:

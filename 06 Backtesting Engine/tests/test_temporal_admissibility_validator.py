@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import fields, replace
 from datetime import datetime, timedelta, timezone
-import json
 from pathlib import Path
 import sys
 
@@ -54,21 +53,12 @@ def _validate(package: AdaptedBacktestPackage) -> TemporalAdmissibilityResult:
     ).validate()
 
 
-def _manifest_payload() -> dict[str, object]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-
-
-def _write_manifest(tmp_path: Path, payload: dict[str, object]) -> Path:
-    path = tmp_path / "manifest.json"
-    path.write_text(json.dumps(payload), encoding="utf-8")
-    return path
-
-
 def test_valid_package_certifies_successfully() -> None:
     result = _validate(_adapted_package())
 
     assert result.admissible is True
     assert result.certification_status is TemporalAdmissibilityStatus.CERTIFIED
+    assert result.certification_scope == "package_metadata_only"
     assert result.blocking_failures == ()
     assert result.temporal_risks == ()
 
@@ -79,9 +69,14 @@ def test_valid_package_certifies_successfully() -> None:
         ("snapshot_id", "snapshot_id must be present"),
         ("feature_version", "feature_version must be present"),
         ("code_commit", "code_commit must be present"),
+        ("adapted_package_id", "package_id must be present"),
+        ("feature_set", "feature_set must be present"),
         ("strategy_id", "strategy_id must be present"),
+        ("strategy_name", "strategy_name must be present"),
+        ("strategy_version", "strategy_version must be present"),
         ("warmup_policy", "warmup_policy must be present"),
         ("gap_report_reference", "gap_report_reference must be present"),
+        ("quality_report_reference", "quality_report_reference must be present"),
     ),
 )
 def test_missing_required_text_metadata_is_not_admissible(
@@ -178,10 +173,8 @@ def test_duplicate_series_rejected() -> None:
     assert any("duplicate symbol/timeframe" in failure for failure in result.blocking_failures)
 
 
-def test_missing_generated_at_rejected(tmp_path: Path) -> None:
-    payload = _manifest_payload()
-    del payload["generated_at"]
-    package = replace(_adapted_package(), manifest_path=_write_manifest(tmp_path, payload))
+def test_missing_generated_at_rejected() -> None:
+    package = replace(_adapted_package(), generated_at=None)
 
     result = _validate(package)
 
@@ -190,6 +183,19 @@ def test_missing_generated_at_rejected(tmp_path: Path) -> None:
         TemporalAdmissibilityStatus.INSUFFICIENT_INFORMATION
     )
     assert "generated_at must be present" in result.blocking_failures
+
+
+def test_generated_at_future_relative_to_validation_timestamp_rejected() -> None:
+    package = replace(
+        _adapted_package(),
+        generated_at=VALIDATION_TIMESTAMP + timedelta(days=1),
+    )
+
+    result = _validate(package)
+
+    assert result.admissible is False
+    assert result.certification_status is TemporalAdmissibilityStatus.REJECTED
+    assert any("generated_at must not be in the future" in failure for failure in result.blocking_failures)
 
 
 def test_deterministic_validation_output() -> None:
@@ -208,6 +214,51 @@ def test_certification_status_enum_enforcement() -> None:
         replace(result, certification_status="certified")
 
 
+def test_certified_reason_is_explicitly_metadata_only() -> None:
+    result = _validate(_adapted_package())
+    reason = result.certification_reason
+
+    assert result.certification_scope == "package_metadata_only"
+    assert "does not certify feature formulas" in reason
+    assert "signal timing" in reason
+    assert "execution timing" in reason
+    assert "anti-leakage correctness" in reason
+
+
+def test_block_07_handoff_fields_exist() -> None:
+    result = _validate(_adapted_package())
+
+    assert result.handoff_required is True
+    assert result.handoff_target == "Block 07"
+    assert result.package_id == _adapted_package().adapted_package_id
+
+
+def test_generated_at_is_propagated_from_loader_to_validator() -> None:
+    loaded_snapshot = FeatureSnapshotLoader(MANIFEST_PATH, schema_path=SCHEMA_PATH).load()
+    input_package = InputPackageBuilder(loaded_snapshot).build()
+    adapted_package = StrategyDossierAdapter(
+        input_package,
+        FICTITIOUS_STRATEGY_DOSSIER,
+    ).adapt()
+    result = _validate(adapted_package)
+
+    assert loaded_snapshot.generated_at == input_package.generated_at
+    assert input_package.generated_at == adapted_package.generated_at
+    assert adapted_package.generated_at == result.generated_at
+
+
+def test_adapted_governance_temporal_status_remains_not_certified() -> None:
+    package = _adapted_package()
+
+    assert package.governance_state.temporal_admissibility_status == (
+        "temporal_admissibility_not_certified"
+    )
+    assert _validate(package).admissible is True
+    assert package.governance_state.temporal_admissibility_status == (
+        "temporal_admissibility_not_certified"
+    )
+
+
 def test_validator_does_not_mutate_package() -> None:
     package = _adapted_package()
     serialized_before = package.to_dict()
@@ -217,6 +268,17 @@ def test_validator_does_not_mutate_package() -> None:
 
     assert package.to_dict() == serialized_before
     assert {key: id(value) for key, value in package.series.items()} == series_ids_before
+
+
+def test_validator_does_not_re_read_manifest(monkeypatch: pytest.MonkeyPatch) -> None:
+    package = _adapted_package()
+
+    def fail_read_text(*args, **kwargs):
+        raise AssertionError("validator must not re-read manifest")
+
+    monkeypatch.setattr(Path, "read_text", fail_read_text)
+
+    assert _validate(package).admissible is True
 
 
 def test_validator_does_not_load_parquet(monkeypatch: pytest.MonkeyPatch) -> None:

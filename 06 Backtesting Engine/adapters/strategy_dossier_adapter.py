@@ -4,6 +4,12 @@ This adapter binds a governed input package to the official conceptual
 StrategyDossier contract. It preserves lineage and governance restrictions only;
 it does not load data, execute strategy logic, certify temporal admissibility,
 simulate trades, compute metrics, or generate evidence.
+
+The official Stage 05 StrategyDossier currently does not expose explicit
+required_feature_set, required_symbols, required_timeframes, strategy-specific
+temporal windows, strategy-specific feature availability requirements, or
+strategy-level decision/execution timing rules. Those limitations are carried
+forward so Block 06 can certify only package metadata consistency.
 """
 
 from __future__ import annotations
@@ -118,6 +124,7 @@ class AdaptedBacktestPackage:
     feature_set: str
     feature_version: str
     code_commit: str
+    generated_at: datetime
     manifest_path: Path
     schema_path: Path
     gap_report_reference: str
@@ -137,6 +144,7 @@ class AdaptedBacktestPackage:
             "feature_set": self.feature_set,
             "feature_version": self.feature_version,
             "code_commit": self.code_commit,
+            "generated_at": self.generated_at.isoformat(),
             "manifest_path": str(self.manifest_path),
             "schema_path": str(self.schema_path),
             "gap_report_reference": self.gap_report_reference,
@@ -195,6 +203,7 @@ class StrategyDossierAdapter:
             feature_set=self.input_package.feature_set,
             feature_version=self.input_package.feature_version,
             code_commit=self.input_package.code_commit,
+            generated_at=self.input_package.generated_at,
             manifest_path=self.input_package.manifest_path,
             schema_path=self.input_package.schema_path,
             gap_report_reference=self.input_package.gap_report_reference,

@@ -96,6 +96,7 @@ Future blocks may append decisions to this log as contracts, schemas, tests, and
 | D-059 | Undocumented assumptions invalidate experimental reproducibility. | Accepted |
 | D-060 | Experiment outputs cannot compensate for protocol defects. | Accepted |
 | D-061 | Protocol integrity takes precedence over result attractiveness. | Accepted |
+| D-145 | Block 07 must consume `TemporalAdmissibilityResult` together with `AdaptedBacktestPackage`; it must not infer temporal certification from `AdaptedBacktestPackage.governance_state` alone. | Accepted |
 
 ## Block 07 Decisions
 

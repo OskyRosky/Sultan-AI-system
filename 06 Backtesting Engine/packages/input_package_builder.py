@@ -54,6 +54,7 @@ class InputPackageLineage:
     feature_set: str
     feature_version: str
     code_commit: str
+    generated_at: datetime
     source_table: str
     manifest_path: Path
     schema_path: Path
@@ -67,6 +68,7 @@ class InputPackageLineage:
             "feature_set": self.feature_set,
             "feature_version": self.feature_version,
             "code_commit": self.code_commit,
+            "generated_at": self.generated_at.isoformat(),
             "source_table": self.source_table,
             "manifest_path": str(self.manifest_path),
             "schema_path": str(self.schema_path),
@@ -155,6 +157,10 @@ class BacktestInputPackage:
         return self.lineage.code_commit
 
     @property
+    def generated_at(self) -> datetime:
+        return self.lineage.generated_at
+
+    @property
     def source_table(self) -> str:
         return self.lineage.source_table
 
@@ -216,6 +222,7 @@ class InputPackageBuilder:
             feature_set=self.loaded_snapshot.feature_set,
             feature_version=self.loaded_snapshot.feature_version,
             code_commit=self.loaded_snapshot.code_commit,
+            generated_at=self.loaded_snapshot.generated_at,
             source_table=self.loaded_snapshot.source_table,
             manifest_path=self.loaded_snapshot.manifest_path,
             schema_path=self.loaded_snapshot.schema_path,

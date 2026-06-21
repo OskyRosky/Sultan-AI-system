@@ -67,6 +67,7 @@ def test_package_preserves_snapshot_feature_version_and_commit() -> None:
     assert package.feature_set == loaded_snapshot.feature_set
     assert package.feature_version == loaded_snapshot.feature_version
     assert package.code_commit == loaded_snapshot.code_commit
+    assert package.generated_at == loaded_snapshot.generated_at
 
 
 def test_package_preserves_manifest_path_and_schema_path() -> None:
@@ -83,6 +84,13 @@ def test_package_preserves_gap_and_quality_report_references() -> None:
     assert package.gap_report_reference == GAP_REPORT_REFERENCE
     assert package.gap_report_reference == loaded_snapshot.gap_report_reference
     assert package.quality_report_reference == loaded_snapshot.quality_report_reference
+
+
+def test_serialized_package_includes_generated_at() -> None:
+    package = _input_package()
+    serialized = package.to_dict()
+
+    assert serialized["lineage"]["generated_at"] == package.generated_at.isoformat()
 
 
 def test_package_includes_all_four_expected_series_references() -> None:
