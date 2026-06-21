@@ -36,7 +36,9 @@ The output of the broader 07 stage may later be a `fused signal candidate`, but 
 
 Block 01 covers conceptual input acceptance rules for:
 
-1. Motor B Output Contract from `06 Backtesting Engine`.
+1. Motor B output from `06 Backtesting Engine`, with the current V1 terminal
+   artifact consumed through
+   `docs/14_motor_b_raw_diagnostics_adapter_contract.md`.
 2. Regime context from `04 Research Layer` / Regime Detection v1.
 3. Motor A macro/fundamental context.
 4. Motor C event / LLM classifier outputs.
@@ -82,7 +84,8 @@ Any input may be contract-valid and still blocked from operational downstream us
 
 | Input family | Source owner | Required now | Implementation status | Notes |
 | --- | --- | --- | --- | --- |
-| `motor_b_output_contract` | `06 Backtesting Engine` | Yes | Documentation contract exists | Consumed from `06 Backtesting Engine/docs/18_motor_b_output_contract.md`. |
+| `motor_b_raw_diagnostics_handoff` | `06 Backtesting Engine` | Yes | Terminal V1 handoff exists | Consumed through `07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md`; source artifact is `RawDiagnosticsHandoffContract`. |
+| `motor_b_output_contract` | `06 Backtesting Engine` | Reference only | Documentation contract exists | Historical/canonical semantics reference from `06 Backtesting Engine/docs/18_motor_b_output_contract.md`; not the current terminal Stage 06 handoff artifact. |
 | `regime_context` | `04 Research Layer` / future Motor A | Optional | Framework input exists conceptually through Regime Detection v1 | Context only; not trading evidence by itself. |
 | `motor_a_macro_fundamental_context` | future Motor A | Optional | Not implemented | Conceptual input only in this block. |
 | `motor_c_event_llm_classification` | future Motor C | Optional | Not implemented | Conceptual input only in this block. |
@@ -134,13 +137,31 @@ It may be used only for interface design, contract validation, dry-run logic, an
 
 ## 7. Motor B Output Contract Input
 
-The Motor B Output Contract is consumed from:
+The historical Motor B Output Contract is referenced from:
 
 ```text
 06 Backtesting Engine/docs/18_motor_b_output_contract.md
 ```
 
-The contract belongs to `06 Backtesting Engine`. Stage 07 consumes it and preserves its semantics. Stage 07 must not redefine it.
+The current V1 terminal Stage 06 artifact is:
+
+```text
+RawDiagnosticsHandoffContract
+```
+
+Stage 07 must consume that terminal artifact through:
+
+```text
+07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md
+```
+
+The Motor B Output Contract remains a semantic reference for framework-only,
+confidence, evidence, and downstream restriction rules. It is not the concrete
+terminal handoff artifact produced by the completed Stage 06 V1 flow.
+
+The contract and handoff both belong to `06 Backtesting Engine`. Stage 07
+consumes them and preserves their semantics. Stage 07 must not redefine either
+artifact.
 
 ### Required Fields To Preserve
 
@@ -509,7 +530,10 @@ Every accepted or degraded input must preserve:
 
 ## 19. Relationship With Block 02 Motor B Adapter
 
-Block 02 may later define how to adapt a concrete Motor B Output Contract instance into 07's internal input representation.
+Block 02 defines the conceptual Motor B adapter. The current V1 concrete source
+artifact is `RawDiagnosticsHandoffContract`, mapped by
+`docs/14_motor_b_raw_diagnostics_adapter_contract.md` into 07's internal input
+representation.
 
 Block 01 does not implement that adapter.
 

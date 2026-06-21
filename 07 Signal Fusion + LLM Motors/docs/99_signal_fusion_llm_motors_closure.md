@@ -75,7 +75,10 @@ Stage 07 contains the following completed contractual blocks:
 
 Stage 07 defines a documentation and contract layer for:
 
-- consuming the `06 Backtesting Engine` Motor B Output Contract;
+- consuming the `06 Backtesting Engine` terminal `RawDiagnosticsHandoffContract`
+  through `docs/14_motor_b_raw_diagnostics_adapter_contract.md`;
+- preserving the older Motor B Output Contract semantics as a framework-only
+  reference;
 - preserving Motor B eligibility and evidence limitations;
 - contextualizing market regime through Motor A;
 - classifying event context through Motor C and bounded LLM assistance;
@@ -92,9 +95,22 @@ This architecture is framework/documentation-only in this phase.
 
 ## 6. Upstream Dependency Summary
 
-Stage 07 depends on the Motor B output state from `06 Backtesting Engine/docs/18_motor_b_output_contract.md`.
+Stage 07 depends on the terminal Motor B handoff state from
+`RawDiagnosticsHandoffContract`, mapped by:
 
-That upstream dependency remains non-operational because Motor B is still `framework_only`.
+```text
+07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md
+```
+
+The older semantic reference remains:
+
+```text
+06 Backtesting Engine/docs/18_motor_b_output_contract.md
+```
+
+That upstream dependency remains non-operational because Motor B is raw
+diagnostics only and must be treated as `framework_only` for Stage 07
+confidence, evidence, and readiness purposes.
 
 Stage 07 does not replace the upstream research, validation, or backtesting obligations that must exist before any operational trading pathway can be considered.
 
@@ -133,15 +149,24 @@ Motor A does not create empirical evidence, does not create trade approval, does
 
 ## 9. Motor B Adapter Summary
 
-The Motor B Adapter defines how Motor B outputs are adapted into Stage 07 without changing their meaning.
+The Motor B Adapter defines how Motor B outputs are adapted into Stage 07
+without changing their meaning.
+
+For V1, the adapter must consume `RawDiagnosticsHandoffContract` through the
+Stage 06->07 raw diagnostics adapter contract. It must not treat raw
+diagnostics as empirical evidence.
 
 It preserves:
 
 - `evidence_completeness_level`;
+- `empirical_results_available = false`;
 - `paper_trading_eligibility`;
+- `paper_trading_ready = false`;
+- `handoff_to_09 = blocked`;
 - `downstream_operational_eligibility`;
 - `confidence_status`;
 - `confidence_score`;
+- `final_signal_confidence_score = null`;
 - missing evidence;
 - blocking gaps;
 - forbidden downstream usage;

@@ -8,11 +8,11 @@ El objetivo inicial es construir una plataforma cuantitativa para investigación
 
 Este repositorio ya contiene las capas iniciales de datos, features, research, strategy framework y backtesting framework. La prioridad sigue siendo operar con enfoque data-first, research-first, risk-first y audit-first antes de cualquier paper trading o live-small.
 
-`06 Backtesting Engine` queda cerrado como framework/director/documentación. No es todavía un motor productivo completo de backtesting, no ejecuta simulaciones reales, no calcula PnL y no autoriza paper trading, live trading ni despliegue.
+`06 Backtesting Engine` queda cerrado como motor de raw execution scaffold, raw diagnostics y handoff contractual. Su artefacto terminal es `RawDiagnosticsHandoffContract`; no autoriza paper trading, live trading ni despliegue.
 
 `08 Risk Engine` queda cerrado como framework documental no operativo. `09 Paper Trading` permanece bloqueado; el orden oficial previo a cualquier discusion de Stage 09 es `General -> 02 -> 06 -> General`, segun [00 Inicio/05_pre_stage_09_readiness_plan.md](<00 Inicio/05_pre_stage_09_readiness_plan.md>).
 
-Antes de diseñar o construir `07 Signal Fusion + LLM Motors`, se debe hacer una micro-validación del pipeline `04 Research Layer -> 05 Strategy Engine -> 06 Backtesting Engine` para identificar qué outputs reales entrega Motor B y qué contratos deben consumir las capas de fusión.
+La frontera oficial entre cierre estructural V1 y maduración operativa V2 está definida en [00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md](<00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md>). El contrato de alineación 06→07 para Motor B raw diagnostics está definido en `07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md`.
 
 ## Reglas iniciales
 

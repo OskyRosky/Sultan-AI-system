@@ -2,7 +2,15 @@
 
 ## 1. Purpose
 
-Block 02 defines how `07 Signal Fusion + LLM Motors` conceptually adapts the Motor B Output Contract produced by `06 Backtesting Engine` into a normalized Motor B input shape for later 07 blocks.
+Block 02 defines how `07 Signal Fusion + LLM Motors` conceptually adapts Motor B output produced by `06 Backtesting Engine` into a normalized Motor B input shape for later 07 blocks.
+
+For V1, the concrete terminal Stage 06 artifact is
+`RawDiagnosticsHandoffContract`, not the older documentary Motor B Output
+Contract alone. The binding 06->07 alignment is defined in:
+
+```text
+07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md
+```
 
 The adapter exists to preserve Motor B input state, missing evidence, blocking gaps, confidence limitations, paper trading restrictions, non-approval status, non-approval statements, and `forbidden_downstream_usage` before any Signal Candidate Normalization or Signal Fusion work begins.
 
@@ -68,15 +76,32 @@ Accepted input means only contract-consumable input. It does not mean an approve
 
 ## 4. Source Contract Reference
 
-The source contract is:
+The historical source contract reference is:
 
 ```text
 06 Backtesting Engine/docs/18_motor_b_output_contract.md
 ```
 
-The Motor B Output Contract belongs to `06 Backtesting Engine`.
+The current V1 terminal handoff artifact is:
 
-Stage 07 consumes the contract, references it, and adapts its contents into a 07-internal normalized shape. Stage 07 must not redefine the Motor B Output Contract, change its semantics, remove restrictions, or upgrade evidence state.
+```text
+RawDiagnosticsHandoffContract
+```
+
+Defined by Stage 06 and mapped into Stage 07 by:
+
+```text
+07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md
+```
+
+The Motor B Output Contract and Raw Diagnostics Handoff both belong to
+`06 Backtesting Engine`.
+
+Stage 07 consumes the current handoff, references the historical contract for
+semantic restrictions, and adapts the handoff into a 07-internal normalized
+shape. Stage 07 must not redefine the Motor B Output Contract, redefine
+`RawDiagnosticsHandoffContract`, change semantics, remove restrictions, or
+upgrade evidence state.
 
 ## 5. Current Motor B State
 
@@ -85,18 +110,27 @@ The current mandatory Motor B state is:
 ```text
 evidence_completeness_level = framework_only
 paper_trading_eligibility = blocked
+paper_trading_ready = false
+handoff_to_09 = blocked
+empirical_results_available = false
 confidence_status = confidence_not_available
 confidence_score = null
+final_signal_confidence_score = null
+strategy_promotion_status = not_promoted
 ```
 
 This means:
 
+- `RawDiagnosticsHandoffContract` is a raw diagnostics handoff artifact, not an
+  empirical evidence package.
 - `04 Research Layer` has framework tools and synthetic tests, but no real persisted research output.
 - `05 Strategy Engine` has strategy candidate and dossier framework objects, but examples are mockups and not real approved strategies.
-- `06 Backtesting Engine` is currently framework/director/documentation only, not a productive Python backtesting engine.
+- `06 Backtesting Engine` is closed as a raw execution scaffold and diagnostics
+  handoff, not as a source of strategy validation or readiness.
 - There is no real backtest, OOS validation, walk-forward execution, robustness result, or historical performance result.
 
-The adapter must preserve this state exactly until a later governed Motor B Output Contract instance provides real evidence.
+The adapter must preserve this state exactly until a later governed V2 Motor B
+artifact provides real evidence.
 
 ## 6. Normalized Motor B Input Schema
 
@@ -505,7 +539,11 @@ when a Motor B input lacks required auditable fields.
 
 `05 Strategy Engine` may provide strategy candidates, dossiers, registry entries, quality gate status, or conceptual references through the Motor B Output Contract. Its mock examples are not real evidence and must not be treated as approved strategies.
 
-`06 Backtesting Engine` provides the Motor B Output Contract. It is currently closed as framework/director/documentation, not as a productive backtesting engine.
+`06 Backtesting Engine` provides the terminal `RawDiagnosticsHandoffContract`.
+The older Motor B Output Contract remains a semantic reference for framework
+only, missing evidence, confidence, and downstream restriction preservation.
+Stage 07 must use `docs/14_motor_b_raw_diagnostics_adapter_contract.md` to map
+the terminal handoff into the normalized Motor B input shape.
 
 The adapter consumes `06` output. It does not modify `04`, `05`, or `06`.
 
