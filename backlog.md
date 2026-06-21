@@ -3,19 +3,16 @@
 ## Ahora
 
 - Mantener alineada la estructura física del repositorio con la secuencia oficial 00-11 del Blueprint Maestro.
-- Micro-validar el pipeline `04 Research Layer -> 05 Strategy Engine -> 06 Backtesting Engine` antes de diseñar `07 Signal Fusion + LLM Motors`.
-- Identificar qué outputs reales entrega Motor B y qué contratos debe consumir la futura capa 07.
+- Usar `00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md` como frontera oficial entre cierre estructural V1 y maduración operativa V2.
+- Ejecutar el siguiente paso inmediato: `Block 1 — 06→07 Contract Alignment`.
 
 ## Siguiente
 
-- Diseñar `07 Signal Fusion + LLM Motors` sin rehacer desde cero el trabajo parcial ya existente de Motor A en `04 Research Layer`, especialmente Regime Detection v1.
-- Definir qué falta para completar Motor A macro/fundamental.
-- Definir Motor C como LLM/event classifier bajo restricciones audit-first.
-- Definir el Signal Fusion Engine entre Motor A, Motor B y Motor C.
+- `Block 2 — 07 Minimal Executable Dry-Run`.
+- `Block 3 — 08 Minimal Executable Dry-Run`.
+- `Block 4 — 09 Non-Operational Framework Charter`.
+- `Block 5 — V1 Closure Package`.
 
 ## Después
 
-- Implementar `08 Risk Engine` con autoridad absoluta de veto.
-- Activar `09 Paper Trading` solo después de Risk Engine.
-- Crear `10 Dashboard + Monitoreo`.
-- Evaluar `11 Live Small + Escalamiento` bajo criterios estrictos.
+- V2 operational maturity: real backtests, OOS, walk-forward, robustness, governed optimization, empirical confidence, real paper runtime, dashboard monitoring, alerts, performance tracking and eventual live-small only after explicit approval.
