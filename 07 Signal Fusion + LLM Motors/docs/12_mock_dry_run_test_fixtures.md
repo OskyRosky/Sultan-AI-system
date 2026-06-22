@@ -44,7 +44,17 @@ This block covers:
 - relationship with 07-Block-14 Stage Closure and Handoff to 08;
 - relationship with `08 Risk Engine`.
 
-This block does not create executable fixtures, JSON files, YAML files, Python tests, trading logic, Paper Trading, Live Trading, execution, capital allocation, Risk Engine behavior, quality gates, or Block 13.
+V1 update: Stage 07 now includes a minimal executable Python dry-run under
+`07 Signal Fusion + LLM Motors/src/` with tests under
+`07 Signal Fusion + LLM Motors/tests/`.
+
+The executable dry-run is limited to contract validation with synthetic mocks.
+It does not process real data, does not call LLMs, does not create trading
+signals, does not produce empirical evidence, does not create confidence, does
+not authorize Paper Trading, and does not promote strategies.
+
+This block does not create trading logic, Paper Trading, Live Trading,
+execution, capital allocation, Risk Engine behavior, quality gates, or Block 13.
 
 ## 3. Non-Authority Reminder
 
@@ -138,6 +148,55 @@ It is not Paper Trading authorization.
 It describes simulated input artifacts, expected normalized/debate/fusion/confidence/risk handoff/replay outcomes, expected missing evidence, expected blocking gaps, expected rejection or degradation reason, and required non-approval labels.
 
 `DryRunScenarioSpec` is not a real market event, not real performance evidence, and not empirical validation.
+
+## 6A. Minimal Executable Dry-Run Implementation
+
+The V1 minimal executable dry-run is implemented as:
+
+```text
+src/contracts.py
+src/motor_b_adapter.py
+src/normalizer.py
+src/fusion_engine.py
+src/confidence_governance.py
+src/risk_handoff.py
+src/audit_trace.py
+src/dry_run.py
+```
+
+Entry point:
+
+```text
+run_stage07_dry_run(mock_payload: dict | None = None) -> Stage07DryRunResult
+```
+
+The dry-run produces:
+
+- `NormalizedMotorAInput`
+- `NormalizedMotorBInput`
+- `NormalizedMotorCInput`
+- `NormalizedSignalCandidate`
+- `FusedSignalCandidate`
+- `ConfidenceGovernanceResult`
+- `RiskHandoffPackage`
+- `Stage07AuditTrace`
+
+All outputs preserve:
+
+```text
+evidence_completeness_level = framework_only
+empirical_results_available = false
+confidence_status = confidence_not_available
+confidence_score = null
+final_signal_confidence_score = null
+paper_trading_ready = false
+handoff_to_09 = blocked
+downstream_operational_eligibility = blocked
+strategy_promotion_status = not_promoted
+```
+
+The dry-run is V1 contract validation only. It is not evidence, signal
+readiness, paper trading readiness, LLM production, or strategy promotion.
 
 ## 7. Fixture Taxonomy
 

@@ -14,6 +14,8 @@ Este repositorio ya contiene las capas iniciales de datos, features, research, s
 
 La frontera oficial entre cierre estructural V1 y maduración operativa V2 está definida en [00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md](<00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md>). El contrato de alineación 06→07 para Motor B raw diagnostics está definido en `07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md`.
 
+`07 Signal Fusion + LLM Motors` tiene un minimal executable dry-run V1 para validar contratos y handoffs con mocks sintéticos. No procesa evidencia real, no llama LLMs, no genera confidence, no produce señales operativas y no desbloquea Paper Trading.
+
 ## Reglas iniciales
 
 - No ejecutar trades reales al inicio.

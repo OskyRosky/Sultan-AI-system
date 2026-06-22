@@ -27,7 +27,10 @@ This closure covers:
 - non-promotion statement;
 - formal handoff to `08 Risk Engine`.
 
-This closure is documentation only.
+This closure is documentation-first. V1 now also includes a minimal executable
+dry-run under `07 Signal Fusion + LLM Motors/src/` for contract validation with
+synthetic mocks only. The dry-run does not change the non-operational closure
+status.
 
 ## 3. Non-Authority Closure Statement
 
@@ -308,7 +311,9 @@ Audit records cannot override Motor B `framework_only`.
 
 ## 18. Mock And Dry-Run Fixture Summary
 
-Block 12 defines `MockDryRunFixtureCatalog` and `DryRunScenarioSpec`.
+Block 12 defines `MockDryRunFixtureCatalog` and `DryRunScenarioSpec`, and V1
+now includes a minimal executable dry-run that exercises those concepts with
+synthetic mocks.
 
 Fixture scenarios cover framework-only paths, synthetic partial empirical placeholders, event shocks, conflicting motors, missing motors, degraded confidence, Bull/Bear disagreement, prohibited inference flags, blocked risk handoff, and replay degraded or unavailable states.
 
@@ -319,6 +324,18 @@ Mock fixtures are not empirical evidence.
 Dry-run fixtures are not validation.
 
 Synthetic outputs cannot authorize Paper Trading, Live Trading, execution, confidence creation, or strategy promotion.
+
+The minimal executable dry-run preserves:
+
+```text
+paper_trading_ready = false
+handoff_to_09 = blocked
+downstream_operational_eligibility = blocked
+confidence_status = confidence_not_available
+confidence_score = null
+final_signal_confidence_score = null
+strategy_promotion_status = not_promoted
+```
 
 ## 19. Quality Gates Summary
 
@@ -407,7 +424,7 @@ Stage 07 cannot use Motor A context, Motor C classification, LLM output, Bull/Be
 
 Known limitations at closure:
 
-- Stage 07 is documentation/framework only.
+- Stage 07 is documentation/framework plus minimal executable dry-run.
 - No production LLM adapter implemented.
 - No runtime LLM provider selected.
 - LLM runtime model remains model-agnostic at this stage.
@@ -495,7 +512,7 @@ It does not mean operational readiness.
 
 ## 28. Explicit Non-Operational Conclusion
 
-Stage 07 is complete as a documented, audit-first, deterministic-first Signal Fusion + LLM Motors framework.
+Stage 07 is complete as a documented, audit-first, deterministic-first Signal Fusion + LLM Motors framework with a minimal V1 executable dry-run for contract validation.
 
 Stage 07 is not complete as a production trading system.
 
