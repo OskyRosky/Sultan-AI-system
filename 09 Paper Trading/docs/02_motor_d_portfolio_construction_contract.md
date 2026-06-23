@@ -165,6 +165,7 @@ capital_allocation_ready = false
 paper_trading_ready = false
 stage_09_operational_start_allowed = false
 risk_approval = false
+handoff_to_09 = blocked
 live_trading_ready = false
 strategy_promotion_status = not_promoted
 confidence_status = confidence_not_available

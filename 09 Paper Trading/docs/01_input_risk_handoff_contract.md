@@ -229,6 +229,13 @@ Fields that exist today in adjacent Stage 08 artifacts:
 | upstream artifact reference/path | repository path only | `08 Risk Engine/src/dry_run.py` and `Stage08DryRunResult` |
 | artifact hashes | `Stage08AuditTrace` | `artifact_hashes`, `decision_hash` |
 
+These `Stage08AuditTrace` fields were verified against:
+
+```text
+08 Risk Engine/src/audit_trace.py
+08 Risk Engine/src/contracts.py
+```
+
 Fields that do not exist today and must be treated as V2/schema gaps:
 
 | Conceptual requirement | Current status |
@@ -265,6 +272,7 @@ stage_09_operational_start_allowed = false
 live_trading_ready = false
 capital_allocation_ready = false
 risk_approval = false
+handoff_to_09 = blocked
 strategy_promotion_status = not_promoted
 confidence_status = confidence_not_available
 confidence_score = null
@@ -284,7 +292,8 @@ Stage 09 must reject, or remain blocked, if:
 - Stage 08 says `risk_decision_status = blocked`;
 - Stage 08 says `risk_approval = false`;
 - Stage 08 says `handoff_to_09 = blocked`;
-- `strategy_promotion_status != not_promoted` in V1;
+- `strategy_promotion_status = not_promoted` is present; this is the expected V1 blocked/default state and does not authorize Stage 09 operational activity;
+- any claim that `strategy_promotion_status` represents valid promotion without real V2 evidence is present;
 - `confidence_score` is non-null in V1 without real V2 evidence;
 - any readiness flag is true;
 - any live readiness is claimed;
@@ -294,7 +303,9 @@ Stage 09 must reject, or remain blocked, if:
 - schema version cannot be traced;
 - artifact path cannot be traced.
 
-In V1, `risk_approval = false` and `handoff_to_09 = blocked` are expected. They mean Stage 09 stays blocked and non-operational.
+In V1, `risk_approval = false`, `handoff_to_09 = blocked`, and `strategy_promotion_status = not_promoted` are expected. They mean Stage 09 stays blocked and non-operational.
+
+If `documentary_only_candidate` appears as a future upstream Stage 08 handoff value, Stage 09 may treat it only as documentary continuity. Separately, this document uses `documentary_only_candidate` as a Stage 09 V1 classification label for non-operational intake. Neither usage authorizes operational Stage 09 activity.
 
 ## Output Of 09.1
 
