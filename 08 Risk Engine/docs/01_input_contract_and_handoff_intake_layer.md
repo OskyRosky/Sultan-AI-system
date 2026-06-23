@@ -16,6 +16,30 @@ This block establishes the first safety boundary for Stage 08. It determines wha
 
 Block 01 does not approve trading, Paper Trading, Live Trading, execution, capital allocation, or strategy promotion. It only defines intake eligibility and initial routing for governed Risk Engine review.
 
+## Minimal Executable V1 Dry-Run
+
+Stage 08 now includes a minimal executable dry-run under:
+
+```text
+08 Risk Engine/src/
+08 Risk Engine/tests/
+```
+
+The dry-run implements V1 contract validation only. It consumes a Stage 07 `RiskHandoffPackage`, validates that the package is targeted to `08 Risk Engine`, rejects raw Stage 06 artifacts and raw Motor A/B/C/LLM inputs, and preserves upstream blocked states.
+
+The dry-run does not create real risk approval. It is not Paper Trading readiness, not an operational Risk Engine, not capital allocation approval, not Live Small approval, and not Stage 09 approval.
+
+Under the current V1 boundary, the executable intake result must keep:
+
+```text
+paper_trading_ready = false
+risk_approval = false
+capital_allocation_ready = false
+live_trading_ready = false
+handoff_to_09 = blocked
+stage_09_operational_start_allowed = false
+```
+
 ## Intake Authority
 
 Stage 08 may receive a package from `07 Signal Fusion + LLM Motors`, but it is not obligated to accept that package operationally.
@@ -328,4 +352,4 @@ This block does not do:
 - robustness testing;
 - empirical performance claims.
 
-Block 01 is a documentary intake contract only. It defines a conservative, auditable, non-operational entry boundary for Stage 08 Risk Engine review.
+Block 01 now has a minimal executable V1 intake validation path for dry-run contract checks. It remains conservative, auditable, non-operational, and blocked by default.

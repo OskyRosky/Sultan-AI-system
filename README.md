@@ -10,7 +10,7 @@ Este repositorio ya contiene las capas iniciales de datos, features, research, s
 
 `06 Backtesting Engine` queda cerrado como motor de raw execution scaffold, raw diagnostics y handoff contractual. Su artefacto terminal es `RawDiagnosticsHandoffContract`; no autoriza paper trading, live trading ni despliegue.
 
-`08 Risk Engine` queda cerrado como framework documental no operativo. `09 Paper Trading` permanece bloqueado; el orden oficial previo a cualquier discusion de Stage 09 es `General -> 02 -> 06 -> General`, segun [00 Inicio/05_pre_stage_09_readiness_plan.md](<00 Inicio/05_pre_stage_09_readiness_plan.md>).
+`08 Risk Engine` queda cerrado como framework no operativo con un minimal executable dry-run V1 para validar el handoff de Stage 07 y preservar bloqueos. No crea risk approval, no autoriza Paper Trading, no aprueba capital allocation, no aprueba Live Small y no desbloquea Stage 09. `09 Paper Trading` permanece bloqueado; el orden oficial previo a cualquier discusion de Stage 09 es `General -> 02 -> 06 -> General`, segun [00 Inicio/05_pre_stage_09_readiness_plan.md](<00 Inicio/05_pre_stage_09_readiness_plan.md>).
 
 La frontera oficial entre cierre estructural V1 y maduración operativa V2 está definida en [00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md](<00 Inicio/06_v1_completion_strategy_and_v2_operational_roadmap.md>). El contrato de alineación 06→07 para Motor B raw diagnostics está definido en `07 Signal Fusion + LLM Motors/docs/14_motor_b_raw_diagnostics_adapter_contract.md`.
 

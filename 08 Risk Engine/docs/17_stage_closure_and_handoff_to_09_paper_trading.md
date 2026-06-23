@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Block 17 closes Stage 08 Risk Engine as a complete documentary framework and defines the handoff posture toward Stage 09 Paper Trading.
+Block 17 closes Stage 08 Risk Engine as a complete documentary framework with a minimal executable V1 dry-run and defines the handoff posture toward Stage 09 Paper Trading.
 
 This closure records the final Stage 08 risk posture after Blocks 00-16, including risk authority, veto mandate, Kill Switch authority, RiskDecision boundaries, human review boundaries, audit/replay expectations, mock/dry-run scenarios, and quality gates.
 
@@ -15,6 +15,7 @@ This block declares:
 - Stage 08 closure does not create empirical evidence.
 - Stage 08 closure does not create confidence.
 - Stage 08 closure does not approve execution or capital allocation.
+- Stage 08 minimal dry-run does not create real risk approval or Paper Trading readiness.
 
 ## Closure Authority
 
@@ -114,6 +115,33 @@ Stage 09 cannot treat human review metadata as approval.
 
 Future Stage 09 work may only begin after future empirical evidence, governance, Risk Engine review, and all required blockers unblock the handoff.
 
+## Minimal Executable V1 Dry-Run
+
+Stage 08 now includes a minimal executable dry-run under:
+
+```text
+08 Risk Engine/src/
+08 Risk Engine/tests/
+```
+
+The dry-run consumes Stage 07 `RiskHandoffPackage` output, validates the Stage 07 -> Stage 08 handoff contract, rejects raw Stage 06 artifacts and raw Motor A/B/C/LLM inputs, runs conservative V1 gates, and emits a blocked non-operational `Stage08RiskDecision`.
+
+This dry-run is V1 contract validation only. It is not real risk approval, not Paper Trading readiness, not an operational Risk Engine, not capital allocation approval, not Live Small approval, and not Stage 09 approval.
+
+The dry-run preserves:
+
+```text
+risk_decision_status = blocked
+operational_status = non_operational
+risk_approval = false
+paper_trading_ready = false
+handoff_to_09 = blocked
+downstream_operational_eligibility = blocked
+stage_09_operational_start_allowed = false
+capital_allocation_ready = false
+live_trading_ready = false
+```
+
 ## Stage 08 Closure Summary
 
 Stage 08 contains the following completed documentary framework blocks:
@@ -137,9 +165,9 @@ Stage 08 contains the following completed documentary framework blocks:
 | Block 14 | Audit, Traceability and Risk Decision Replay | complete_documentary_only |
 | Block 15 | Mock and Dry-Run Risk Scenarios | complete_documentary_only |
 | Block 16 | Quality Gates for 08 | complete_documentary_only |
-| Block 17 | Stage Closure and Handoff to 09 Paper Trading | complete_documentary_only |
+| Block 17 | Stage Closure and Handoff to 09 Paper Trading | complete_documentary_with_v1_dry_run |
 
-Completion is documentary framework completion only.
+Completion is documentary framework completion plus minimal V1 dry-run contract validation only.
 
 Stage 08 closure does not approve Paper Trading, Live Trading, execution, order generation, exchange connection, capital allocation, productive position sizing, risk budget activation, strategy promotion, confidence, downstream operational eligibility, or `handoff_to_09`.
 
@@ -239,11 +267,11 @@ walk_forward_status = walk_forward_not_available
 robustness_status = robustness_not_available
 ```
 
-This state is conservative, audit-first, deterministic-first, and non-operational.
+This state is conservative, audit-first, deterministic-first, and non-operational. The executable dry-run must preserve this state and must not convert it into operational approval.
 
 ## Handoff Statement to Stage 09
 
-Stage 08 Risk Engine is closed as a documented, non-operational risk framework. The handoff to Stage 09 Paper Trading remains blocked under the current framework_only state. Stage 09 must not begin operational Paper Trading until future empirical evidence, governance review, Risk Engine review, and all required blockers are resolved.
+Stage 08 Risk Engine is closed as a documented, non-operational risk framework with a minimal executable V1 dry-run. The handoff to Stage 09 Paper Trading remains blocked under the current framework_only state. Stage 09 must not begin operational Paper Trading until future empirical evidence, governance review, Risk Engine review, and all required blockers are resolved.
 
 This closure does not approve trading, Paper Trading, Live Trading, execution, capital allocation, strategy promotion, confidence scoring or handoff_to_09.
 
@@ -283,12 +311,10 @@ This block does not:
 - run OOS validation;
 - run walk-forward;
 - run robustness;
-- implement quality gate runtime;
+- implement operational quality gate runtime;
 - implement CI workflow;
-- implement executable tests;
-- implement pytest tests;
-- implement mock runtime;
-- implement dry-run runtime;
+- implement operational tests;
+- implement operational runtime;
 - implement audit replay runtime;
 - implement human approval workflow;
 - implement override runtime;
